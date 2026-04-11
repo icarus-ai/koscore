@@ -1,0 +1,55 @@
+syntax = "proto3";
+
+package auth;
+
+option go_package = ".;auth";
+
+message Session {
+  WLoginSigs sig      = 1;
+  State      state    = 2;
+  BotInfo    info     = 3;
+  uint32     sequence = 4;
+}
+
+message WLoginSigs {
+  bytes a1                    = 1; // Tlv106
+  bytes a1_key                = 2; // Tlv10C 16
+  bytes a2                    = 3; // Tlv10A tgt
+  bytes a2_key                = 4; // Tlv10D 16
+  bytes d2                    = 5; // Tlv143
+  bytes d2_key                = 6; // Tlv305 16
+  bytes no_pic_sig            = 7; // Tlv16A
+  bytes tgtgt_key             = 8;
+  bytes ksid                  = 9;
+  bytes super_key             = 10;
+  bytes st                    = 11;
+  bytes st_key                = 12;
+  bytes St_web                = 13;
+  bytes wt_session_ticket     = 14;
+  bytes wt_session_ticket_key = 15;
+  bytes random_key            = 16; // 16
+  bytes s_key                 = 17;
+  map<string, string> ps_key  = 18;
+}
+
+message State {
+  bytes  tlv104 = 1;
+  bytes  tlv547 = 2;
+  bytes  tlv174 = 3;
+  string cookie = 4;
+  bytes  qr_sig = 5;
+  KeyExchange key_exchange = 6;
+}
+
+message KeyExchange {
+  bytes session_ticket = 1;
+  bytes session_key    = 2;
+}
+
+message BotInfo {
+  uint32 age    = 1;
+  uint32 gender = 2;
+  string name   = 3;
+  uint64 uin    = 4;
+  string uid    = 5;
+}
