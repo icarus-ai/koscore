@@ -11,7 +11,7 @@ import (
 
 // SendGroupSign 发送群聊打卡消息
 func (m *QQClient) SendGroupSign(groupUin uint64) (*oidb.BotGroupClockInResult, error) {
-	pkt, e := oidb.BuildGroupSignPacket(m.UIN(), groupUin, m.version.CurrentVersion)
+	pkt, e := oidb.BuildGroupSignPacket(m.Uin(), groupUin, m.version.CurrentVersion)
 	if e != nil {
 		return nil, e
 	}
@@ -37,7 +37,7 @@ func (m *QQClient) GetAtAllRemain(uin, groupUin uint64) (*oidb.AtAllRemainInfo, 
 // CheckURLSafely 通过TX服务器检查URL安全性
 // ref https://github.com/Mrs4s/MiraiGo/blob/54bdd873e3fed9fe1c944918924674dacec5ac76/client/security.go#L24
 func (m *QQClient) CheckURLSafely(url string) (oidb.URLSecurityLevel, error) {
-	pkt, err := oidb.BuildURLCheckRequest(m.UIN(), url)
+	pkt, err := oidb.BuildURLCheckRequest(m.Uin(), url)
 	if err != nil {
 		return oidb.URLSecurityLevelUnknown, err
 	}

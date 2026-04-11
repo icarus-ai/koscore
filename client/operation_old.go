@@ -40,7 +40,7 @@ func (m *QQClient) KickGroupMember(groupUin, uin uint64, rejectAddRequest bool) 
 func (m *QQClient) SetGroupMemberSpecialTitle(groupUin, uin uint64, title string) error { return nil }
 
 // SetGroupReaction 设置群消息表态
-func (m *QQClient) SetGroupReaction(groupUin uint64, sequence uint32, code string, isAdd bool) error {
+func (m *QQClient) SetGroupReaction(groupUin, sequence uint64, code string, isAdd bool) error {
 	return nil
 }
 

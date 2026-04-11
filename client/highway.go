@@ -83,7 +83,7 @@ func (m *QQClient) highwayUpload(commonId int, r io.Reader, fileSize uint64, md5
 	// fallback to http upload
 	servers := m.hw_session.SsoAddr
 	saddr := servers[rand.Intn(len(servers))]
-	server := fmt.Sprintf("http://%s:%d/cgi-bin/httpconn?htcmd=0x6FF0087&uin=%d", binary.UInt32ToIPV4Address(saddr.IP), saddr.Port, m.UIN())
+	server := fmt.Sprintf("http://%s:%d/cgi-bin/httpconn?htcmd=0x6FF0087&uin=%d", binary.UInt32ToIPV4Address(saddr.IP), saddr.Port, m.Uin())
 	buffer := make([]byte, hw.BlockSize)
 	for offset := uint64(0); offset < fileSize; offset += hw.BlockSize {
 		if hw.BlockSize > fileSize-offset {

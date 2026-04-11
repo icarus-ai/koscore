@@ -53,25 +53,25 @@ func (m *QQClient) message_handle_parse_push_message(data []byte) error {
 
 	switch msg_type {
 	case message_type.GROUP_MESSAGE:
-		msg := message.ParseGroupMessage(m.UIN(), common_msg)
+		msg := message.ParseGroupMessage(m.Uin(), common_msg)
 		m.PreprocessGroupMessageEvent(msg)
-		if msg.Sender.Uin == m.UIN() {
+		if msg.Sender.Uin == m.Uin() {
 			m.events.SelfGroupMessage.dispatch(m, msg)
 		} else {
 			m.events.GroupMessage.dispatch(m, msg)
 		}
 		return nil
 	case message_type.PRIVATE_MESSAGE: // 166 for private msg, 208 for private record, 529 for private file
-		msg := message.ParsePrivateMessage(m.UIN(), common_msg)
+		msg := message.ParsePrivateMessage(m.Uin(), common_msg)
 		m.PreprocessPrivateMessageEvent(msg)
-		if msg.Sender.Uin == m.UIN() {
+		if msg.Sender.Uin == m.Uin() {
 			m.events.SelfPrivateMessage.dispatch(m, msg)
 		} else {
 			m.events.PrivateMessage.dispatch(m, msg)
 		}
 		return nil
 	case message_type.TEMP_MESSAGE:
-		msg := message.ParseTempMessage(m.UIN(), common_msg)
+		msg := message.ParseTempMessage(m.Uin(), common_msg)
 		m.events.TempMessage.dispatch(m, msg)
 		return nil
 	}
@@ -86,7 +86,7 @@ func (m *QQClient) message_handle_parse_push_message(data []byte) error {
 			}
 			ev := event.ParseMemberIncreaseEvent(pb)
 			_ = m.ResolveUin(ev)
-			if ev.UserUin == m.UIN() { // bot 进群
+			if ev.UserUin == m.Uin() { // bot 进群
 				_ = m.RefreshAllGroupsInfo()
 				m.events.GroupJoin.dispatch(m, ev)
 			} else {
@@ -109,7 +109,7 @@ func (m *QQClient) message_handle_parse_push_message(data []byte) error {
 				pb.Operator = utils.S2B(op.Operator.Uid.Unwrap())
 				ev := event.ParseMemberDecreaseEvent(pb)
 				_ = m.ResolveUin(ev)
-				if ev.UserUin == m.UIN() {
+				if ev.UserUin == m.Uin() {
 					m.events.GroupLeave.dispatch(m, ev)
 				} else {
 					m.events.GroupMemberLeave.dispatch(m, ev)

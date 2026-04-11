@@ -52,8 +52,8 @@ func (m *QQClient) LoadToken(path string) error {
 	return nil
 }
 
-func (m *QQClient) UIN() uint64  { return m.UIN() }
-func (m *QQClient) Uid() string  { return m.Uid() }
+func (m *QQClient) Uin() uint64  { return m.session.Info.Uin }
+func (m *QQClient) Uid() string  { return m.session.Info.Uid }
 func (m *QQClient) Nick() string { return m.session.Info.Name }
 
 // 设置qq已经上线

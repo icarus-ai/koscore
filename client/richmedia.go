@@ -32,7 +32,7 @@ func (m *QQClient) UploadGroupFile(gin uint64, file *message.FileElement, parent
 	}
 
 	if !upload.FileExist.Unwrap() {
-		ext, err := build_highway_file_ex(m.UIN(), gin, 0,
+		ext, err := build_highway_file_ex(m.Uin(), gin, 0,
 			&pb_hw.ExcitingFileEntry{
 				FileSize:  proto.Some(int64(file.FileSize)),
 				Md5:       file.FileMd5,
@@ -78,7 +78,7 @@ func (m *QQClient) UploadPrivateFile(uin uint64, file *message.FileElement) (*me
 	}
 
 	if !upload.FileExist.Unwrap() {
-		ext, err := build_highway_file_ex(m.UIN(), 0, 1,
+		ext, err := build_highway_file_ex(m.Uin(), 0, 1,
 			&pb_hw.ExcitingFileEntry{
 				FileSize:  proto.Some(int64(file.FileSize)),
 				Md5:       file.FileMd5,

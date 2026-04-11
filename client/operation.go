@@ -91,7 +91,7 @@ func (m *QQClient) FetchFriends(token []byte) (*oidb.FetchFriendsRsp, error) {
 // 获取单向好友列表
 // ref https://github.com/Mrs4s/MiraiGo/blob/54bdd873e3fed9fe1c944918924674dacec5ac76/client/web.go#L23
 func (m *QQClient) GetUnidirectionalFriendList() ([]*entity.User, error) {
-	rsp, err := m.webSsoRequest("ti.qq.com", "OidbSvc.0xe17_0", fmt.Sprintf(`{"uint64_uin":%v,"uint64_top":0,"uint32_req_num":99,"bytes_cookies":""}`, m.UIN()))
+	rsp, err := m.webSsoRequest("ti.qq.com", "OidbSvc.0xe17_0", fmt.Sprintf(`{"uint64_uin":%v,"uint64_top":0,"uint32_req_num":99,"bytes_cookies":""}`, m.Uin()))
 	if err != nil {
 		return nil, err
 	}
@@ -262,13 +262,13 @@ func (m *QQClient) FetchForwardMsg(resid string, isgroup bool) (msg *message.For
 			Time:     uint32(b.ContentHead.Time.Unwrap()),
 		}
 		if forward.IsGroup = b.RoutingHead.Group != nil; forward.IsGroup {
-			ms := message.ParseGroupMessage(m.UIN(), b)
+			ms := message.ParseGroupMessage(m.Uin(), b)
 			m.PreprocessGroupMessageEvent(ms)
 			forward.Nodes[idx].GroupId = ms.GroupUin
 			forward.Nodes[idx].SenderName = ms.Sender.CardName
 			forward.Nodes[idx].Message = ms.Elements
 		} else {
-			ms := message.ParsePrivateMessage(m.UIN(), b)
+			ms := message.ParsePrivateMessage(m.Uin(), b)
 			m.PreprocessPrivateMessageEvent(ms)
 			forward.Nodes[idx].SenderName = ms.Sender.Nickname
 			forward.Nodes[idx].Message = ms.Elements

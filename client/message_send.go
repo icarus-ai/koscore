@@ -53,10 +53,10 @@ func (m *QQClient) SendGroupMessage(gin uint64, elements []message.IMessageEleme
 			Time:      rsp.SendTime.Unwrap(),
 			Elements:  elements,
 			Sender: message.Sender{
-				Uin:      m.UIN(),
+				Uin:      m.Uin(),
 				Uid:      m.Uid(),
 				Nickname: m.Nick(),
-				CardName: m.GetCachedMemberInfo(m.UIN(), gin).MemberCard,
+				CardName: m.GetCachedMemberInfo(m.Uin(), gin).MemberCard,
 				IsFriend: false,
 			},
 		},
@@ -85,7 +85,7 @@ func (m *QQClient) SendPrivateMessage(uin uint64, elements []message.IMessageEle
 			Time:      rsp.SendTime.Unwrap(),
 			Elements:  elements,
 			Sender: message.Sender{
-				Uin:      m.UIN(),
+				Uin:      m.Uin(),
 				Uid:      m.Uid(),
 				Nickname: m.Nick(),
 				IsFriend: true,
@@ -163,10 +163,10 @@ func (m *QQClient) BuildFakeMessage(nodes []*message.ForwardNode) []*pb_msg.Comm
 		} else {
 			body[idx].RoutingHead.CommonC2C = &pb_msg.CommonC2C{Name: proto.Some(node.SenderName)}
 			body[idx].RoutingHead.ToUid = proto.Some(m.Uid())
-			body[idx].RoutingHead.ToUin = proto.Some(int64(m.UIN()))
+			body[idx].RoutingHead.ToUin = proto.Some(int64(m.Uin()))
 			body[idx].ContentHead.SubType = proto.Some[int32](4)
 			body[idx].ContentHead.DivSeq = proto.Some[int32](4)
-			m.preProcessPrivateMessage(m.UIN(), node.Message)
+			m.preProcessPrivateMessage(m.Uin(), node.Message)
 		}
 		body[idx].MessageBody = message.PackElementsToBody(node.Message)
 	}
@@ -259,7 +259,7 @@ func (m *QQClient) preProcessPrivateMessage(targetUin uint64, elements []message
 		case *message.ForwardMessage:
 			if elem.ResId != "" && len(elem.Nodes) == 0 {
 				forward, _ := m.FetchForwardMsg(elem.ResId, false)
-				elem.SelfId = m.UIN()
+				elem.SelfId = m.Uin()
 				elem.Nodes = forward.Nodes
 			}
 			if elem.ResId == "" && len(elem.Nodes) != 0 {
