@@ -618,7 +618,7 @@ type SsoGetC2CMsgReq struct {
 }
 
 type SsoGetC2CMsgRsp struct {
-	Retcode       proto.Option[uint32] `protobuf:"varint,1,opt"`
+	RetCode       proto.Option[uint32] `protobuf:"varint,1,opt"`
 	Message       proto.Option[string] `protobuf:"bytes,2,opt"`
 	StartSequence proto.Option[uint64] `protobuf:"varint,3,opt"`
 	EndSequence   proto.Option[uint64] `protobuf:"varint,4,opt"`

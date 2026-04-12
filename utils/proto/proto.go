@@ -12,6 +12,9 @@ func Unmarshal[T any](data []byte) (*T, error) {
 
 var Marshal = proto.Marshal
 
-var TRUE = proto.Some(true)
+var (
+	TRUE  = proto.Some(true)
+	FALSE = proto.Some(false)
+)
 
 func Some[T any](val T) proto.Option[T] { return proto.Some[T](val) }

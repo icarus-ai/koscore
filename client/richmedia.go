@@ -100,21 +100,6 @@ func (m *QQClient) UploadPrivateFile(uin uint64, file *message.FileElement) (*me
 	return file, nil
 }
 
-/*
-
-   public async Task<string> GroupFSDownload(long groupUin, string fileId)
-   {
-       var request = new GroupFSDownloadEventReq(groupUin, fileId);
-       var response = await context.EventContext.SendEvent<GroupFSDownloadEventResp>(request);
-       return response.FileUrl;
-   }
-
-   public async Task GroupFSMove(long groupUin, string fileId, string parentDirectory, string targetDirectory) => await context.EventContext.SendEvent<GroupFSMoveEventResp>(new GroupFSMoveEventReq(groupUin, fileId, parentDirectory, targetDirectory));
-
-   public async Task GroupFSDelete(long groupUin, string fileId) => await context.EventContext.SendEvent<GroupFSDeleteEventResp>(new GroupFSDeleteEventReq(groupUin, fileId));
-
-*/
-
 // *****
 
 func build_highway_file_ex(bot_uin, gin uint64, field200 int32, entry *pb_hw.ExcitingFileEntry, file_name string, ip string, port uint32) ([]byte, error) {
