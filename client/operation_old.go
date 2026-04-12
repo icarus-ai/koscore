@@ -4,7 +4,6 @@ import (
 	"io"
 
 	"github.com/kernel-ai/koscore/client/entity"
-	"github.com/kernel-ai/koscore/client/packets/pb/v2/service/oidb"
 	"github.com/kernel-ai/koscore/client/packets/pb/v2/service/operation"
 	"github.com/kernel-ai/koscore/message"
 	"github.com/kernel-ai/koscore/utils/types"
@@ -73,10 +72,6 @@ func (m *QQClient) MarkPrivateMessageReaded(uin uint64, timestamp int64, startSe
 
 // MarkGroupMessageReaded 标记群消息已读
 func (m *QQClient) MarkGroupMessageReaded(gin, seq uint64) error { panic(types.ERROR_NOT_IMPL) }
-
-func (m *QQClient) GenFileNode(name, md5, sha1, uuid string, size uint32, isnt bool) *oidb.IndexNode {
-	panic(types.ERROR_NOT_IMPL)
-}
 
 // QueryGroupImage 获取群图片
 func (m *QQClient) QueryGroupImage(md5 []byte, fileUuid string) (*message.ImageElement, error) {

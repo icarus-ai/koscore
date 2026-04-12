@@ -540,21 +540,6 @@ func ToReadableString(m []IMessageElement) string {
 }
 
 func ToReadableStringEle(elem IMessageElement) string {
-	/*
-		switch e := elem.(type) {
-			case *TextElement      : return e.Content
-			case *ImageElement     : return "[图片]"
-			case *AtElement        : return e.Display
-			case *ReplyElement     : return "[回复]" // [Optional] + ToReadableString(e.Elements), 这里不破坏原义不添加
-			case *FaceElement      : return "[表情]"
-			case *VoiceElement     : return "[语音]"
-			case *ShortVideoElement: return "[视频]"
-			case *LightAppElement  : return "[卡片消息]"
-			case *ForwardMessage   : return "[转发消息]"
-			case *MarketFaceElement: return "[魔法表情]"
-			default                : return "[暂不支持该消息类型]"
-		}
-	*/
 	switch elem.Type() {
 	case Text:
 		return elem.(*TextElement).Content
@@ -608,37 +593,3 @@ func (msg *SendingMessage) FirstOrNil(f func(element IMessageElement) bool) IMes
 	return nil
 }
 */
-
-func ElementsHasType(elems []IMessageElement, t ElementType) bool {
-	for _, elem := range elems {
-		if elem.Type() == t {
-			return true
-		}
-	}
-	return false
-}
-
-func PackElementsToBody(elems []IMessageElement) (body *message.MessageBody) {
-	body = &message.MessageBody{
-		RichText: &message.RichText{Elems: PackElements(elems)},
-	}
-	for _, elem := range elems {
-		if bd, ok := elem.(MsgContentBuilder); ok {
-			body.MsgContent = bd.BuildContent()
-		}
-	}
-	return
-}
-
-func PackElements(elems []IMessageElement) []*message.Elem {
-	if len(elems) == 0 {
-		return nil
-	}
-	ret := make([]*message.Elem, 0, len(elems))
-	for _, elem := range elems {
-		if bd, ok := elem.(ElementBuilder); ok {
-			ret = append(ret, bd.BuildElement()...)
-		}
-	}
-	return ret
-}

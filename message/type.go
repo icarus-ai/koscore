@@ -74,3 +74,37 @@ type MsgContentBuilder interface {
 type ElementBuilder interface {
 	BuildElement() []*message.Elem
 }
+
+func ElementsHasType(elems []IMessageElement, t ElementType) bool {
+	for _, elem := range elems {
+		if elem.Type() == t {
+			return true
+		}
+	}
+	return false
+}
+
+func PackElementsToBody(elems []IMessageElement) (body *message.MessageBody) {
+	body = &message.MessageBody{
+		RichText: &message.RichText{Elems: PackElements(elems)},
+	}
+	for _, elem := range elems {
+		if bd, ok := elem.(MsgContentBuilder); ok {
+			body.MsgContent = bd.BuildContent()
+		}
+	}
+	return
+}
+
+func PackElements(elems []IMessageElement) []*message.Elem {
+	if len(elems) == 0 {
+		return nil
+	}
+	ret := make([]*message.Elem, 0, len(elems))
+	for _, elem := range elems {
+		if bd, ok := elem.(ElementBuilder); ok {
+			ret = append(ret, bd.BuildElement()...)
+		}
+	}
+	return ret
+}

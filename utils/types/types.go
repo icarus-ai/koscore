@@ -36,12 +36,10 @@ func (m *Bytes) UnmarshalJSON(d []byte) (e error) {
 }
 
 type Tlvs map[uint16][]byte
-
 type MapSS map[string]string
+type Strings []string
 
 const ERROR_NOT_IMPL = "未实现该功能"
-
-type Strings []string
 
 func (m Strings) String() (s string) {
 	for _, v := range m {

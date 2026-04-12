@@ -7,12 +7,298 @@ import (
 	pb_msg "github.com/kernel-ai/koscore/client/packets/pb/v2/message"
 	pb_hw "github.com/kernel-ai/koscore/client/packets/pb/v2/service/operation"
 
+	"github.com/kernel-ai/koscore/client/packets/pb/v2/service/oidb"
 	"github.com/kernel-ai/koscore/message"
 	"github.com/kernel-ai/koscore/utils"
 	"github.com/kernel-ai/koscore/utils/crypto"
 	"github.com/kernel-ai/koscore/utils/proto"
 )
 
+// 上传群聊图片
+func (m *QQClient) UploadGroupImage(gin uint64, image *message.ImageElement) (*message.ImageElement, error) {
+	if image == nil || image.Stream == nil {
+		return nil, errors.New("image is nil")
+	}
+	defer utils.CloseIO(image.Stream)
+	image.IsGroup = true
+	pkt, err := pkt_msg.BuildGroupImageUploadPacket(gin, image)
+	if err != nil {
+		return nil, err
+	}
+	if pkt, err = m.sendOidbPacketAndWait(pkt); err != nil {
+		return nil, err
+	}
+	upload, err := pkt_msg.ParseNTv2RichMediaUploadPacket(pkt.Data)
+	if err != nil {
+		return nil, err
+	}
+	if md5, ext := pkt_msg.NTV2RICH_MEDIA_IMAGE.CommonGenerateHighwayExt(upload, image.Stream, image.Size, nil); ext != nil {
+		//m.LOGD("group image upload ukey: %s", ukey)
+		if err = m.highwayUpload(1004, image.Stream, uint64(image.Size), md5, ext); err != nil {
+			return nil, err
+		}
+	}
+	image.CompatFace, _ = proto.Unmarshal[pb_msg.CustomFace](upload.CompatQMsg)
+	image.MsgInfo = upload.MsgInfo
+	image.FileUuid = upload.MsgInfo.MsgInfoBody[0].Index.FileUuid.Unwrap()
+	return image, nil
+}
+
+// 上传私聊图片
+func (m *QQClient) UploadPrivateImage(uin uint64, image *message.ImageElement) (*message.ImageElement, error) {
+	if image == nil || image.Stream == nil {
+		return nil, errors.New("image is nil")
+	}
+	defer utils.CloseIO(image.Stream)
+	image.IsGroup = false
+	pkt, err := pkt_msg.BuildPrivateImageUploadPacket(m.GetUid(uin), image)
+	if err != nil {
+		return nil, err
+	}
+	if pkt, err = m.sendOidbPacketAndWait(pkt); err != nil {
+		return nil, err
+	}
+	upload, err := pkt_msg.ParseNTv2RichMediaUploadPacket(pkt.Data)
+	if err != nil {
+		return nil, err
+	}
+	if md5, ext := pkt_msg.NTV2RICH_MEDIA_IMAGE.CommonGenerateHighwayExt(upload, image.Stream, image.Size, nil); ext != nil {
+		//m.LOGD("private image upload ukey: %s", ukey)
+		if err = m.highwayUpload(1003, image.Stream, uint64(image.Size), md5, ext); err != nil {
+			return nil, err
+		}
+	}
+	image.CompatFace, _ = proto.Unmarshal[pb_msg.CustomFace](upload.CompatQMsg)
+	image.MsgInfo = upload.MsgInfo
+	image.FileUuid = upload.MsgInfo.MsgInfoBody[0].Index.FileUuid.Unwrap()
+	return image, nil
+}
+
+// 上传群聊视频
+func (m *QQClient) UploadGroupShortVideo(gin uint64, video *message.ShortVideoElement) (*message.ShortVideoElement, error) {
+	if video == nil || video.Stream == nil {
+		return nil, errors.New("video is nil")
+	}
+	if video.Thumb == nil || video.Thumb.Stream == nil {
+		return nil, errors.New("video thumb is nil")
+	}
+	defer utils.CloseIO(video.Stream)
+	defer utils.CloseIO(video.Thumb.Stream)
+	pkt, err := pkt_msg.BuildGroupVideoUploadPacket(gin, video)
+	if err != nil {
+		return nil, err
+	}
+	if pkt, err = m.sendOidbPacketAndWait(pkt); err != nil {
+		return nil, err
+	}
+	upload, err := pkt_msg.ParseNTv2RichMediaUploadPacket(pkt.Data)
+	if err != nil {
+		return nil, err
+	}
+
+	// video
+	if md5, ext := pkt_msg.NTV2RICH_MEDIA_VIdEO.CommonGenerateHighwayExt(upload, video.Stream, video.Size, nil); ext != nil {
+		//m.LOGD("group video upload ukey: %s", ukey)
+		if err = m.highwayUpload(1005, video.Stream, uint64(video.Size), md5, ext); err != nil {
+			return nil, err
+		}
+	}
+	// thumb
+	if md5, ext := pkt_msg.NTV2RICH_MEDIA_IMAGE.CommonGenerateHighwayExt(upload, video.Thumb.Stream, video.Thumb.Size, upload.SubFileInfos[0]); ext != nil {
+		//m.LOGD("group video.thumb upload ukey: %s", ukey)
+		if err = m.highwayUpload(1006, video.Thumb.Stream, uint64(video.Thumb.Size), md5, ext); err != nil {
+			return nil, err
+		}
+	}
+
+	video.Compat, _ = proto.Unmarshal[pb_msg.VideoFile](upload.CompatQMsg)
+	video.MsgInfo = upload.MsgInfo
+	video.Name = video.Compat.FileName.Unwrap()
+	video.Uuid = video.Compat.FileUuid.Unwrap()
+	return video, nil
+}
+
+// 上传私聊视频
+func (m *QQClient) UploadPrivateShortVideo(uin uint64, video *message.ShortVideoElement) (*message.ShortVideoElement, error) {
+	if video == nil || video.Stream == nil {
+		return nil, errors.New("video is nil")
+	}
+	if video.Thumb == nil || video.Thumb.Stream == nil {
+		return nil, errors.New("video thumb is nil")
+	}
+	defer utils.CloseIO(video.Stream)
+	defer utils.CloseIO(video.Thumb.Stream)
+	pkt, err := pkt_msg.BuildPrivateVideoUploadPacket(m.GetUid(uin), video)
+	if err != nil {
+		return nil, err
+	}
+	if pkt, err = m.sendOidbPacketAndWait(pkt); err != nil {
+		return nil, err
+	}
+	upload, err := pkt_msg.ParseNTv2RichMediaUploadPacket(pkt.Data)
+	if err != nil {
+		return nil, err
+	}
+
+	// video
+	if md5, ext := pkt_msg.NTV2RICH_MEDIA_VIdEO.CommonGenerateHighwayExt(upload, video.Stream, video.Size, nil); ext != nil {
+		//m.LOGD("pivate video upload ukey: %s", ukey)
+		if err = m.highwayUpload(1001, video.Stream, uint64(video.Size), md5, ext); err != nil {
+			return nil, err
+		}
+	}
+	// thumb
+	if md5, ext := pkt_msg.NTV2RICH_MEDIA_IMAGE.CommonGenerateHighwayExt(upload, video.Thumb.Stream, video.Thumb.Size, upload.SubFileInfos[0]); ext != nil {
+		//m.LOGD("pivate video.thumb upload ukey: %s", ukey)
+		if err = m.highwayUpload(1002, video.Thumb.Stream, uint64(video.Thumb.Size), md5, ext); err != nil {
+			return nil, err
+		}
+	}
+
+	if video.Compat, err = proto.Unmarshal[pb_msg.VideoFile](upload.CompatQMsg); err != nil {
+		return nil, err
+	}
+	video.MsgInfo = upload.MsgInfo
+	video.Name = video.Compat.FileName.Unwrap()
+	video.Uuid = video.Compat.FileUuid.Unwrap()
+	return video, nil
+}
+
+// 上传群聊语音片
+func (m *QQClient) UploadGroupRecord(gin uint64, voice *message.VoiceElement) (*message.VoiceElement, error) {
+	if voice == nil || voice.Stream == nil {
+		return nil, errors.New("voice is nil")
+	}
+	defer utils.CloseIO(voice.Stream)
+	pkt, err := pkt_msg.BuildGroupRecordUploadPacket(gin, voice)
+	if err != nil {
+		return nil, err
+	}
+	if pkt, err = m.sendOidbPacketAndWait(pkt); err != nil {
+		return nil, err
+	}
+	upload, err := pkt_msg.ParseNTv2RichMediaUploadPacket(pkt.Data)
+	if err != nil {
+		return nil, err
+	}
+
+	if md5, ext := pkt_msg.NTV2RICH_MEDIA_RECORD.CommonGenerateHighwayExt(upload, voice.Stream, voice.Size, nil); ext != nil {
+		//m.LOGD("group record upload ukey: %s", ukey)
+		if err = m.highwayUpload(1008, voice.Stream, uint64(voice.Size), md5, ext); err != nil {
+			return nil, err
+		}
+	}
+
+	voice.MsgInfo = upload.MsgInfo
+	voice.Uuid = upload.MsgInfo.MsgInfoBody[0].Index.FileUuid.Unwrap()
+	voice.Compat = upload.CompatQMsg
+	return voice, nil
+}
+
+// 上传私聊语音
+func (m *QQClient) UploadPrivateRecord(uin uint64, voice *message.VoiceElement) (*message.VoiceElement, error) {
+	if voice == nil || voice.Stream == nil {
+		return nil, errors.New("voice is nil")
+	}
+	defer utils.CloseIO(voice.Stream)
+	pkt, err := pkt_msg.BuildPrivateRecordUploadPacket(m.GetUid(uin), voice)
+	if err != nil {
+		return nil, err
+	}
+	if pkt, err = m.sendOidbPacketAndWait(pkt); err != nil {
+		return nil, err
+	}
+	upload, err := pkt_msg.ParseNTv2RichMediaUploadPacket(pkt.Data)
+	if err != nil {
+		return nil, err
+	}
+
+	if md5, ext := pkt_msg.NTV2RICH_MEDIA_RECORD.CommonGenerateHighwayExt(upload, voice.Stream, voice.Size, nil); ext != nil {
+		//m.LOGD("group record upload ukey: %s", ukey)
+		if err = m.highwayUpload(1007, voice.Stream, uint64(voice.Size), md5, ext); err != nil {
+			return nil, err
+		}
+	}
+
+	voice.MsgInfo = upload.MsgInfo
+	voice.Uuid = upload.MsgInfo.MsgInfoBody[0].Index.FileUuid.Unwrap()
+	voice.Compat = upload.CompatQMsg
+	return voice, nil
+}
+
+// 获取私聊图片下载链接
+func (m *QQClient) GetPrivateImageURL(node *oidb.IndexNode) (string, error) {
+	pkt, e := pkt_msg.BuildPrivateImageDownloadPacket(m.Uid(), node)
+	if e != nil {
+		return "", e
+	}
+	if pkt, e = m.sendOidbPacketAndWait(pkt); e != nil {
+		return "", e
+	}
+	return pkt_msg.ParseNTv2RichMediaRspDownload(pkt.Data)
+}
+
+// 获取群聊图片下载链接
+func (m *QQClient) GetGroupImageURL(groupUin uint64, node *oidb.IndexNode) (string, error) {
+	pkt, e := pkt_msg.BuildGroupImageDownloadPacket(groupUin, node)
+	if e != nil {
+		return "", e
+	}
+	if pkt, e = m.sendOidbPacketAndWait(pkt); e != nil {
+		return "", e
+	}
+	return pkt_msg.ParseNTv2RichMediaRspDownload(pkt.Data)
+}
+
+// 获取私聊语音下载链接
+func (m *QQClient) GetPrivateRecordURL(node *oidb.IndexNode) (string, error) {
+	pkt, e := pkt_msg.BuildPrivateRecordDownloadPacket(m.Uid(), node)
+	if e != nil {
+		return "", e
+	}
+	if pkt, e = m.sendOidbPacketAndWait(pkt); e != nil {
+		return "", e
+	}
+	return pkt_msg.ParseNTv2RichMediaRspDownload(pkt.Data)
+}
+
+// 获取群聊语音下载链接
+func (m *QQClient) GetGroupRecordURL(groupUin uint64, node *oidb.IndexNode) (string, error) {
+	pkt, e := pkt_msg.BuildGroupRecordDownloadPacket(groupUin, node)
+	if e != nil {
+		return "", e
+	}
+	if pkt, e = m.sendOidbPacketAndWait(pkt); e != nil {
+		return "", e
+	}
+	return pkt_msg.ParseNTv2RichMediaRspDownload(pkt.Data)
+}
+
+// 获取私聊视频下载链接
+func (m *QQClient) GetPrivateVideoURL(node *oidb.IndexNode) (string, error) {
+	pkt, e := pkt_msg.BuildPrivateVideoDownloadPacket(m.Uid(), node)
+	if e != nil {
+		return "", e
+	}
+	if pkt, e = m.sendOidbPacketAndWait(pkt); e != nil {
+		return "", e
+	}
+	return pkt_msg.ParseNTv2RichMediaRspDownload(pkt.Data)
+}
+
+// 获取群聊视频下载链接
+func (m *QQClient) GetGroupVideoURL(groupUin uint64, node *oidb.IndexNode) (string, error) {
+	pkt, e := pkt_msg.BuildGroupVideoDownloadPacket(groupUin, node)
+	if e != nil {
+		return "", e
+	}
+	if pkt, e = m.sendOidbPacketAndWait(pkt); e != nil {
+		return "", e
+	}
+	return pkt_msg.ParseNTv2RichMediaRspDownload(pkt.Data)
+}
+
+// 上传群聊文件
 func (m *QQClient) UploadGroupFile(gin uint64, file *message.FileElement, parent_dir string) (*message.FileElement, error) {
 	if file == nil || file.FileStream == nil {
 		return nil, errors.New("element type is not group file")
@@ -61,6 +347,7 @@ func (m *QQClient) UploadGroupFile(gin uint64, file *message.FileElement, parent
 	return file, nil
 }
 
+// 上传私聊文件
 func (m *QQClient) UploadPrivateFile(uin uint64, file *message.FileElement) (*message.FileElement, error) {
 	if file == nil || file.FileStream == nil {
 		return nil, errors.New("element type is not file")
@@ -100,8 +387,6 @@ func (m *QQClient) UploadPrivateFile(uin uint64, file *message.FileElement) (*me
 	return file, nil
 }
 
-// *****
-
 func build_highway_file_ex(bot_uin, gin uint64, field200 int32, entry *pb_hw.ExcitingFileEntry, file_name string, ip string, port uint32) ([]byte, error) {
 	return proto.Marshal(&pb_hw.FileUploadExt{
 		Unknown1: proto.Some[int32](100),
@@ -130,210 +415,26 @@ func build_highway_file_ex(bot_uin, gin uint64, field200 int32, entry *pb_hw.Exc
 	})
 }
 
-// ***** ***** ***** ***** *****
-
-func (m *QQClient) UploadGroupImage(gin uint64, image *message.ImageElement) (*message.ImageElement, error) {
-	if image == nil || image.Stream == nil {
-		return nil, errors.New("image is nil")
+// 获取私聊文件下载链接
+func (m *QQClient) GetPrivateFileURL(file_uuid string, file_hash string) (string, error) {
+	pkt, e := pkt_msg.BuildPrivateFSDownloadPacket(m.Uid(), file_uuid, file_hash)
+	if e != nil {
+		return "", e
 	}
-	defer utils.CloseIO(image.Stream)
-	image.IsGroup = true
-	pkt, err := pkt_msg.BuildGroupImageUploadPacket(gin, image)
-	if err != nil {
-		return nil, err
+	if pkt, e = m.sendOidbPacketAndWait(pkt); e != nil {
+		return "", e
 	}
-	if pkt, err = m.sendOidbPacketAndWait(pkt); err != nil {
-		return nil, err
-	}
-	upload, err := pkt_msg.ParseNTv2RichMediaUploadPacket(pkt.Data)
-	if err != nil {
-		return nil, err
-	}
-	if md5, ext := pkt_msg.NTV2RICH_MEDIA_IMAGE.CommonGenerateHighwayExt(upload, image.Stream, image.Size, nil); ext != nil {
-		//m.LOGD("group image upload ukey: %s", ukey)
-		if err = m.highwayUpload(1004, image.Stream, uint64(image.Size), md5, ext); err != nil {
-			return nil, err
-		}
-	}
-	image.CompatFace, _ = proto.Unmarshal[pb_msg.CustomFace](upload.CompatQMsg)
-	image.MsgInfo = upload.MsgInfo
-	image.FileUuid = upload.MsgInfo.MsgInfoBody[0].Index.FileUuid.Unwrap()
-	return image, nil
+	return pkt_msg.ParsePrivateFSDownloadPacket(pkt.Data)
 }
 
-func (m *QQClient) UploadPrivateImage(uin uint64, image *message.ImageElement) (*message.ImageElement, error) {
-	if image == nil || image.Stream == nil {
-		return nil, errors.New("image is nil")
+// 获取群聊文件下载链接
+func (m *QQClient) GetGroupFileURL(groupUin uint64, file_id string) (string, error) {
+	pkt, e := pkt_msg.BuildGroupFSDownloadPacket(groupUin, file_id)
+	if e != nil {
+		return "", e
 	}
-	defer utils.CloseIO(image.Stream)
-	image.IsGroup = false
-	pkt, err := pkt_msg.BuildPrivateImageUploadPacket(m.GetUid(uin), image)
-	if err != nil {
-		return nil, err
+	if pkt, e = m.sendOidbPacketAndWait(pkt); e != nil {
+		return "", e
 	}
-	if pkt, err = m.sendOidbPacketAndWait(pkt); err != nil {
-		return nil, err
-	}
-	upload, err := pkt_msg.ParseNTv2RichMediaUploadPacket(pkt.Data)
-	if err != nil {
-		return nil, err
-	}
-	if md5, ext := pkt_msg.NTV2RICH_MEDIA_IMAGE.CommonGenerateHighwayExt(upload, image.Stream, image.Size, nil); ext != nil {
-		//m.LOGD("private image upload ukey: %s", ukey)
-		if err = m.highwayUpload(1003, image.Stream, uint64(image.Size), md5, ext); err != nil {
-			return nil, err
-		}
-	}
-	image.CompatFace, _ = proto.Unmarshal[pb_msg.CustomFace](upload.CompatQMsg)
-	image.MsgInfo = upload.MsgInfo
-	image.FileUuid = upload.MsgInfo.MsgInfoBody[0].Index.FileUuid.Unwrap()
-	return image, nil
-}
-
-func (m *QQClient) UploadGroupShortVideo(gin uint64, video *message.ShortVideoElement) (*message.ShortVideoElement, error) {
-	if video == nil || video.Stream == nil {
-		return nil, errors.New("video is nil")
-	}
-	if video.Thumb == nil || video.Thumb.Stream == nil {
-		return nil, errors.New("video thumb is nil")
-	}
-	defer utils.CloseIO(video.Stream)
-	defer utils.CloseIO(video.Thumb.Stream)
-	pkt, err := pkt_msg.BuildGroupVideoUploadPacket(gin, video)
-	if err != nil {
-		return nil, err
-	}
-	if pkt, err = m.sendOidbPacketAndWait(pkt); err != nil {
-		return nil, err
-	}
-	upload, err := pkt_msg.ParseNTv2RichMediaUploadPacket(pkt.Data)
-	if err != nil {
-		return nil, err
-	}
-
-	// video
-	if md5, ext := pkt_msg.NTV2RICH_MEDIA_VIdEO.CommonGenerateHighwayExt(upload, video.Stream, video.Size, nil); ext != nil {
-		//m.LOGD("group video upload ukey: %s", ukey)
-		if err = m.highwayUpload(1005, video.Stream, uint64(video.Size), md5, ext); err != nil {
-			return nil, err
-		}
-	}
-	// thumb
-	if md5, ext := pkt_msg.NTV2RICH_MEDIA_IMAGE.CommonGenerateHighwayExt(upload, video.Thumb.Stream, video.Thumb.Size, upload.SubFileInfos[0]); ext != nil {
-		//m.LOGD("group video.thumb upload ukey: %s", ukey)
-		if err = m.highwayUpload(1006, video.Thumb.Stream, uint64(video.Thumb.Size), md5, ext); err != nil {
-			return nil, err
-		}
-	}
-
-	video.Compat, _ = proto.Unmarshal[pb_msg.VideoFile](upload.CompatQMsg)
-	video.MsgInfo = upload.MsgInfo
-	video.Name = video.Compat.FileName.Unwrap()
-	video.Uuid = video.Compat.FileUuid.Unwrap()
-	return video, nil
-}
-
-func (m *QQClient) UploadPrivateShortVideo(uin uint64, video *message.ShortVideoElement) (*message.ShortVideoElement, error) {
-	if video == nil || video.Stream == nil {
-		return nil, errors.New("video is nil")
-	}
-	if video.Thumb == nil || video.Thumb.Stream == nil {
-		return nil, errors.New("video thumb is nil")
-	}
-	defer utils.CloseIO(video.Stream)
-	defer utils.CloseIO(video.Thumb.Stream)
-	pkt, err := pkt_msg.BuildPrivateVideoUploadPacket(m.GetUid(uin), video)
-	if err != nil {
-		return nil, err
-	}
-	if pkt, err = m.sendOidbPacketAndWait(pkt); err != nil {
-		return nil, err
-	}
-	upload, err := pkt_msg.ParseNTv2RichMediaUploadPacket(pkt.Data)
-	if err != nil {
-		return nil, err
-	}
-
-	// video
-	if md5, ext := pkt_msg.NTV2RICH_MEDIA_VIdEO.CommonGenerateHighwayExt(upload, video.Stream, video.Size, nil); ext != nil {
-		//m.LOGD("pivate video upload ukey: %s", ukey)
-		if err = m.highwayUpload(1001, video.Stream, uint64(video.Size), md5, ext); err != nil {
-			return nil, err
-		}
-	}
-	// thumb
-	if md5, ext := pkt_msg.NTV2RICH_MEDIA_IMAGE.CommonGenerateHighwayExt(upload, video.Thumb.Stream, video.Thumb.Size, upload.SubFileInfos[0]); ext != nil {
-		//m.LOGD("pivate video.thumb upload ukey: %s", ukey)
-		if err = m.highwayUpload(1002, video.Thumb.Stream, uint64(video.Thumb.Size), md5, ext); err != nil {
-			return nil, err
-		}
-	}
-
-	if video.Compat, err = proto.Unmarshal[pb_msg.VideoFile](upload.CompatQMsg); err != nil {
-		return nil, err
-	}
-	video.MsgInfo = upload.MsgInfo
-	video.Name = video.Compat.FileName.Unwrap()
-	video.Uuid = video.Compat.FileUuid.Unwrap()
-	return video, nil
-}
-
-func (m *QQClient) UploadGroupRecord(gin uint64, voice *message.VoiceElement) (*message.VoiceElement, error) {
-	if voice == nil || voice.Stream == nil {
-		return nil, errors.New("voice is nil")
-	}
-	defer utils.CloseIO(voice.Stream)
-	pkt, err := pkt_msg.BuildGroupRecordUploadPacket(gin, voice)
-	if err != nil {
-		return nil, err
-	}
-	if pkt, err = m.sendOidbPacketAndWait(pkt); err != nil {
-		return nil, err
-	}
-	upload, err := pkt_msg.ParseNTv2RichMediaUploadPacket(pkt.Data)
-	if err != nil {
-		return nil, err
-	}
-
-	if md5, ext := pkt_msg.NTV2RICH_MEDIA_RECORD.CommonGenerateHighwayExt(upload, voice.Stream, voice.Size, nil); ext != nil {
-		//m.LOGD("group record upload ukey: %s", ukey)
-		if err = m.highwayUpload(1008, voice.Stream, uint64(voice.Size), md5, ext); err != nil {
-			return nil, err
-		}
-	}
-
-	voice.MsgInfo = upload.MsgInfo
-	voice.Uuid = upload.MsgInfo.MsgInfoBody[0].Index.FileUuid.Unwrap()
-	voice.Compat = upload.CompatQMsg
-	return voice, nil
-}
-
-func (m *QQClient) UploadPrivateRecord(uin uint64, voice *message.VoiceElement) (*message.VoiceElement, error) {
-	if voice == nil || voice.Stream == nil {
-		return nil, errors.New("voice is nil")
-	}
-	defer utils.CloseIO(voice.Stream)
-	pkt, err := pkt_msg.BuildPrivateRecordUploadPacket(m.GetUid(uin), voice)
-	if err != nil {
-		return nil, err
-	}
-	if pkt, err = m.sendOidbPacketAndWait(pkt); err != nil {
-		return nil, err
-	}
-	upload, err := pkt_msg.ParseNTv2RichMediaUploadPacket(pkt.Data)
-	if err != nil {
-		return nil, err
-	}
-
-	if md5, ext := pkt_msg.NTV2RICH_MEDIA_RECORD.CommonGenerateHighwayExt(upload, voice.Stream, voice.Size, nil); ext != nil {
-		//m.LOGD("group record upload ukey: %s", ukey)
-		if err = m.highwayUpload(1007, voice.Stream, uint64(voice.Size), md5, ext); err != nil {
-			return nil, err
-		}
-	}
-
-	voice.MsgInfo = upload.MsgInfo
-	voice.Uuid = upload.MsgInfo.MsgInfoBody[0].Index.FileUuid.Unwrap()
-	voice.Compat = upload.CompatQMsg
-	return voice, nil
+	return pkt_msg.ParseGroupFSDownloadPacket(pkt.Data)
 }

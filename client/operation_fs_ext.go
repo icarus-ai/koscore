@@ -3,6 +3,10 @@ package client
 import (
 	"github.com/kernel-ai/koscore/client/entity"
 	"github.com/kernel-ai/koscore/client/packets/oidb"
+	"github.com/kernel-ai/koscore/utils"
+	"github.com/kernel-ai/koscore/utils/proto"
+
+	pb_oidb "github.com/kernel-ai/koscore/client/packets/pb/v2/service/oidb"
 )
 
 // 获取群文件系统信息
@@ -99,8 +103,21 @@ func (m *QQClient) ListGroupRootFiles(groupUin uint64) ([]*entity.GroupFile, []*
 	return m.ListGroupFilesByFolder(groupUin, "/")
 }
 
-/*
+// Deprecated
+func (m *QQClient) GenFileNode(name, md5, sha1, uuid string, size uint32, isnt bool) *pb_oidb.IndexNode {
+	return &pb_oidb.IndexNode{
+		Info: &pb_oidb.FileInfo{
+			FileName: proto.Some(name),
+			FileSize: proto.Some(size),
+			FileSha1: proto.Some(sha1),
+			FileHash: proto.Some(md5),
+		},
+		FileUuid: proto.Some(uuid),
+		StoreId:  proto.Some(utils.Ternary[uint32](isnt, 1, 0)), // 0旧服务器 1为nt服务器
+	}
+}
 
+/*
 // 重命名群文件
 func (c *QQClient) RenameGroupFile(groupUin uint64, fileId string, parent_dir string, newFileName string) error {
 	pkt, err := oidb.BuildGroupFileRenameReq(groupUin, fileId, parent_dir, newFileName)

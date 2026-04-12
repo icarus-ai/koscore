@@ -1,7 +1,11 @@
 package client
 
 import (
+	"net/http"
+	"net/http/cookiejar"
 	"sync/atomic"
+
+	"golang.org/x/net/publicsuffix"
 
 	"github.com/kernel-ai/koscore/client/auth"
 	"github.com/kernel-ai/koscore/client/internal/cache"
@@ -21,6 +25,7 @@ type QQClient struct {
 	stat          Statistics
 	cache         cache.Cache
 	hw_session    highway.Session
+	ticket        *TicketService
 
 	*Events
 	logger
@@ -60,11 +65,16 @@ func (m *QQClient) Nick() string { return m.session.Info.Name }
 func (m *QQClient) setOnline() { m.is_online.Store(true) }
 
 func NewClient(uin uint64, password string) *QQClient {
+	cookie, _ := cookiejar.New(&cookiejar.Options{PublicSuffixList: publicsuffix.List})
 	ctx := &QQClient{
 		session:       auth.NewSession(),
 		is_heart_beat: false,
 		logger:        log_t{},
 		Events:        newEventCall(),
+		ticket: &TicketService{
+			client: &http.Client{Jar: cookie},
+			sKey:   &keyInfo{},
+		},
 	}
 	ctx.session.Info.Uin = uin
 	ctx.sso_context = NewPacketContext(ctx)
