@@ -62,22 +62,24 @@ func (m *QQClient) RecallFriendMessage(uin, seq, random, clientSeq uint64, times
 func (m *QQClient) RecallGroupMessage(gin, seq uint64) error { return nil }
 
 // MarkPrivateMessageReaded 标记私聊消息已读
-func (m *QQClient) MarkPrivateMessageReaded(uin uint64, timestamp, startSeq uint32) error { return nil }
+func (m *QQClient) MarkPrivateMessageReaded(uin uint64, timestamp int64, startSeq uint64) error {
+	return nil
+}
 
 // MarkGroupMessageReaded 标记群消息已读
-func (m *QQClient) MarkGroupMessageReaded(gin uint64, seq uint32) error { return nil }
+func (m *QQClient) MarkGroupMessageReaded(gin, seq uint64) error { return nil }
 
 func (m *QQClient) GenFileNode(name, md5, sha1, uuid string, size uint32, isnt bool) *oidb.IndexNode {
 	return nil
 }
 
 // QueryGroupImage 获取群图片
-func (m *QQClient) QueryGroupImage(md5 []byte, fileUUid string) (*message.ImageElement, error) {
+func (m *QQClient) QueryGroupImage(md5 []byte, fileUuid string) (*message.ImageElement, error) {
 	return nil, nil
 }
 
 // QueryFriendImage 获取私聊图片
-func (m *QQClient) QueryFriendImage(md5 []byte, fileUUid string) (*message.ImageElement, error) {
+func (m *QQClient) QueryFriendImage(md5 []byte, fileUuid string) (*message.ImageElement, error) {
 	return nil, nil
 }
 
@@ -127,9 +129,7 @@ func (m *QQClient) SetAvatar(avatar io.ReadSeeker) error { return nil }
 func (m *QQClient) SetGroupAvatar(groupuin uint64, avatar io.ReadSeeker) error { return nil }
 
 // SetEssenceMessage 设置群聊精华消息
-func (m *QQClient) SetEssenceMessage(groupUin uint64, seq, random uint32, isSet bool) error {
-	return nil
-}
+func (m *QQClient) SetEssenceMessage(groupUin, seq, random uint64, isSet bool) error { return nil }
 
 // SendFriendLike 给好友点赞
 func (m *QQClient) SendFriendLike(uin uint64, count uint32) error { return nil }

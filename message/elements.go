@@ -43,7 +43,7 @@ type (
 	}
 
 	ReplyElement struct {
-		ReplySeq  uint32
+		ReplySeq  uint64
 		SenderUin uint64
 		SenderUid string
 		GroupUin  uint64 // 私聊回复群聊时
@@ -57,7 +57,7 @@ type (
 
 	VoiceElement struct {
 		Name string
-		UUid string
+		Uuid string
 		Size uint32
 		URL  string
 		Md5  []byte
@@ -76,7 +76,7 @@ type (
 
 	ImageElement struct {
 		ImageId  string
-		FileUUid string // only in new protocol photo
+		FileUuid string // only in new protocol photo
 		Size     uint32
 		Width    uint32
 		Height   uint32
@@ -105,7 +105,7 @@ type (
 		FileMd5  []byte
 		FileURL  string
 		FileId   string // group
-		FileUUid string // private
+		FileUuid string // private
 		FileHash string
 
 		// send
@@ -115,7 +115,7 @@ type (
 
 	ShortVideoElement struct {
 		Name     string
-		UUid     string
+		Uuid     string
 		Size     uint32
 		URL      string
 		Duration uint32
@@ -357,15 +357,15 @@ func NewLightApp(content string) *LightAppElement {
 	}
 }
 
-func NewXML(content string) *XMLElement { return NewXMLWithId(35, content) }
-func NewXMLWithId(id int, content string) *XMLElement {
+func NewXML(content string) *XMLElement { return NewXMLWithID(35, content) }
+func NewXMLWithID(id int, content string) *XMLElement {
 	return &XMLElement{ServiceId: id, Content: content}
 }
 
 func NewForward(resid string, nodes []*ForwardNode) *ForwardMessage {
 	return &ForwardMessage{ResId: resid, Nodes: nodes}
 }
-func NewForwardWithResId(resid string) *ForwardMessage         { return NewForward(resid, nil) }
+func NewForwardWithResID(resid string) *ForwardMessage         { return NewForward(resid, nil) }
 func NewForwardWithNodes(nodes []*ForwardNode) *ForwardMessage { return NewForward("", nodes) }
 
 func NewFace(id uint32) *FaceElement {

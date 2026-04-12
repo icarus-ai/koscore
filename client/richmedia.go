@@ -96,7 +96,7 @@ func (m *QQClient) UploadPrivateFile(uin uint64, file *message.FileElement) (*me
 	}
 
 	file.FileHash = upload.FileIdCrc.Unwrap()
-	file.FileUUid = upload.Uuid.Unwrap()
+	file.FileUuid = upload.Uuid.Unwrap()
 	return file, nil
 }
 
@@ -172,7 +172,7 @@ func (m *QQClient) UploadGroupImage(gin uint64, image *message.ImageElement) (*m
 	}
 	image.CompatFace, _ = proto.Unmarshal[pb_msg.CustomFace](upload.CompatQMsg)
 	image.MsgInfo = upload.MsgInfo
-	image.FileUUid = upload.MsgInfo.MsgInfoBody[0].Index.FileUuid.Unwrap()
+	image.FileUuid = upload.MsgInfo.MsgInfoBody[0].Index.FileUuid.Unwrap()
 	return image, nil
 }
 
@@ -201,7 +201,7 @@ func (m *QQClient) UploadPrivateImage(uin uint64, image *message.ImageElement) (
 	}
 	image.CompatFace, _ = proto.Unmarshal[pb_msg.CustomFace](upload.CompatQMsg)
 	image.MsgInfo = upload.MsgInfo
-	image.FileUUid = upload.MsgInfo.MsgInfoBody[0].Index.FileUuid.Unwrap()
+	image.FileUuid = upload.MsgInfo.MsgInfoBody[0].Index.FileUuid.Unwrap()
 	return image, nil
 }
 
@@ -244,7 +244,7 @@ func (m *QQClient) UploadGroupShortVideo(gin uint64, video *message.ShortVideoEl
 	video.Compat, _ = proto.Unmarshal[pb_msg.VideoFile](upload.CompatQMsg)
 	video.MsgInfo = upload.MsgInfo
 	video.Name = video.Compat.FileName.Unwrap()
-	video.UUid = video.Compat.FileUuid.Unwrap()
+	video.Uuid = video.Compat.FileUuid.Unwrap()
 	return video, nil
 }
 
@@ -289,7 +289,7 @@ func (m *QQClient) UploadPrivateShortVideo(uin uint64, video *message.ShortVideo
 	}
 	video.MsgInfo = upload.MsgInfo
 	video.Name = video.Compat.FileName.Unwrap()
-	video.UUid = video.Compat.FileUuid.Unwrap()
+	video.Uuid = video.Compat.FileUuid.Unwrap()
 	return video, nil
 }
 
@@ -318,7 +318,7 @@ func (m *QQClient) UploadGroupRecord(gin uint64, voice *message.VoiceElement) (*
 	}
 
 	voice.MsgInfo = upload.MsgInfo
-	voice.UUid = upload.MsgInfo.MsgInfoBody[0].Index.FileUuid.Unwrap()
+	voice.Uuid = upload.MsgInfo.MsgInfoBody[0].Index.FileUuid.Unwrap()
 	voice.Compat = upload.CompatQMsg
 	return voice, nil
 }
@@ -348,7 +348,7 @@ func (m *QQClient) UploadPrivateRecord(uin uint64, voice *message.VoiceElement) 
 	}
 
 	voice.MsgInfo = upload.MsgInfo
-	voice.UUid = upload.MsgInfo.MsgInfoBody[0].Index.FileUuid.Unwrap()
+	voice.Uuid = upload.MsgInfo.MsgInfoBody[0].Index.FileUuid.Unwrap()
 	voice.Compat = upload.CompatQMsg
 	return voice, nil
 }

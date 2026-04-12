@@ -57,7 +57,7 @@ func ParseGroupAiRecordService(data []byte) (*message.VoiceElement, error) {
 	}
 	index := rsp.MsgInfo.MsgInfoBody[0].Index
 	elem := &message.VoiceElement{
-		UUid:     index.FileUuid.Unwrap(),
+		Uuid:     index.FileUuid.Unwrap(),
 		Name:     index.Info.FileName.Unwrap(),
 		Size:     index.Info.FileSize.Unwrap(),
 		Duration: index.Info.Time.Unwrap(),

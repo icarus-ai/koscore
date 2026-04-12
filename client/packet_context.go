@@ -64,7 +64,7 @@ func (m *PacketContext) dispatchPacket(payload []byte) {
 	default:
 		m.LOGE("parse incoming packet error: %s (%d)", sso.Extra, sso.RetCode)
 		m.sock.Disconnect()
-		go m.events.Disconnected.dispatch(m.QQClient, &event.Disconnected{Message: fmt.Sprintf("%s (%d)", sso.Extra, sso.RetCode)})
+		go m.Events.Disconnected.dispatch(m.QQClient, &event.Disconnected{Message: fmt.Sprintf("%s (%d)", sso.Extra, sso.RetCode)})
 	}
 }
 
@@ -136,13 +136,13 @@ func (m *PacketContext) unexpectedDisconnect(_ *network.TCPClient, e error) {
 	m.is_online.Store(false)
 	if err := m.sock.Connect(); err != nil {
 		m.LOGE("connect server error: %v", err)
-		m.events.Disconnected.dispatch(m.QQClient, &event.Disconnected{Message: "connection dropped by server."})
+		m.Events.Disconnected.dispatch(m.QQClient, &event.Disconnected{Message: "connection dropped by server."})
 		return
 	}
 	if !m.Online() {
 		m.LOGE("register client failed")
 		m.sock.Disconnect()
-		m.events.Disconnected.dispatch(m.QQClient, &event.Disconnected{Message: "register error"})
+		m.Events.Disconnected.dispatch(m.QQClient, &event.Disconnected{Message: "register error"})
 		return
 	}
 }
@@ -153,13 +153,13 @@ func (m *PacketContext) quickReconnect() {
 	time.Sleep(time.Millisecond * 200)
 	if err := m.sock.Connect(); err != nil {
 		m.LOGE("connect server error: %v", err)
-		m.events.Disconnected.dispatch(m.QQClient, &event.Disconnected{Message: "quick reconnect failed"})
+		m.Events.Disconnected.dispatch(m.QQClient, &event.Disconnected{Message: "quick reconnect failed"})
 		return
 	}
 	if !m.Online() {
 		m.LOGE("register client failed: %v")
 		m.sock.Disconnect()
-		m.events.Disconnected.dispatch(m.QQClient, &event.Disconnected{Message: "register error"})
+		m.Events.Disconnected.dispatch(m.QQClient, &event.Disconnected{Message: "register error"})
 		return
 	}
 }

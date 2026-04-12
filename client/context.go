@@ -22,7 +22,7 @@ type QQClient struct {
 	cache         cache.Cache
 	hw_session    highway.Session
 
-	events *Events
+	*Events
 	logger
 }
 
@@ -64,7 +64,7 @@ func NewClient(uin uint64, password string) *QQClient {
 		session:       auth.NewSession(),
 		is_heart_beat: false,
 		logger:        log_t{},
-		events:        newEventCall(),
+		Events:        newEventCall(),
 	}
 	ctx.session.Info.Uin = uin
 	ctx.sso_context = NewPacketContext(ctx)
@@ -83,3 +83,7 @@ func (m *QQClient) Release() {
 
 func (m *QQClient) Session() *auth.Session     { return m.session }
 func (m *QQClient) SsoPaacket() *PacketContext { return m.sso_context }
+
+func (m *QQClient) GetCache() *cache.Cache                       { return &m.cache }
+func (m *QQClient) GetCacheUid(uin uint64, gin ...uint64) string { return m.cache.GetUid(uin, gin...) }
+func (m *QQClient) GetCacheUin(uid string, gin ...uint64) uint64 { return m.cache.GetUin(uid, gin...) }

@@ -26,7 +26,7 @@ func (m *QQClient) message_handle_parse_packet(pkt *sso_type.SsoPacket) bool {
 			m.LOGW("ParseKickPacket: %v", e)
 			ev.Message = e.Error()
 		}
-		m.events.Disconnected.dispatch(m, ev)
+		m.Events.Disconnected.dispatch(m, ev)
 	case system_type.AttributePushParams.Command:
 	case system_type.AttributeInfoSyncPush.Command:
 	case system_type.AttributeHeartbeat.Command, system_type.AttributeSsoHeartBeat.Command:
@@ -56,23 +56,23 @@ func (m *QQClient) message_handle_parse_push_message(data []byte) error {
 		msg := message.ParseGroupMessage(m.Uin(), common_msg)
 		m.PreprocessGroupMessageEvent(msg)
 		if msg.Sender.Uin == m.Uin() {
-			m.events.SelfGroupMessage.dispatch(m, msg)
+			m.Events.SelfGroupMessage.dispatch(m, msg)
 		} else {
-			m.events.GroupMessage.dispatch(m, msg)
+			m.Events.GroupMessage.dispatch(m, msg)
 		}
 		return nil
 	case message_type.PRIVATE_MESSAGE: // 166 for private msg, 208 for private record, 529 for private file
 		msg := message.ParsePrivateMessage(m.Uin(), common_msg)
 		m.PreprocessPrivateMessageEvent(msg)
 		if msg.Sender.Uin == m.Uin() {
-			m.events.SelfPrivateMessage.dispatch(m, msg)
+			m.Events.SelfPrivateMessage.dispatch(m, msg)
 		} else {
-			m.events.PrivateMessage.dispatch(m, msg)
+			m.Events.PrivateMessage.dispatch(m, msg)
 		}
 		return nil
 	case message_type.TEMP_MESSAGE:
 		msg := message.ParseTempMessage(m.Uin(), common_msg)
-		m.events.TempMessage.dispatch(m, msg)
+		m.Events.TempMessage.dispatch(m, msg)
 		return nil
 	}
 
@@ -88,10 +88,10 @@ func (m *QQClient) message_handle_parse_push_message(data []byte) error {
 			_ = m.ResolveUin(ev)
 			if ev.UserUin == m.Uin() { // bot 进群
 				_ = m.RefreshAllGroupsInfo()
-				m.events.GroupJoin.dispatch(m, ev)
+				m.Events.GroupJoin.dispatch(m, ev)
 			} else {
 				_ = m.RefreshGroupMemberCache(ev.GroupUin, ev.UserUin)
-				m.events.GroupMemberJoin.dispatch(m, ev)
+				m.Events.GroupMemberJoin.dispatch(m, ev)
 			}
 		case message_type.GROUP_MEMBER_DECREASE_NOTICE:
 			pb, e := proto.Unmarshal[notify.GroupChange](msg_content)
@@ -110,9 +110,9 @@ func (m *QQClient) message_handle_parse_push_message(data []byte) error {
 				ev := event.ParseMemberDecreaseEvent(pb)
 				_ = m.ResolveUin(ev)
 				if ev.UserUin == m.Uin() {
-					m.events.GroupLeave.dispatch(m, ev)
+					m.Events.GroupLeave.dispatch(m, ev)
 				} else {
-					m.events.GroupMemberLeave.dispatch(m, ev)
+					m.Events.GroupMemberLeave.dispatch(m, ev)
 				}
 			case 130: // Exit
 			}
@@ -124,7 +124,7 @@ func (m *QQClient) message_handle_parse_push_message(data []byte) error {
 			ev := event.ParseGroupMemberPermissionChanged(pb)
 			_ = m.ResolveUin(ev)
 			_ = m.RefreshGroupMemberCache(ev.GroupUin, ev.UserUin)
-			m.events.GroupMemberPermissionChanged.dispatch(m, ev)
+			m.Events.GroupMemberPermissionChanged.dispatch(m, ev)
 		case message_type.GROUP_JOIN_NOTICE:
 			pb, e := proto.Unmarshal[notify.GroupJoin](msg_content)
 			if e != nil {
@@ -147,7 +147,7 @@ func (m *QQClient) message_handle_parse_push_message(data []byte) error {
 				}
 			}
 
-			m.events.GroupMemberJoinRequest.dispatch(m, ev)
+			m.Events.GroupMemberJoinRequest.dispatch(m, ev)
 		case message_type.GROUP_INVITE_NOTICE:
 			pb, e := proto.Unmarshal[notify.GroupInvite](msg_content)
 			if e != nil {
@@ -173,7 +173,7 @@ func (m *QQClient) message_handle_parse_push_message(data []byte) error {
 				}
 			}
 
-			m.events.GroupInvited.dispatch(m, ev)
+			m.Events.GroupInvited.dispatch(m, ev)
 		case message_type.Event0x20D: // GroupInviteProcessor
 			// another in `RichTextMsgProcessor` for private send invitation card.
 			pb, e := proto.Unmarshal[notify.Event0X20D](msg_content)
@@ -192,7 +192,7 @@ func (m *QQClient) message_handle_parse_push_message(data []byte) error {
 			if user, _ := m.FetchStrangerUid(ev.UserUid); user != nil {
 				ev.UserUin, ev.TargetNick = user.Uin, user.Nickname
 			}
-			m.events.GroupMemberJoinRequest.dispatch(m, ev)
+			m.Events.GroupMemberJoinRequest.dispatch(m, ev)
 		case message_type.EVENT_FRIEND:
 		case message_type.EVENT_GROUP:
 		}
@@ -248,7 +248,7 @@ func (m *QQClient) PreprocessPrivateMessageEvent(msg *message.PrivateMessage) {
 				e.URL = url
 			}
 		case *message.FileElement:
-			if url, err := m.GetPrivateFileURL(e.FileUUid, e.FileHash); err == nil {
+			if url, err := m.GetPrivateFileURL(e.FileUuid, e.FileHash); err == nil {
 				e.FileURL = url
 			}
 		case *message.ForwardMessage:

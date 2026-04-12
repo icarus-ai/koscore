@@ -44,7 +44,7 @@ type (
 		OperatorUid string
 		OperatorUin uint64
 		Sequence    uint64
-		Time        uint32
+		Time        int64
 		Random      uint32
 	}
 
@@ -248,7 +248,7 @@ func ParseGroupRecallEvent(event *notify.NotifyMessageBody) *GroupRecall {
 	return &GroupRecall{
 		OperatorUid: event.Recall.OperatorUid.Unwrap(),
 		Sequence:    info.Sequence.Unwrap(),
-		Time:        info.Time.Unwrap(),
+		Time:        int64(info.Time.Unwrap()),
 		Random:      info.Random.Unwrap(),
 		GroupEvent: GroupEvent{
 			GroupUin: uint64(event.GroupUin.Unwrap()),

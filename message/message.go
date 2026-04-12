@@ -105,7 +105,7 @@ func parse_ptt_rich_text(uin uint64, body *message.MessageBody, isGroup bool) (r
 				Name:     rich.Ptt.FileName.Unwrap(),
 				Size:     rich.Ptt.FileSize.Unwrap(),
 				Md5:      rich.Ptt.FileMd5,
-				UUid:     string(rich.Ptt.FileUuid),
+				Uuid:     string(rich.Ptt.FileUuid),
 				Duration: rich.Ptt.Time.Unwrap(),
 			}
 			if isGroup {
@@ -129,7 +129,7 @@ func parse_ptt_rich_text(uin uint64, body *message.MessageBody, isGroup bool) (r
 				FileSize: extra.File.FileSize.Unwrap(),
 				FileName: extra.File.FileName.Unwrap(),
 				FileMd5:  extra.File.FileMd5,
-				FileUUid: extra.File.FileUuid.Unwrap(),
+				FileUuid: extra.File.FileUuid.Unwrap(),
 				FileHash: extra.File.FileIdCrcMedia.Unwrap(),
 			})
 		}
@@ -251,7 +251,7 @@ func ParseMessageElements(msg []*message.Elem) (res []IMessageElement) {
 			video := elem.VideoFile
 			res = append(res, &ShortVideoElement{
 				Name: video.FileName.Unwrap(),
-				UUid: video.FileUuid.Unwrap(),
+				Uuid: video.FileUuid.Unwrap(),
 				Size: uint32(video.FileSize.Unwrap()),
 				Md5:  video.FileMd5,
 				Node: &oidb.IndexNode{
@@ -349,7 +349,7 @@ func ParseMessageElements(msg []*message.Elem) (res []IMessageElement) {
 				case 10, 20: // img
 					res = append(res, &ImageElement{
 						ImageId:  index.Info.FileName.Unwrap(),
-						FileUUid: index.FileUuid.Unwrap(),
+						FileUuid: index.FileUuid.Unwrap(),
 						SubType:  int32(extra.ExtBizInfo.Pic.BizType.Unwrap()),
 						Summary:  utils.Ternary(extra.ExtBizInfo.Pic.TextSummary.Unwrap() == "", "[图片]", extra.ExtBizInfo.Pic.TextSummary.Unwrap()),
 						Md5:      utils.MustParseHexStr(index.Info.FileHash.Unwrap()),
@@ -362,7 +362,7 @@ func ParseMessageElements(msg []*message.Elem) (res []IMessageElement) {
 				case 12, 22: // record 22 for Group
 					res = append(res, &VoiceElement{
 						Name:     index.Info.FileName.Unwrap(),
-						UUid:     index.FileUuid.Unwrap(),
+						Uuid:     index.FileUuid.Unwrap(),
 						Md5:      utils.MustParseHexStr(index.Info.FileHash.Unwrap()),
 						Sha1:     utils.MustParseHexStr(index.Info.FileSha1.Unwrap()),
 						Duration: index.Info.Time.Unwrap(),
@@ -372,7 +372,7 @@ func ParseMessageElements(msg []*message.Elem) (res []IMessageElement) {
 				case 11, 21: // video
 					video := &ShortVideoElement{
 						Name:     index.Info.FileName.Unwrap(),
-						UUid:     index.FileUuid.Unwrap(),
+						Uuid:     index.FileUuid.Unwrap(),
 						Md5:      utils.MustParseHexStr(index.Info.FileHash.Unwrap()),
 						Sha1:     utils.MustParseHexStr(index.Info.FileSha1.Unwrap()),
 						Size:     index.Info.FileSize.Unwrap(),
@@ -457,7 +457,7 @@ func ParseMessageElements(msg []*message.Elem) (res []IMessageElement) {
 				xmlData := binary.ZlibUncompress(elem.RichMsg.BytesTemplate1[1:])
 				var multimsg MultiMessage
 				if err := xml.Unmarshal(xmlData, &multimsg); err == nil {
-					res = append(res, NewForwardWithResId(multimsg.ResId))
+					res = append(res, NewForwardWithResID(multimsg.ResId))
 				} else {
 					res = append(res, &XMLElement{ServiceId: 35, Content: utils.B2S(xmlData)})
 				}

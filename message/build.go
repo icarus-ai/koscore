@@ -63,7 +63,7 @@ func (m *FileElement) BuildContent() []byte {
 	extra, _ := proto.Marshal(&message.FileExtra{
 		File: &message.NotOnlineFile{
 			FileType:       proto.Some[uint32](0),
-			FileUuid:       proto.Some(m.FileUUid),
+			FileUuid:       proto.Some(m.FileUuid),
 			FileMd5:        m.FileMd5,
 			FileName:       proto.Some(m.FileName),
 			FileSize:       proto.Some(m.FileSize),

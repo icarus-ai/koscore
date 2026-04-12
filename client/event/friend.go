@@ -27,7 +27,7 @@ type (
 		FromUin  uint64
 		FromUid  string
 		Sequence uint64
-		Time     uint32
+		Time     int64
 		Random   uint32
 	}
 
