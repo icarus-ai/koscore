@@ -12,6 +12,7 @@ import (
 	"github.com/kernel-ai/koscore/client/packets/pb/v2/common"
 	"github.com/kernel-ai/koscore/utils"
 	"github.com/kernel-ai/koscore/utils/binary"
+	"github.com/kernel-ai/koscore/utils/types"
 	//"github.com/kernel-ai/koscore/utils/comm"
 )
 
@@ -29,7 +30,7 @@ type (
 
 	remoteV2 struct {
 		server  string
-		headers header
+		headers types.MapSS
 		latency atomic.Uint32
 	}
 )
@@ -37,7 +38,7 @@ type (
 func NewSignerV2(uin uint32, app *auth.AppInfo, device *auth.DeviceInfo, sign_server_token []string) *ClientV2 {
 	var servs []*remoteV2
 	for i := 0; i < len(sign_server_token); i += 2 {
-		servs = append(servs, &remoteV2{server: sign_server_token[i], headers: header{
+		servs = append(servs, &remoteV2{server: sign_server_token[i], headers: types.MapSS{
 			"Authorization": "Bearer " + sign_server_token[i+1],
 			"User-Agent":    "kosbot qq/" + app.CurrentVersion,
 		}})
@@ -55,9 +56,9 @@ func (c *ClientV2) Reset() {
 	}
 }
 
-func (c *ClientV2) Release()                            {}
-func (c *ClientV2) AddRequestHeader(heads header)       {}
-func (c *ClientV2) AddSignServer(signServers ...string) {}
+func (c *ClientV2) Release()                           {}
+func (c *ClientV2) AddRequestHeader(heads types.MapSS) {}
+func (c *ClientV2) AddSignServer(servers ...string)    {}
 
 func (c *ClientV2) GetSignServer() []string {
 	c.lock.RLock()

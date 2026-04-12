@@ -4,9 +4,9 @@ import (
 	"crypto/sha1"
 	"errors"
 
-	"github.com/kernel-ai/koscore/client/internal/http"
 	"github.com/kernel-ai/koscore/client/packets/pb/v2/service/operation"
 	"github.com/kernel-ai/koscore/utils/crypto"
+	"github.com/kernel-ai/koscore/utils/http"
 	"github.com/kernel-ai/koscore/utils/proto"
 )
 
