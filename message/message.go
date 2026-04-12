@@ -44,10 +44,10 @@ func parse_message_resolves(content_head *message.ContentHead, routing_head *mes
 	case message_type.GROUP_MESSAGE:
 		msg.Sender.Nickname = routing_head.Group.GroupCard.Unwrap()
 		//msg.Sender.IsFriend = await _context.CacheContext.ResolveFriend(msg.Sender.Uin)
-		msg.Sender.CardName = msg.Sender.Nickname
+		msg.Sender.CardName = routing_head.Group.GroupCard.Unwrap()
 	case message_type.TEMP_MESSAGE:
-		//msg.Sender.Nickname = routing_head.CommonC2C.Name.Unwrap()
-		//msg.Sender.Nickname = routing_head.CommonC2C.FromTinyId.Unwrap()
+		msg.Sender.Nickname = routing_head.CommonC2C.Name.Unwrap()
+		//msg.Sender.TinyId = routing_head.CommonC2C.FromTinyId.Unwrap()
 		//await _context.CacheContext.ResolveStranger(routingHead.ToUid)).CloneWithSource(routingHead.CommonC2C.FromTinyId);
 	default: // throw new NotImplementedException();
 	}
@@ -56,12 +56,12 @@ func parse_message_resolves(content_head *message.ContentHead, routing_head *mes
 
 type (
 	innerSequence struct {
-		A         int64
-		B         int64
-		BotUinVal int64
-		FileKey   []byte
-		TimeUTC   int64
-		C         []byte
+		A       int64
+		B       int64
+		BotUin  int64
+		FileKey []byte
+		TimeUTC int64
+		C       []byte
 	}
 	outerSequence struct {
 		Version int
@@ -75,9 +75,9 @@ func parse_ptt_rich_text(uin uint64, body *message.MessageBody, isGroup bool) (r
 		rich := body.RichText
 		inner := &innerSequence{
 			A: 1, B: 0,
-			BotUinVal: int64(uin),
-			FileKey:   nil,
-			TimeUTC:   time.Now().UTC().Unix(),
+			BotUin:  int64(uin),
+			FileKey: nil,
+			TimeUTC: time.Now().UTC().Unix(),
 			C: binary.NewBuilder().
 				WriteLengthString("filetype", prefix.Int32|prefix.LengthOnly).
 				WriteLengthString("0", prefix.Int32|prefix.LengthOnly).
@@ -86,7 +86,7 @@ func parse_ptt_rich_text(uin uint64, body *message.MessageBody, isGroup bool) (r
 				ToBytes(),
 		}
 		if uin >= 0x80000000 {
-			inner.BotUinVal -= 0x100000000
+			inner.BotUin -= 0x100000000
 		}
 		if len(rich.Ptt.GroupFileKey) > 0 {
 			inner.FileKey = rich.Ptt.GroupFileKey

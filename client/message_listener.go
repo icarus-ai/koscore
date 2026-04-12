@@ -201,6 +201,12 @@ func (m *QQClient) message_handle_parse_push_message(data []byte) error {
 }
 
 func (m *QQClient) PreprocessGroupMessageEvent(msg *message.GroupMessage) {
+	if friend := m.GetCachedFriendInfo(msg.Sender.Uin); friend != nil {
+		msg.Sender.IsFriend = true
+		msg.Sender.Nickname = friend.Nickname
+	} else if member := m.GetCachedMemberInfo(msg.GroupUin, msg.Sender.Uin); member != nil {
+		msg.Sender.Nickname = member.Nickname
+	}
 	for _, elem := range msg.Elements {
 		switch e := elem.(type) {
 		case *message.ImageElement:
