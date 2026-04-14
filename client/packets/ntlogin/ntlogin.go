@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"github.com/kernel-ai/koscore/client/auth"
-	"github.com/kernel-ai/koscore/client/packets/ntlogin/ntlogin_type"
 	"github.com/kernel-ai/koscore/client/packets/pb/v2/login"
 	"github.com/kernel-ai/koscore/utils/crypto"
 	"github.com/kernel-ai/koscore/utils/proto"
@@ -31,35 +30,35 @@ func nt_login_encode_common[T any](version *auth.AppInfo, device *auth.DeviceInf
 	})
 }
 
-func nt_login_decode_common[T any](session *auth.Session, payload []byte) (ntlogin_type.NTLoginRetCode, *login.NTLoginErrorInfo, *T, error) {
+func nt_login_decode_common[T any](session *auth.Session, payload []byte) (login.NTLoginRetCode, *login.NTLoginErrorInfo, *T, error) {
 	if session.State.KeyExchange == nil {
-		return ntlogin_type.LOGIN_ERROR_UNKNOW, nil, nil, fmt.Errorf("invalid operation exception: key exchange session is not initialized.")
+		return 0, nil, nil, fmt.Errorf("invalid operation exception: key exchange session is not initialized.")
 	}
 
 	forward, e := proto.Unmarshal[login.NTLoginForwardRequest](payload)
 	if e != nil {
-		return ntlogin_type.LOGIN_ERROR_UNKNOW, nil, nil, e
+		return 0, nil, nil, e
 	}
 
 	payload, e = crypto.AESGCMDecrypt(forward.Buffer, session.State.KeyExchange.SessionKey)
 	if e != nil {
-		return ntlogin_type.LOGIN_ERROR_UNKNOW, nil, nil, e
+		return 0, nil, nil, e
 	}
 
 	common, e := proto.Unmarshal[login.NTLoginCommon](payload)
 	if e != nil {
-		return ntlogin_type.LOGIN_ERROR_UNKNOW, nil, nil, e
+		return 0, nil, nil, e
 	}
 
 	rsp, e := proto.Unmarshal[T](common.Body)
 	if e != nil {
-		return ntlogin_type.LOGIN_ERROR_UNKNOW, nil, nil, e
+		return 0, nil, nil, e
 	}
 
 	if common.Head.ErrorInfo == nil || common.Head.ErrorInfo.ErrCode.Unwrap() == 0 {
-		return ntlogin_type.LOGIN_SUCCESS, nil, rsp, nil
+		return login.NTLoginRetCode_SUCCESS, nil, rsp, nil
 	}
-	return ntlogin_type.NTLoginRetCode(common.Head.ErrorInfo.ErrCode.Unwrap()), common.Head.ErrorInfo, rsp, nil
+	return login.NTLoginRetCode(common.Head.ErrorInfo.ErrCode.Unwrap()), common.Head.ErrorInfo, rsp, nil
 }
 
 func nt_login_build_common[T any](version *auth.AppInfo, device *auth.DeviceInfo, session *auth.Session, body *T) (ret *login.NTLoginCommon) {
@@ -103,6 +102,6 @@ func nt_login_save_ticket(session *auth.Session, tickets *login.NTLoginTickets) 
 func nt_login_encode_common_android[T any](version *auth.AppInfo, device *auth.DeviceInfo, session *auth.Session, body *T) ([]byte, error) {
 	panic(types.ERROR_NOT_IMPL)
 }
-func nt_login_decode_common_android[T any](session *auth.Session, body []byte) (ntlogin_type.NTLoginRetCode, *login.NTLoginErrorInfo, *T, error) {
+func nt_login_decode_common_android[T any](session *auth.Session, body []byte) (login.NTLoginRetCode, *login.NTLoginErrorInfo, *T, error) {
 	panic(types.ERROR_NOT_IMPL)
 }

@@ -1,9 +1,12 @@
 package ntlogin_type
 
-import "github.com/kernel-ai/koscore/utils/types"
+import (
+	"github.com/kernel-ai/koscore/client/packets/pb/v2/login"
+	"github.com/kernel-ai/koscore/utils/types"
+)
 
 type INTLoginRsp struct {
-	State NTLoginRetCode
+	State login.NTLoginRetCode
 	Tips  types.Strings
 }
 
@@ -20,33 +23,18 @@ type PasswordLoginReq struct {
 }
 
 type PasswordLoginRsp struct {
-	State      NTLoginRetCode
-	Tips       types.Strings
+	INTLoginRsp
 	JumpingUrl string
 }
 
 type EasyLoginRsp struct {
-	State       NTLoginRetCode
-	Tips        types.Strings
+	INTLoginRsp
 	UnusualSigs []byte
 }
 
-type UnusualEasyLoginRsp struct {
-	State NTLoginRetCode
-	Tips  types.Strings
-}
-
-type NewDeviceLoginRsp struct {
-	State NTLoginRetCode
-	Tips  types.Strings
-}
-
-type RefreshTicketRsp struct {
-	State NTLoginRetCode
-	Tips  types.Strings
-}
-
-type RefreshA2Rsp struct {
-	State NTLoginRetCode
-	Tips  types.Strings
-}
+type (
+	UnusualEasyLoginRsp = INTLoginRsp
+	NewDeviceLoginRsp   = INTLoginRsp
+	RefreshTicketRsp    = INTLoginRsp
+	RefreshA2Rsp        = INTLoginRsp
+)

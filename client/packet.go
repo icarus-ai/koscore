@@ -22,6 +22,7 @@ func (m *PacketContext) uniPacket(packet *sso_type.SsoPacket) (seq uint32, d []b
 		}
 	}
 	d, e = structs.BuildSsoPacket(m.version, m.device, m.session, packet, info)
+	seq = packet.Sequence
 	return
 }
 

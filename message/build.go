@@ -11,13 +11,6 @@ import (
 	"github.com/kernel-ai/koscore/utils/proto"
 )
 
-/*
-import (
-	"encoding/json"
-	"fmt"
-)
-*/
-
 func (m *TextElement) BuildElement() []*message.Elem {
 	return []*message.Elem{{Text: &message.Text{TextMsg: proto.Some(m.Content)}}}
 }

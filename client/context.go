@@ -3,6 +3,7 @@ package client
 import (
 	"net/http"
 	"net/http/cookiejar"
+	"net/netip"
 	"sync/atomic"
 
 	"golang.org/x/net/publicsuffix"
@@ -21,11 +22,12 @@ type QQClient struct {
 	sso_context *PacketContext
 
 	is_heart_beat bool
-	is_online     atomic.Bool
 	stat          Statistics
 	cache         cache.Cache
 	hw_session    highway.Session
 	ticket        *TicketService
+
+	Online atomic.Bool
 
 	*Events
 	logger
@@ -38,6 +40,7 @@ func (m *QQClient) SetLogger(log logger) {
 }
 func (m *QQClient) GetSignProvider() sign.Provider     { return m.sig_context }
 func (m *QQClient) SetSignProvider(prov sign.Provider) { m.sig_context = prov }
+func (m *QQClient) UseSig(info *auth.Session)          { m.session = info }
 func (m *QQClient) GetDevice() *auth.DeviceInfo        { return m.device }
 func (m *QQClient) SetDevice(info *auth.DeviceInfo)    { m.device = info }
 func (m *QQClient) GetVersion() *auth.AppInfo          { return m.version }
@@ -47,22 +50,14 @@ func (m *QQClient) SetVersion(info *auth.AppInfo) {
 	m.hw_session.SubAppId = info.SubAppId
 }
 
-func (m *QQClient) SaveToken(path string) error { return m.session.Save(path) }
-func (m *QQClient) LoadToken(path string) error {
-	session, e := auth.LoadSession(path)
-	if e != nil {
-		return e
-	}
-	m.session = session
-	return nil
-}
+func (m *QQClient) SetCustomServer(v []netip.AddrPort) { m.sso_context.sock.SetCustomServer(v) }
 
 func (m *QQClient) Uin() uint64  { return m.session.Info.Uin }
 func (m *QQClient) Uid() string  { return m.session.Info.Uid }
 func (m *QQClient) Nick() string { return m.session.Info.Name }
 
 // 设置qq已经上线
-func (m *QQClient) setOnline() { m.is_online.Store(true) }
+func (m *QQClient) setOnline() { m.Online.Store(true) }
 
 func NewClient(uin uint64, password string) *QQClient {
 	cookie, _ := cookiejar.New(&cookiejar.Options{PublicSuffixList: publicsuffix.List})
@@ -82,9 +77,12 @@ func NewClient(uin uint64, password string) *QQClient {
 	return ctx
 }
 
+func (m *QQClient) Disconnect() { m.sso_context.Disconnect() }
+
 func (m *QQClient) Release() {
+	m.session.Clear()
 	m.sig_context.Release()
-	if m.is_online.Load() {
+	if m.Online.Load() {
 		m.sso_context.Disconnect()
 	}
 }

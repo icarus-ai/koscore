@@ -27,14 +27,14 @@ func ParseEasyLoginPacket(session *auth.Session, pkt *sso_type.SsoPacket) (ret *
 		return nil, ee
 	}
 
-	ret = &ntlogin_type.EasyLoginRsp{State: state}
+	ret = &ntlogin_type.EasyLoginRsp{INTLoginRsp: ntlogin_type.INTLoginRsp{State: state}}
 	switch state {
-	case ntlogin_type.LOGIN_SUCCESS:
+	case login.NTLoginRetCode_SUCCESS:
 		if rsp.Tickets == nil {
 			return nil, errors.New("invalid operation exception: tickets is nil")
 		}
 		nt_login_save_ticket(session, rsp.Tickets)
-	case ntlogin_type.LOGIN_ERROR_UNUSUAL_DEVICE:
+	case login.NTLoginRetCode_ERROR_UNUSUAL_DEVICE:
 		ret.UnusualSigs = rsp.SecProtect.UnusualDeviceCheckSig
 	default:
 		if info != nil {
@@ -61,8 +61,8 @@ func ParseUnusualEasyLoginPacket(session *auth.Session, pkt *sso_type.SsoPacket)
 		return nil, ee
 	}
 
-	ret = &ntlogin_type.EasyLoginRsp{State: state}
-	if state == ntlogin_type.LOGIN_SUCCESS {
+	ret = &ntlogin_type.EasyLoginRsp{INTLoginRsp: ntlogin_type.INTLoginRsp{State: state}}
+	if state == login.NTLoginRetCode_SUCCESS {
 		if rsp.Tickets == nil {
 			return nil, errors.New("invalid operation exception: tickets is nil")
 		}

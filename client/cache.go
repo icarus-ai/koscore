@@ -265,6 +265,7 @@ func (m *QQClient) GetFriendsData() (map[uint64]*entity.User, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	friends := make(map[uint64]*entity.User)
 	for {
 		rsp, err = m.FetchFriends(rsp.Cookie)

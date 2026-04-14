@@ -12,10 +12,10 @@ import (
 	"github.com/kernel-ai/koscore/utils/proto"
 )
 
-func (m *QQClient) SendRawMessage(route *pb_msg.SendRoutingHead, body *pb_msg.MessageBody) (rsp *pb_msg.PbSendMsgResp, seq, random uint32, err error) {
+func (m *QQClient) SendRawMessage(route *pb_msg.SendRoutingHead, body *pb_msg.MessageBody) (rsp *pb_msg.PbSendMsgResp, seq uint64, random uint32, err error) {
 	var pkt *sso_type.SsoPacket
-	seq, random = m.session.GetSequence(), crypto.RandU32()
-	if pkt, err = pkt_msg.BuildRawMessage(seq, random, route, body); err != nil {
+	random = crypto.RandU32()
+	if pkt, err = pkt_msg.BuildRawMessage(m.session.GetSequence(), random, route, body); err != nil {
 		return
 	}
 	if pkt, err = m.sendOidbPacketAndWait(pkt); err != nil {
@@ -25,7 +25,14 @@ func (m *QQClient) SendRawMessage(route *pb_msg.SendRoutingHead, body *pb_msg.Me
 		return
 	}
 	if rsp.Result.Unwrap() != 0 {
-		return nil, 0, 0, fmt.Errorf("operation exception: %d", rsp.Result.Unwrap())
+		return nil, 0, 0, fmt.Errorf("operation exception: %s (%d)", rsp.ErrMsg.Unwrap(), rsp.Result.Unwrap())
+	}
+	seq = rsp.Sequence.Unwrap()
+	if seq == 0 {
+		seq = rsp.ClientSequence.Unwrap()
+	}
+	if seq == 0 {
+		err = errors.New("ret group sequence 0")
 	}
 	return
 }
@@ -34,20 +41,17 @@ func (m *QQClient) SendGroupMessage(gin uint64, elements []message.IMessageEleme
 	if needPreprocess == nil || needPreprocess[0] {
 		elements = m.preProcessGroupMessage(gin, elements)
 	}
-	rsp, _, random, err := m.SendRawMessage(&pb_msg.SendRoutingHead{
+	rsp, seq, random, err := m.SendRawMessage(&pb_msg.SendRoutingHead{
 		Group: &pb_msg.Grp{GroupUin: proto.Some(int64(gin))},
 	}, message.PackElementsToBody(elements))
 	if err != nil {
 		return nil, err
 	}
-	if rsp.Sequence.Unwrap() == 0 && rsp.ClientSequence.Unwrap() == 0 {
-		return nil, errors.New("ret group sequence 0")
-	}
 	return &message.GroupMessage{
 		GroupUin:  gin,
 		GroupName: m.GetCachedGroupInfo(gin).GroupName,
 		Message: &message.Message{
-			Id:        rsp.Sequence.Unwrap(),
+			Id:        seq,
 			Random:    uint64(random),
 			ClientSeq: rsp.ClientSequence.Unwrap(),
 			Time:      rsp.SendTime.Unwrap(),
@@ -67,19 +71,15 @@ func (m *QQClient) SendPrivateMessage(uin uint64, elements []message.IMessageEle
 	if needPreprocess == nil || needPreprocess[0] {
 		elements = m.preProcessPrivateMessage(uin, elements)
 	}
-	rsp, _, random, err := m.SendRawMessage(&pb_msg.SendRoutingHead{
+	rsp, seq, random, err := m.SendRawMessage(&pb_msg.SendRoutingHead{
 		C2C: &pb_msg.C2C{PeerUin: proto.Some(int64(uin)), PeerUid: proto.Some(m.GetUid(uin))},
 	}, message.PackElementsToBody(elements))
 	if err != nil {
 		return nil, err
 	}
-	if rsp.Sequence.Unwrap() == 0 && rsp.ClientSequence.Unwrap() == 0 {
-		return nil, errors.New("ret private sequence 0")
-	}
-
 	return &message.PrivateMessage{
 		Message: &message.Message{
-			Id:        rsp.Sequence.Unwrap(),
+			Id:        seq,
 			Random:    uint64(random),
 			ClientSeq: rsp.ClientSequence.Unwrap(),
 			Time:      rsp.SendTime.Unwrap(),

@@ -142,13 +142,6 @@ func (c *ClientV2) test() {
 func (i *remoteV2) sign(cmd string, seq uint32, buf []byte, uin uint32, guid, qua string) (*ResponseV2, error) {
 	s := fmt.Sprintf(`{"command":"%s","seq":"%d","body":"%x","uin":"%d","guid":"%s","qua":"%s"}`, cmd, seq, buf, uin, guid, qua)
 	rsp, e := httpPost[ResponseV2](i.server, utils.S2B(s), i.headers)
-	/*
-	   comm.LOGW("sign: %s", i.server)
-	   comm.LOGW("  > body: %s", s)
-	   //comm.FwriteString(fmt.Sprintf("%s/kosbot/src/bot/_bin/sign_%s_%d_bin", comm.RootSD, cmd, seq), s)
-	   if e == nil { comm.LOGW("  > Y: %X - %X - %s", rsp.Value.Sign, rsp.Value.Token, string(rsp.Value.Extra))
-	   }  else     { comm.LOGW("   > N: %v", e) }
-	*/
 	if e != nil {
 		return nil, e
 	}

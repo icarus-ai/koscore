@@ -1,12 +1,12 @@
 package client
 
 import (
-	"errors"
 	"fmt"
 	"runtime/debug"
 	"time"
 
 	"github.com/RomiChan/syncx"
+	"github.com/pkg/errors"
 
 	"github.com/kernel-ai/koscore/client/event"
 	"github.com/kernel-ai/koscore/client/internal"
@@ -38,14 +38,13 @@ func (m *PacketContext) dispatchPacket(payload []byte) {
 	//m.LOGD("PacketContext::DispatchPacket: raw %d %X", len(data), data)
 	sso, e := structs.ParseSsoPacket(m.session, payload)
 	if e != nil {
-		m.LOGW("structs.ParseSsoPacket: %v", e)
+		m.LOGW("dispatch: parse sso packet: %v", e)
 		if fn, ok := m.handlers.LoadAndDelete(sso.Sequence); ok {
 			fn(sso, e)
 		}
 		return
 	}
 	if sso.RetCode == 0 {
-		//m.LOGD("PacketContext::DispatchPacket: sso: %v %s %d %d %X", e, sso.Command, sso.Sequence, len(sso.Data), sso.Data)
 		m.message_handle_parse_packet(sso)
 		return
 	}
@@ -101,7 +100,7 @@ func (m *PacketContext) SendPacketAndWait(pkt *sso_type.SsoPacket) (*sso_type.Ss
 				continue
 			}
 			m.handlers.Delete(seq)
-			return nil, errors.New("Packet timed out")
+			return nil, errors.New("Packet timed out " + pkt.Command)
 		}
 	}
 }
@@ -126,21 +125,21 @@ func (m *PacketContext) IsConnect() bool { return m.sock.IsConnect() }
 func (m *PacketContext) plannedDisconnect(_ *network.TCPClient) {
 	m.LOGD("planned disconnect.")
 	m.stat.DisconnectTimes.Add(1)
-	m.is_online.Store(false)
+	m.Online.Store(false)
 }
 
 // 非预期断线事件
 func (m *PacketContext) unexpectedDisconnect(_ *network.TCPClient, e error) {
 	m.LOGE("unexpected disconnect: %v", e)
 	m.stat.DisconnectTimes.Add(1)
-	m.is_online.Store(false)
+	m.Online.Store(false)
 	if err := m.sock.Connect(); err != nil {
 		m.LOGE("connect server error: %v", err)
 		m.Events.Disconnected.dispatch(m.QQClient, &event.Disconnected{Message: "connection dropped by server."})
 		return
 	}
-	if !m.Online() {
-		m.LOGE("register client failed")
+	if e := m.register(); e != nil {
+		m.LOGE("register client failed: %v", e)
 		m.sock.Disconnect()
 		m.Events.Disconnected.dispatch(m.QQClient, &event.Disconnected{Message: "register error"})
 		return
@@ -156,8 +155,8 @@ func (m *PacketContext) quickReconnect() {
 		m.Events.Disconnected.dispatch(m.QQClient, &event.Disconnected{Message: "quick reconnect failed"})
 		return
 	}
-	if !m.Online() {
-		m.LOGE("register client failed: %v")
+	if err := m.register(); err != nil {
+		m.LOGE("register client failed: %v", err)
 		m.sock.Disconnect()
 		m.Events.Disconnected.dispatch(m.QQClient, &event.Disconnected{Message: "register error"})
 		return

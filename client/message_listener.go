@@ -3,6 +3,7 @@ package client
 import (
 	"github.com/kernel-ai/koscore/client/event"
 	"github.com/kernel-ai/koscore/client/packets/message/message_type"
+	pb_msg "github.com/kernel-ai/koscore/client/packets/pb/v2/message"
 	"github.com/kernel-ai/koscore/client/packets/pb/v2/notify"
 	"github.com/kernel-ai/koscore/client/packets/structs/sso_type"
 	"github.com/kernel-ai/koscore/client/packets/system"
@@ -10,8 +11,6 @@ import (
 	"github.com/kernel-ai/koscore/message"
 	"github.com/kernel-ai/koscore/utils"
 	"github.com/kernel-ai/koscore/utils/proto"
-
-	pb_msg "github.com/kernel-ai/koscore/client/packets/pb/v2/message"
 )
 
 func (m *QQClient) message_handle_parse_packet(pkt *sso_type.SsoPacket) bool {
@@ -32,7 +31,8 @@ func (m *QQClient) message_handle_parse_packet(pkt *sso_type.SsoPacket) bool {
 	case system_type.AttributeHeartbeat.Command, system_type.AttributeSsoHeartBeat.Command:
 		return false
 	default:
-		m.LOGD("message_handle_parse_packet: cmd: %s", pkt.Command)
+		//m.LOGD("PacketContext::DispatchPacket: sso: %v %s %d %d %X", e, sso.Command, sso.Sequence, len(sso.Data), sso.Data)
+		m.LOGD("message_handle_parse_packet: %d %s", pkt.Sequence, pkt.Command)
 		if fn, ok := m.sso_context.handlers.LoadAndDelete(pkt.Sequence); ok {
 			fn(pkt, nil)
 		}

@@ -7,11 +7,14 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/kernel-ai/koscore/client/entity"
+	"github.com/kernel-ai/koscore/client/packets/message/message_type"
 	"github.com/kernel-ai/koscore/client/packets/oidb"
+	"github.com/kernel-ai/koscore/client/packets/pb/v2/service/operation"
 	"github.com/kernel-ai/koscore/client/packets/websso"
 	"github.com/kernel-ai/koscore/message"
 	"github.com/kernel-ai/koscore/utils"
 	"github.com/kernel-ai/koscore/utils/crypto"
+	"github.com/kernel-ai/koscore/utils/proto"
 )
 
 // 获取Rkey
@@ -24,6 +27,23 @@ func (m *QQClient) FetchRkey() (entity.RKeyMap, error) {
 		return nil, e
 	}
 	return oidb.ParseFetchRKeyPacket(pkt.Data)
+}
+
+// 设置在线状态
+func (m *QQClient) SetOnlineStatus(status operation.SetStatus) error {
+	data, _ := proto.Marshal(&status)
+	pkt, err := m.sendOidbPacketAndWait(message_type.AttributeSetStatus.NewSsoPacket(m.Session().GetAndIncreaseSequence(), data))
+	if err != nil {
+		return err
+	}
+	rsp, err := proto.Unmarshal[operation.SetStatusResponse](pkt.Data)
+	if err != nil {
+		return err
+	}
+	if rsp.Message != "set status success" {
+		return fmt.Errorf("set status failed: %s", rsp.Message)
+	}
+	return nil
 }
 
 // 获取单向好友列表

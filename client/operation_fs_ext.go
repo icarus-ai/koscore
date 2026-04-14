@@ -103,8 +103,8 @@ func (m *QQClient) ListGroupRootFiles(groupUin uint64) ([]*entity.GroupFile, []*
 	return m.ListGroupFilesByFolder(groupUin, "/")
 }
 
-// Deprecated
-func (m *QQClient) GenFileNode(name, md5, sha1, uuid string, size uint32, isnt bool) *pb_oidb.IndexNode {
+// Deprecated, udid and ttl
+func (m *QQClient) GenFileNode(name, md5, sha1, uuid string, size, ttl uint32, isnt bool) *pb_oidb.IndexNode {
 	return &pb_oidb.IndexNode{
 		Info: &pb_oidb.FileInfo{
 			FileName: proto.Some(name),
@@ -114,6 +114,7 @@ func (m *QQClient) GenFileNode(name, md5, sha1, uuid string, size uint32, isnt b
 		},
 		FileUuid: proto.Some(uuid),
 		StoreId:  proto.Some(utils.Ternary[uint32](isnt, 1, 0)), // 0旧服务器 1为nt服务器
+		Ttl:      proto.Some(ttl),
 	}
 }
 

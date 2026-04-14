@@ -4,13 +4,9 @@ import (
 	"io"
 
 	"github.com/kernel-ai/koscore/client/entity"
-	"github.com/kernel-ai/koscore/client/packets/pb/v2/service/operation"
 	"github.com/kernel-ai/koscore/message"
 	"github.com/kernel-ai/koscore/utils/types"
 )
-
-// SetOnlineStatus 设置在线状态
-func (m *QQClient) SetOnlineStatus(status operation.SetStatus) error { panic(types.ERROR_NOT_IMPL) }
 
 // SetGroupRemark 设置群聊备注
 func (m *QQClient) SetGroupRemark(groupuin uint64, remark string) error { panic(types.ERROR_NOT_IMPL) }
@@ -131,10 +127,6 @@ func (m *QQClient) SetEssenceMessage(groupUin, seq, random uint64, isSet bool) e
 
 // SendFriendLike 给好友点赞
 func (m *QQClient) SendFriendLike(uin uint64, count uint32) error { panic(types.ERROR_NOT_IMPL) }
-
-func (m *QQClient) GetPrivateMessages(uin uint64, timestamp int64, count uint32) ([]*message.PrivateMessage, error) {
-	panic(types.ERROR_NOT_IMPL)
-}
 
 // FetchMarketFaceKey 获取魔法表情key
 func (m *QQClient) FetchMarketFaceKey(faceIds ...string) ([]string, error) {

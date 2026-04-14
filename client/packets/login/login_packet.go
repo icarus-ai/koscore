@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"github.com/fumiama/gofastTEA"
-	//"github.com/kernel-ai/koscore/utils/comm"
 
 	"github.com/kernel-ai/koscore/client/auth"
 	"github.com/kernel-ai/koscore/client/packets/login/login_type"
@@ -15,6 +14,7 @@ import (
 	"github.com/kernel-ai/koscore/utils/binary/prefix"
 	"github.com/kernel-ai/koscore/utils/proto"
 	"github.com/kernel-ai/koscore/utils/types"
+	//"github.com/kernel-ai/koscore/utils/comm"
 )
 
 func BuildLoginPacket(version *auth.AppInfo, device *auth.DeviceInfo, session *auth.Session, req *login_type.LoginReq) *sso_type.SsoPacket {

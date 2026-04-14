@@ -18,8 +18,9 @@ var (
 var signMap map[string]uint8 // 只在启动时初始化, 无并发问题
 
 func ContainSignPKG(cmd string) bool {
-	_, ok := signMap[cmd]
-	return ok
+	//_, ok := signMap[cmd]
+	//return ok
+	return true
 }
 
 func AddSignPKG(pkg string) {

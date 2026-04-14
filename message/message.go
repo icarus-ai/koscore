@@ -189,13 +189,13 @@ func ParseMessageElements(msg []*message.Elem) (res []IMessageElement) {
 				elements = append(elements, v)
 			}
 			res = append(res, &ReplyElement{
-				SrcUid:      resvAttr.SourceMsgId.Unwrap(),
-				SrcSequence: elem.SrcMsg.OrigSeqs[0],
-				Time:        elem.SrcMsg.Time.Unwrap(),
-				SenderUin:   elem.SrcMsg.SenderUin.Unwrap(),
-				GroupUin:    elem.SrcMsg.ToUin.Unwrap(),
-				Elements:    ParseMessageElements(elements),
-				SourceUin:   int64(elem.SrcMsg.SenderUin.Unwrap()),
+				ReplySeq:  elem.SrcMsg.OrigSeqs[0],
+				Time:      elem.SrcMsg.Time.Unwrap(),
+				SenderUin: elem.SrcMsg.SenderUin.Unwrap(),
+				GroupUin:  elem.SrcMsg.ToUin.Unwrap(),
+				Elements:  ParseMessageElements(elements),
+				SourceUin: int64(elem.SrcMsg.SenderUin.Unwrap()),
+				SrcUid:    resvAttr.SourceMsgId.Unwrap(),
 			})
 		}
 
@@ -496,39 +496,6 @@ func ParseMessageElements(msg []*message.Elem) (res []IMessageElement) {
 		// ***** HAS_OLD_CODE END *****
 	}
 	return
-}
-
-func (msg *GroupMessage) ToString() string               { return ToReadableString(msg.Elements) }
-func (msg *GroupMessage) GetElements() []IMessageElement { return msg.Elements }
-func (msg *GroupMessage) Chat() int64                    { return int64(msg.Id) }
-func (msg *GroupMessage) Texts() []string {
-	texts := make([]string, 0, len(msg.Elements))
-	for _, elem := range msg.Elements {
-		texts = append(texts, ToReadableStringEle(elem))
-	}
-	return texts
-}
-
-func (msg *PrivateMessage) ToString() string               { return ToReadableString(msg.Elements) }
-func (msg *PrivateMessage) GetElements() []IMessageElement { return msg.Elements }
-func (msg *PrivateMessage) Chat() int64                    { return int64(msg.Id) }
-func (msg *PrivateMessage) Texts() []string {
-	texts := make([]string, 0, len(msg.Elements))
-	for _, elem := range msg.Elements {
-		texts = append(texts, ToReadableStringEle(elem))
-	}
-	return texts
-}
-
-func (msg *TempMessage) ToString() string               { return ToReadableString(msg.Elements) }
-func (msg *TempMessage) GetElements() []IMessageElement { return msg.Elements }
-func (msg *TempMessage) Chat() int64                    { return int64(msg.Id) }
-func (msg *TempMessage) Texts() []string {
-	texts := make([]string, 0, len(msg.Elements))
-	for _, elem := range msg.Elements {
-		texts = append(texts, ToReadableStringEle(elem))
-	}
-	return texts
 }
 
 func ToReadableString(m []IMessageElement) string {

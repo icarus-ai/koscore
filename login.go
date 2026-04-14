@@ -9,16 +9,14 @@ import (
 	"github.com/kernel-ai/koscore/client"
 	"github.com/kernel-ai/koscore/client/auth"
 	"github.com/kernel-ai/koscore/client/packets/login/login_type"
-	"github.com/kernel-ai/koscore/client/packets/ntlogin/ntlogin_type"
 	"github.com/kernel-ai/koscore/client/sign"
-
 	"github.com/kernel-ai/koscore/utils/comm"
 )
 
-var (
-	k_SIGN_V2_URI = "http://127.0.0.1:8080/api/sign/sec-sign"
+const (
+	k_SIGN_V2_URI = "https://sign.lagrangecore.org/api/sign/sec-sign"
 	k_SIGN_V2_KEY = "you sign key"
-	k_SIGN_V2_UIN = uint64(0) // you sign uin
+	k_SIGN_V2_UIN = 0 // you sign uin
 	TOKEN_PATH    = "session_bin"
 	QRCODE_PATH   = "qrcode.png"
 	k_GUID        = "you guid hex"
@@ -32,55 +30,59 @@ func main() {
 
 func qq_login(uin uint64, password string) {
 	ctx := new_client(uin, password)
-	if e := ctx.LoadToken(TOKEN_PATH); e != nil {
-		comm.LOGW("auth.LoadSession: %v", e)
+	d, e := os.ReadFile(TOKEN_PATH)
+	if e != nil {
+		comm.FAIL("load session: open: %v", e)
 	}
+	session, e := auth.UnmarshalSigInfo(d, true)
+	if e != nil {
+		comm.FAIL("load session: unmarshal: %v", e)
+	}
+	//session, _ := proto.Unmarshal[auth.Session](d)
+	ctx.UseSig(session)
 	manual_login(ctx)
+
+	if e = ctx.RefreshFriendCache(); e == nil {
+		infos := ctx.GetCachedAllFriendsInfo()
+		comm.LOGI("好友数: %d", len(infos))
+	} else {
+		comm.LOGW("刷新好友列表失败: %v", e)
+	}
+
+	if us, e := ctx.GetUnidirectionalFriendList(); e == nil {
+		comm.LOGI("单向好友数: %d", len(us))
+	} else {
+		comm.LOGW("刷新单向好友列表失败: %v", e)
+	}
+
+	if e = ctx.RefreshAllGroupMembersCache(); e == nil {
+		infos := ctx.GetCachedAllGroupsInfo()
+		comm.LOGI("群数: %d", len(infos))
+	} else {
+		comm.LOGW("刷新群列表&成员失败: %v", e)
+	}
+
 	comm.LOGD("wait signal kill")
 	comm.WaitSignalKill()
 }
 
 func manual_login(ctx *client.QQClient) login_type.LoginState {
-	ctx.HeartBeatLoop(2)
-	session := ctx.Session()
-	if len(session.Sig.A2) > 0 && len(session.Sig.D2) > 0 {
-		ctx.LOGD("valid session detected, doing online task")
+	if e := ctx.FastLogin(); e == nil {
 		return loginResponseProcessor(ctx, login_type.LoginSuccess)
 	}
-	/*
-		if ctx.Version.OS.IsAndroid() && len(password) == 0 {
-			ctx.LOGD("Android Platform can not use QRLogin, Please fill in password")
-			return
-		}
-	*/
-	version := ctx.GetVersion()
-	if version.OS.IsPC() && len(session.Sig.A1) > 0 {
-		if !ctx.KeyExchange() {
-			comm.FAIL("no online: KeyExchange")
-			return login_type.LoginUnknown
-		}
-		rsp, e := ctx.EasyLogin()
-		if e != nil {
-			comm.FAIL("EasyLogin: %v", e)
-		}
-		switch rsp.State {
-		case ntlogin_type.LOGIN_SUCCESS:
-			return loginResponseProcessor(ctx, login_type.LoginSuccess)
-		case ntlogin_type.LOGIN_ERROR_UNUSUAL_DEVICE:
-			if len(rsp.UnusualSigs) > 0 {
-				ss := qrcode_login(ctx, rsp.UnusualSigs)
-				return loginResponseProcessor(ctx, ss)
-			}
-		default:
-			comm.FAIL("KeyExchange: state: %d, %s", rsp.State, rsp.Tips.String())
-		}
+	state, unusual, e := ctx.ExchangeEasyLogin()
+	if e != nil {
+		comm.FAIL("%v", e)
 	}
-	// no password
-	ss := qrcode_login(ctx, nil)
-	return loginResponseProcessor(ctx, ss)
+	if state == login_type.LoginSuccess {
+		return loginResponseProcessor(ctx, login_type.LoginSuccess)
+	}
+	return loginResponseProcessor(ctx, qrcode_login(ctx, unusual))
 }
 
 func qrcode_login(m *client.QQClient, unusual_sigs []byte) login_type.LoginState {
+	// if m.GetVersion().OS.IsAndroid() && len(password) == 0 { comm.FAIL("Android Platform can not use QRLogin, Please fill in password") }
+
 	unusual := len(unusual_sigs) > 0
 	im, e := m.FetchQRode(3, unusual_sigs)
 	if e != nil {
@@ -122,20 +124,13 @@ func qrcode_login(m *client.QQClient, unusual_sigs []byte) login_type.LoginState
 		case login_type.TransEmpConfirmed:
 			comm.LOGI("扫码成功: 手机端已确认登录")
 			if unusual {
-				rsp, e := m.UnusualEasyLogin()
-				if e != nil {
+				if e := m.UnusualEasyLogin(); e != nil {
 					comm.FAIL("扫码: unusual easy login: %v", e)
 				}
-				if rsp.State == ntlogin_type.LOGIN_SUCCESS {
-					return login_type.LoginSuccess
-				}
-				comm.FAIL("扫码: unusual easy login: state: %d, %s", rsp.State, rsp.Tips.String())
-			}
-			rsp_state, e := m.QRCodeLogin()
-			if e != nil {
+			} else if e := m.QRCodeLogin(); e != nil {
 				comm.FAIL("扫码: login %v", e)
 			}
-			return rsp_state
+			return login_type.LoginSuccess
 		default:
 			comm.LOGW("扫码 code: %v", state.String())
 		}
@@ -144,13 +139,13 @@ func qrcode_login(m *client.QQClient, unusual_sigs []byte) login_type.LoginState
 
 func loginResponseProcessor(m *client.QQClient, stata login_type.LoginState) login_type.LoginState {
 	if stata == login_type.LoginSuccess {
-		if !m.Online() {
+		if !m.Online.Load() {
 			comm.FAIL("no online")
 		}
-		if e := m.SaveToken(TOKEN_PATH); e != nil {
+		if e := os.WriteFile(TOKEN_PATH, m.Session().Marshal(), 0o644); e != nil {
 			comm.LOGW("m.session.Save: %v", e)
 		}
-		return login_type.LoginSuccess
+		comm.LOGD("online")
 	}
 	return stata
 }

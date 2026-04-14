@@ -19,6 +19,7 @@ type SocketContext struct {
 	//_client    ClientListener
 	//context BotContext
 	servers         []netip.AddrPort
+	customs         []netip.AddrPort
 	sock            network.TCPClient
 	alive           bool
 	currServerIndex int
@@ -31,8 +32,13 @@ type SocketContext struct {
 	onQuickReconnect func()
 }
 
+func (m *SocketContext) SetCustomServer(v []netip.AddrPort) { m.customs = v }
+
+func (m *SocketContext) GetCurrServer() netip.AddrPort { return m.servers[m.currServerIndex] }
+
 func (m *SocketContext) resolve_dns() {
 	m.servers = nil
+	m.servers = append(m.servers, m.customs...)
 	hsot := utils.Ternary(m.useIPv6Network, "msfwifiv6.3g.qq.com", "msfwifi.3g.qq.com")
 	adds, e := net.LookupIP(hsot) // host servers
 	if e == nil && len(adds) > 0 {

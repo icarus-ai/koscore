@@ -2,7 +2,6 @@ package message
 
 import (
 	"github.com/kernel-ai/koscore/client/packets/message/message_type"
-	pkt_oidb "github.com/kernel-ai/koscore/client/packets/oidb"
 	pb_msg "github.com/kernel-ai/koscore/client/packets/pb/v2/message"
 	"github.com/kernel-ai/koscore/client/packets/structs/sso_type"
 	"github.com/kernel-ai/koscore/utils/proto"
@@ -34,5 +33,5 @@ func BuildRawMessage(cli_seq, random uint32, route *pb_msg.SendRoutingHead, body
 }
 
 func ParseMessagePacket(data []byte) (*pb_msg.PbSendMsgResp, error) {
-	return pkt_oidb.ParseOidbPacket[pb_msg.PbSendMsgResp](data)
+	return proto.Unmarshal[pb_msg.PbSendMsgResp](data)
 }

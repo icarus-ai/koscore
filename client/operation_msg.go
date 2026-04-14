@@ -25,7 +25,7 @@ func (m *QQClient) GetGroupMessages(gin, start_seq, end_seq uint64) ([]*message.
 }
 
 // 获取私聊历史消息
-func (m *QQClient) GetRoamMessages(peer_uin uint64, timestamp, count uint32) ([]*message.PrivateMessage, error) {
+func (m *QQClient) GetPrivateMessages(peer_uin uint64, timestamp, count uint32) ([]*message.PrivateMessage, error) {
 	pkt, err := m.sendOidbPacketAndWait(pkt_msg.BuildGetRoamMessagePacket(m.GetUid(peer_uin), timestamp, count))
 	if err != nil {
 		return nil, err

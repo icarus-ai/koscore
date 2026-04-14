@@ -9,7 +9,7 @@ import (
 
 var AppList APP_INFO_MAP
 
-type APP_INFO_MAP map[string]map[string]*AppInfo
+type APP_INFO_MAP map[SYS_OS]map[string]*AppInfo
 
 type WtLoginSdkInfo struct {
 	SdkBuildTime uint32 `json:"sdk_build_time"`
