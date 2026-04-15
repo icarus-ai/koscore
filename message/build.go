@@ -41,7 +41,7 @@ func (m *ReplyElement) BuildElement() []*message.Elem {
 	}
 	return []*message.Elem{{
 		SrcMsg: &message.SourceMsg{
-			OrigSeqs:  []uint64{uint64(m.ReplySeq)},
+			OrigSeqs:  []uint64{m.ReplySeq},
 			SenderUin: proto.Some(m.SenderUin),
 			Flag:      proto.Some[uint32](0), // intentional, force the client to fetch the original message
 			Time:      proto.Some(m.Time),

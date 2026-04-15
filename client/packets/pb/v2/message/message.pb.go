@@ -646,7 +646,7 @@ type SsoGetGroupMsgRsp struct {
 }
 
 type SsoGetGroupMsgRspBody struct {
-	RetCode       proto.Option[uint32] `protobuf:"varint,1,opt"`
+	Retcode       proto.Option[uint32] `protobuf:"varint,1,opt"`
 	Message       proto.Option[string] `protobuf:"bytes,2,opt"`
 	GroupUin      proto.Option[uint32] `protobuf:"varint,3,opt"`
 	StartSequence proto.Option[uint64] `protobuf:"varint,4,opt"`

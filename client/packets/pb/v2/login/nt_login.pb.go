@@ -275,9 +275,9 @@ type NTLoginEasyLoginUnusualDeviceRspBody struct {
 }
 
 type NTLoginTGTExchangeFastLoginReqBody struct {
-	Tgt      []byte              `protobuf:"bytes,1,opt"`
-	SecExtra []byte              `protobuf:"bytes,2,opt"`
-	CodeType proto.Option[int32] `protobuf:"varint,3,opt"`
+	Tgt      []byte                        `protobuf:"bytes,1,opt"`
+	SecExtra []byte                        `protobuf:"bytes,2,opt"`
+	CodeType proto.Option[NTLoginCodeType] `protobuf:"varint,3,opt"`
 }
 
 type NTLoginTGTExchangeFastLoginRspBody struct {

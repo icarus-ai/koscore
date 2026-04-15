@@ -48,7 +48,7 @@ type GroupChange struct {
 	GroupUin  proto.Option[uint32] `protobuf:"varint,1,opt"`
 	Flag      proto.Option[uint32] `protobuf:"varint,2,opt"`
 	MemberUid proto.Option[string] `protobuf:"bytes,3,opt"`
-	Type      proto.Option[uint32] `protobuf:"varint,4,opt"` // DecreaseType 131 invitor 130 operator
+	Type      proto.Option[uint32] `protobuf:"varint,4,opt"`
 	Operator  []byte               `protobuf:"bytes,5,opt"`
 	Field6    proto.Option[uint32] `protobuf:"varint,6,opt"`
 	Field7    []byte               `protobuf:"bytes,7,opt"`
@@ -71,13 +71,13 @@ type EssenceMessage struct {
 	GroupUin         proto.Option[int64]  `protobuf:"varint,1,opt"`
 	MsgSequence      proto.Option[uint64] `protobuf:"varint,2,opt"`
 	Random           proto.Option[uint32] `protobuf:"varint,3,opt"`
-	SetFlag          proto.Option[uint32] `protobuf:"varint,4,opt"` // set 1 remove 2
-	MemberUin        proto.Option[uint32] `protobuf:"varint,5,opt"` // AuthorUin
+	SetFlag          proto.Option[uint32] `protobuf:"varint,4,opt"`
+	MemberUin        proto.Option[uint32] `protobuf:"varint,5,opt"`
 	OperatorUin      proto.Option[uint32] `protobuf:"varint,6,opt"`
 	TimeStamp        proto.Option[uint32] `protobuf:"varint,7,opt"`
-	MsgSequence2     proto.Option[uint64] `protobuf:"varint,8,opt"` // removed 0
-	OperatorNickName proto.Option[string] `protobuf:"bytes,9,opt"`  // OperatorName
-	MemberNickName   proto.Option[string] `protobuf:"bytes,10,opt"` // AuthorName
+	MsgSequence2     proto.Option[uint64] `protobuf:"varint,8,opt"`
+	OperatorNickName proto.Option[string] `protobuf:"bytes,9,opt"`
+	MemberNickName   proto.Option[string] `protobuf:"bytes,10,opt"`
 	SetFlag2         proto.Option[uint32] `protobuf:"varint,11,opt"`
 	_                [0]func()
 }
@@ -171,12 +171,12 @@ type NotifyMessageBody struct {
 	SubType          proto.Option[uint32] `protobuf:"varint,13,opt"`
 	OperatorUid      proto.Option[string] `protobuf:"bytes,21,opt"`
 	GeneralGrayTip   *GeneralGrayTipInfo  `protobuf:"bytes,26,opt"`
-	EssenceMessage   *EssenceMessage      `protobuf:"bytes,33,opt"`
 	MsgSequence      proto.Option[uint64] `protobuf:"varint,37,opt"`
 	Field39          proto.Option[uint32] `protobuf:"varint,39,opt"`
 	GroupRecallNudge *GroupRecallNudge    `protobuf:"bytes,40,opt"`
 	Reaction         *GroupReactionData0  `protobuf:"bytes,44,opt"`
 	TipsSeqId        proto.Option[uint64] `protobuf:"varint,50,opt"`
+	EssenceMessage   *EssenceMessage      `protobuf:"bytes,33,opt"`
 }
 
 type GeneralGrayTipInfo struct {

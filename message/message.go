@@ -185,7 +185,7 @@ func ParseMessageElements(msg []*message.Elem) (res []IMessageElement) {
 			}
 			var elements []*message.Elem
 			for _, v := range elem.SrcMsg.Elems {
-				//if len(v) > 0 { if _elem, e := proto.Unmarshal[message.Elem](v); e != nil { elements = append(elements, _elem) } }
+				//if len(v) > 0 { if _elem, e := proto.Unmarshal[message.Elem](v); e == nil { elements = append(elements, _elem) } }
 				elements = append(elements, v)
 			}
 			res = append(res, &ReplyElement{

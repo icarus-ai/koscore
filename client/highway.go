@@ -31,15 +31,11 @@ func (c *QQClient) initHighwayServers() {
 
 func (m *QQClient) ensureHighwayServers() error {
 	if m.hw_session.SsoAddr == nil || m.hw_session.SigSession == nil || m.hw_session.SessionKey == nil {
-		pkt, err := pkt_hw.BuildHighWayURLReq(m.session.Sig.A2)
-		if err != nil {
-			return err
-		}
-		sso, err := m.sendUniPacketAndWait("HttpConn.0x6ff_501", pkt)
+		pkt, err := m.sendOidbPacketAndWait(pkt_hw.BuildHighWayURLReq(m.session.Sig.A2))
 		if err != nil {
 			return fmt.Errorf("get highway server: %w", err)
 		}
-		rsp, err := pkt_hw.ParseHighWayURLReq(sso.Data)
+		rsp, err := pkt_hw.ParseHighWayURLReq(pkt.Data)
 		if err != nil {
 			return fmt.Errorf("parse highway server: %w", err)
 		}
@@ -50,8 +46,8 @@ func (m *QQClient) ensureHighwayServers() error {
 		for _, info := range rsp.RspBody.Addrs {
 			if info.ServiceType.Unwrap() == 1 {
 				for _, addr := range info.Addrs {
-					m.LOGD("add highway server %s:%d", binary.UInt32ToIPV4Address(uint32(addr.Ip.Unwrap())), addr.Port)
-					m.hw_session.AppendAddr(uint32(addr.Ip.Unwrap()), addr.Port.Unwrap())
+					m.LOGD("add highway server %s:%d", binary.UInt32ToIPV4Address(addr.Ip.Unwrap()), addr.Port)
+					m.hw_session.AppendAddr(addr.Ip.Unwrap(), addr.Port.Unwrap())
 				}
 			}
 		}

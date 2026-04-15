@@ -2,11 +2,14 @@ package highway
 
 import (
 	"github.com/kernel-ai/koscore/client/packets/pb/v2/service/oidb"
+	"github.com/kernel-ai/koscore/client/packets/structs/sso_type"
 	"github.com/kernel-ai/koscore/utils/proto"
 )
 
-func BuildHighWayURLReq(sig_a2 []byte) ([]byte, error) {
-	return proto.Marshal(&oidb.C501ReqBody{
+var AttributeHttpConn_0x6FF_501 = sso_type.NewServiceAttributeD2D2("HttpConn.0x6ff_501")
+
+func BuildHighWayURLReq(sig_a2 []byte) *sso_type.SsoPacket {
+	data, _ := proto.Marshal(&oidb.C501ReqBody{
 		ReqBody: &oidb.SubCmd0X501ReqBody{
 			Uin:            proto.Some[uint64](0),
 			IdcId:          proto.Some[uint32](0),
@@ -21,6 +24,7 @@ func BuildHighWayURLReq(sig_a2 []byte) ([]byte, error) {
 			Version:        proto.Some("1.0.1"),
 		},
 	})
+	return AttributeHttpConn_0x6FF_501.NewSsoPacket(0, data)
 }
 
 func ParseHighWayURLReq(data []byte) (*oidb.C501RspBody, error) {
