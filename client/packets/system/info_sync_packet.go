@@ -23,7 +23,7 @@ func BuildInfoSyncPacket(version *auth.AppInfo, device *auth.DeviceInfo) *sso_ty
 		NormalConfig: &system.NormalConfig{IntCfg: make(map[uint32]int32)},
 		RegisterInfo: &system.RegisterInfo{
 			Guid:                       proto.Some(device.GUID.ToUpHexStr()),
-			KickPC:                     proto.Some[uint32](0),
+			KickPc:                     proto.Some[uint32](0),
 			BuildVer:                   proto.Some(version.CurrentVersion),
 			IsFirstRegisterProxyOnline: proto.Some[uint32](1),
 			LocaleId:                   proto.Some[uint32](2052),

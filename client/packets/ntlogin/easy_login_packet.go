@@ -38,7 +38,7 @@ func ParseEasyLoginPacket(session *auth.Session, pkt *sso_type.SsoPacket) (ret *
 		ret.UnusualSigs = rsp.SecProtect.UnusualDeviceCheckSig
 	default:
 		if info != nil {
-			ret.Tips = types.Strings{info.StrTipsTitle.Unwrap(), info.StrTipsContent.Unwrap()}
+			ret.Tips = types.Strings{info.TipsTitle.Unwrap(), info.TipsContent.Unwrap()}
 		}
 	}
 	return
@@ -68,7 +68,7 @@ func ParseUnusualEasyLoginPacket(session *auth.Session, pkt *sso_type.SsoPacket)
 		}
 		nt_login_save_ticket(session, rsp.Tickets)
 	} else if info != nil {
-		ret.Tips = types.Strings{info.StrTipsTitle.Unwrap(), info.StrTipsContent.Unwrap()}
+		ret.Tips = types.Strings{info.TipsTitle.Unwrap(), info.TipsContent.Unwrap()}
 	}
 	return
 }

@@ -120,10 +120,9 @@ func (m *VoiceElement) BuildElement() []*message.Elem {
 }
 
 func (m *LightAppElement) BuildElement() []*message.Elem {
-	return []*message.Elem{{
-		LightAppElem: &message.LightAppElem{
-			BytesData: append([]byte{0x01}, binary.ZlibCompress([]byte(m.Content))...),
-		}}}
+	return []*message.Elem{{LightAppElem: &message.LightAppElem{
+		Data: append([]byte{0x01}, binary.ZlibCompress([]byte(m.Content))...),
+	}}}
 }
 
 func (m *ForwardMessage) BuildElement() []*message.Elem {

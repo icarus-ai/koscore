@@ -19,7 +19,7 @@ type DeleteFileReqBody struct {
 }
 
 type DeleteFileRspBody struct {
-	RetCode       proto.Option[int64]  `protobuf:"varint,1,opt"` // ?? int32
+	RetCode       proto.Option[int64]  `protobuf:"varint,1,opt"` // int32
 	RetMsg        proto.Option[string] `protobuf:"bytes,2,opt"`
 	ClientWording proto.Option[string] `protobuf:"bytes,3,opt"`
 	_             [0]func()
@@ -38,7 +38,7 @@ type DownloadFileReqBody struct {
 }
 
 type DownloadFileRspBody struct {
-	RetCode          proto.Option[int64]  `protobuf:"varint,1,opt"` // int32 // ?? int32
+	RetCode          proto.Option[int64]  `protobuf:"varint,1,opt"` // int32
 	RetMsg           proto.Option[string] `protobuf:"bytes,2,opt"`
 	ClientWording    proto.Option[string] `protobuf:"bytes,3,opt"`
 	DownloadIp       proto.Option[string] `protobuf:"bytes,4,opt"`

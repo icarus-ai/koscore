@@ -8,11 +8,11 @@ import (
 )
 
 type FlashTransferUploadReq struct {
-	FieId1 proto.Option[uint32]     `protobuf:"varint,1,opt"`
-	AppId  proto.Option[uint32]     `protobuf:"varint,2,opt"`
-	FieId3 proto.Option[uint32]     `protobuf:"varint,3,opt"`
-	Body   *FlashTransferUploadBody `protobuf:"bytes,107,opt"`
-	_      [0]func()
+	FieId1  proto.Option[uint32]     `protobuf:"varint,1,opt"`
+	AppId   proto.Option[uint32]     `protobuf:"varint,2,opt"`
+	FileId3 proto.Option[uint32]     `protobuf:"varint,3,opt"`
+	Body    *FlashTransferUploadBody `protobuf:"bytes,107,opt"`
+	_       [0]func()
 }
 
 type FlashTransferUploadBody struct {

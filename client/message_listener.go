@@ -49,7 +49,6 @@ func (m *QQClient) message_handle_parse_push_message(data []byte) error {
 
 	common_msg := msg_push.CommonMessage
 	msg_type := common_msg.ContentHead.Type.Unwrap()
-	//sub_type := common_msg.ContentHead.SubType.Unwrap()
 
 	switch msg_type {
 	case message_type.GROUP_MESSAGE:
@@ -78,6 +77,7 @@ func (m *QQClient) message_handle_parse_push_message(data []byte) error {
 
 	if common_msg.MessageBody != nil && len(common_msg.MessageBody.MsgContent) > 0 {
 		msg_content := common_msg.MessageBody.MsgContent
+		sub_type := common_msg.ContentHead.SubType.Unwrap()
 		switch msg_type {
 		case message_type.GROUP_MEMBER_INCREASE_NOTICE:
 			pb, e := proto.Unmarshal[notify.GroupChange](msg_content)
@@ -194,7 +194,9 @@ func (m *QQClient) message_handle_parse_push_message(data []byte) error {
 			}
 			m.Events.GroupMemberJoinRequest.dispatch(m, ev)
 		case message_type.EVENT_FRIEND:
+			return m.decodeOlPushServicePacket_group_notify_msg_0x210(sub_type, common_msg)
 		case message_type.EVENT_GROUP:
+			return m.decodeOlPushServicePacket_group_notify_msg_0x2DC(sub_type, common_msg)
 		}
 	}
 	return nil

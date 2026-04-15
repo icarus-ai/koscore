@@ -134,7 +134,7 @@ func ParseLoginSig(session *auth.Session, tlvs types.Tlvs) (e error) {
 				e = ee
 				continue
 			}
-			session.Info.Uid = rsp.CommonInfo.RspNT.Uid.Unwrap()
+			session.Info.Uid = rsp.CommonInfo.RspNt.Uid.Unwrap()
 			//default: comm.LOGD("0x%X", k) // 0x118 0x11F 0x130 0x138 0x167 0x163 0x510 0x523 0x550
 		}
 	}

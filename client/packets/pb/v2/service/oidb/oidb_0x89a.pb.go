@@ -21,27 +21,6 @@ type D89ARspBody struct {
 	_         [0]func()
 }
 
-type GroupExInfoOnly struct {
-	TribeId          proto.Option[uint32] `protobuf:"varint,1,opt"`
-	MoneyForAddGroup proto.Option[uint32] `protobuf:"varint,2,opt"`
-	_                [0]func()
-}
-
-type GroupGeoInfo struct {
-	CityId     proto.Option[uint32] `protobuf:"varint,1,opt"`
-	Longitude  proto.Option[uint64] `protobuf:"varint,2,opt"`
-	Latitude   proto.Option[uint64] `protobuf:"varint,3,opt"`
-	GeoContent proto.Option[string] `protobuf:"bytes,4,opt"`
-	PoiId      proto.Option[uint64] `protobuf:"varint,5,opt"`
-	_          [0]func()
-}
-
-type GroupNewGuidelinesInfo struct {
-	Enabled proto.Option[bool]   `protobuf:"varint,1,opt"`
-	Content proto.Option[string] `protobuf:"bytes,2,opt"`
-	_       [0]func()
-}
-
 type D89AReqBodyGroupInfo struct {
 	GroupExtAdmNum       proto.Option[uint32]    `protobuf:"varint,1,opt"`
 	Flag                 proto.Option[uint32]    `protobuf:"varint,2,opt"`
@@ -86,4 +65,25 @@ type D89AReqBodyGroupInfo struct {
 	HlGuildOrgid         proto.Option[uint32]    `protobuf:"varint,41,opt"`
 	GroupFlagExt4        proto.Option[uint32]    `protobuf:"varint,42,opt"`
 	GroupFlagExt4Mask    proto.Option[uint32]    `protobuf:"varint,43,opt"`
+}
+
+type GroupExInfoOnly struct {
+	TribeId          proto.Option[uint32] `protobuf:"varint,1,opt"`
+	MoneyForAddGroup proto.Option[uint32] `protobuf:"varint,2,opt"`
+	_                [0]func()
+}
+
+type GroupGeoInfo struct {
+	CityId     proto.Option[uint32] `protobuf:"varint,1,opt"`
+	Longitude  proto.Option[uint64] `protobuf:"varint,2,opt"`
+	Latitude   proto.Option[uint64] `protobuf:"varint,3,opt"`
+	GeoContent proto.Option[string] `protobuf:"bytes,4,opt"`
+	PoiId      proto.Option[uint64] `protobuf:"varint,5,opt"`
+	_          [0]func()
+}
+
+type GroupNewGuidelinesInfo struct {
+	Enabled proto.Option[bool]   `protobuf:"varint,1,opt"`
+	Content proto.Option[string] `protobuf:"bytes,2,opt"`
+	_       [0]func()
 }

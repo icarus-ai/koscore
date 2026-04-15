@@ -141,7 +141,7 @@ type OnlineBusinessInfo struct {
 
 type RegisterInfo struct {
 	Guid                       proto.Option[string] `protobuf:"bytes,1,opt"`
-	KickPC                     proto.Option[uint32] `protobuf:"varint,2,opt"`
+	KickPc                     proto.Option[uint32] `protobuf:"varint,2,opt"`
 	BuildVer                   proto.Option[string] `protobuf:"bytes,3,opt"`
 	IsFirstRegisterProxyOnline proto.Option[uint32] `protobuf:"varint,4,opt"`
 	LocaleId                   proto.Option[uint32] `protobuf:"varint,5,opt"`
@@ -203,7 +203,7 @@ type ThirdPartyLoginResponse struct {
 
 type RespCommonInfo struct {
 	NeedVerifyScenes proto.Option[uint32] `protobuf:"varint,10,opt"`
-	RspNT            *RspNT               `protobuf:"bytes,11,opt"`
+	RspNt            *RspNT               `protobuf:"bytes,11,opt"`
 	A1Seq            proto.Option[uint32] `protobuf:"varint,12,opt"`
 	_                [0]func()
 }

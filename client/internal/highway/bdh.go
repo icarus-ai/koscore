@@ -71,11 +71,11 @@ func (trans *Transaction) Build(s *Session, offset uint64, length uint32, md5has
 			CacheAddr:     proto.Some(uint32(0)),
 			CachePort:     proto.Some(uint32(0)),
 		},
-		BytesReqExtendInfo: trans.Ext,
+		ReqExtendInfo: trans.Ext,
 		MsgLoginSigHead: &highway.LoginSigHead{
-			Uint32LoginSigType: proto.Some[uint32](8),
-			BytesLoginSig:      trans.LoginSig,
-			AppId:              proto.Some[uint32](s.AppId),
+			LoginSigType: proto.Some[uint32](8),
+			LoginSig:     trans.LoginSig,
+			AppId:        proto.Some[uint32](s.AppId),
 		},
 	}
 }
@@ -115,8 +115,8 @@ func (s *Session) uploadSingle(trans *Transaction) ([]byte, error) {
 		if rspHead.ErrorCode.Unwrap() != 0 {
 			return nil, fmt.Errorf("upload failed: %d", rspHead.ErrorCode.Unwrap())
 		}
-		if rspHead.BytesRspExtendInfo != nil {
-			rspExt = rspHead.BytesRspExtendInfo
+		if rspHead.RspExtendInfo != nil {
+			rspExt = rspHead.RspExtendInfo
 		}
 		if rspHead.MsgSegHead != nil && rspHead.MsgSegHead.ServiceTicket != nil {
 			trans.Ticket = rspHead.MsgSegHead.ServiceTicket
@@ -212,8 +212,8 @@ func (s *Session) Upload(trans *Transaction) ([]byte, error) {
 			if rspHead.ErrorCode.Unwrap() != 0 {
 				return fmt.Errorf("upload failed: %d", rspHead.ErrorCode.Unwrap())
 			}
-			if last && rspHead.BytesRspExtendInfo != nil {
-				rspExt = rspHead.BytesRspExtendInfo
+			if last && rspHead.RspExtendInfo != nil {
+				rspExt = rspHead.RspExtendInfo
 			}
 		}
 		return nil

@@ -23,7 +23,7 @@ func (typ ntv2_rich_media) common_ConvertIPv4(ipv4s []*oidb.IPv4) *oidb.NTHighwa
 		ret.IPv4S = append(ret.IPv4S, &oidb.NTHighwayIPv4{
 			Domain: &oidb.NTHighwayDomain{
 				IsEnable: proto.TRUE,
-				IP:       proto.Some(binary.UInt32ToIPV4Address(item.OutIP.Unwrap())),
+				Ip:       proto.Some(binary.UInt32ToIPV4Address(item.OutIp.Unwrap())),
 			},
 			Port: item.OutPort,
 		})
@@ -217,12 +217,12 @@ func BuildGroupImageUploadPacket(gin uint64, image *message.ImageElement) (*sso_
 	}
 	body, e := NTV2RICH_MEDIA_IMAGE.build_upload(gin, &oidb.ExtBizInfo{
 		Pic: &oidb.PicExtBizInfo{
-			//BizType    : proto.Some(uint32(image.SubType)),
-			TextSummary:       proto.Some(utils.Ternary(image.Summary == "" && image.SubType == 1, "[动画表情]", image.Summary)),
-			BytesPbReserveC2C: []byte{0x08, 0x00, 0x18, 0x00, 0x20, 0x00, 0x4A, 0x00, 0x50, 0x00, 0x62, 0x00, 0x92, 0x01, 0x00, 0x9A, 0x01, 0x00, 0xAA, 0x01, 0x0C, 0x08, 0x00, 0x12, 0x00, 0x18, 0x00, 0x20, 0x00, 0x28, 0x00, 0x3A, 0x00},
+			//BizType   : proto.Some(uint32(image.SubType)),
+			TextSummary:  proto.Some(utils.Ternary(image.Summary == "" && image.SubType == 1, "[动画表情]", image.Summary)),
+			PbReserveC2C: []byte{0x08, 0x00, 0x18, 0x00, 0x20, 0x00, 0x4A, 0x00, 0x50, 0x00, 0x62, 0x00, 0x92, 0x01, 0x00, 0x9A, 0x01, 0x00, 0xAA, 0x01, 0x0C, 0x08, 0x00, 0x12, 0x00, 0x18, 0x00, 0x20, 0x00, 0x28, 0x00, 0x3A, 0x00},
 		},
-		Video: &oidb.VideoExtBizInfo{BytesPbReserve: binary.Empty},
-		Ptt:   &oidb.PttExtBizInfo{BytesReserve: binary.Empty, BytesPbReserve: binary.Empty, BytesGeneralFlags: binary.Empty},
+		Video: &oidb.VideoExtBizInfo{PbReserve: binary.Empty},
+		Ptt:   &oidb.PttExtBizInfo{Reserve: binary.Empty, PbReserve: binary.Empty, GeneralFlags: binary.Empty},
 	}, fstream{stream: image.Stream, size: image.Size, md5: image.Md5, sha1: image.Sha1})
 	if e != nil {
 		return nil, e
@@ -236,12 +236,12 @@ func BuildPrivateImageUploadPacket(self_uid string, image *message.ImageElement)
 	}
 	body, e := NTV2RICH_MEDIA_IMAGE.build_upload(self_uid, &oidb.ExtBizInfo{
 		Pic: &oidb.PicExtBizInfo{
-			//BizType    : proto.Some(uint32(image.SubType)),
-			TextSummary:       proto.Some(utils.Ternary(image.Summary == "" && image.SubType == 1, "[动画表情]", image.Summary)),
-			BytesPbReserveC2C: []byte{0x08, 0x00, 0x18, 0x00, 0x20, 0x00, 0x42, 0x00, 0x50, 0x00, 0x62, 0x00, 0x92, 0x01, 0x00, 0x9A, 0x01, 0x00, 0xA2, 0x01, 0x0C, 0x08, 0x00, 0x12, 0x00, 0x18, 0x00, 0x20, 0x00, 0x28, 0x00, 0x3A, 0x00},
+			//BizType   : proto.Some(uint32(image.SubType)),
+			TextSummary:  proto.Some(utils.Ternary(image.Summary == "" && image.SubType == 1, "[动画表情]", image.Summary)),
+			PbReserveC2C: []byte{0x08, 0x00, 0x18, 0x00, 0x20, 0x00, 0x42, 0x00, 0x50, 0x00, 0x62, 0x00, 0x92, 0x01, 0x00, 0x9A, 0x01, 0x00, 0xA2, 0x01, 0x0C, 0x08, 0x00, 0x12, 0x00, 0x18, 0x00, 0x20, 0x00, 0x28, 0x00, 0x3A, 0x00},
 		},
-		Video: &oidb.VideoExtBizInfo{BytesPbReserve: binary.Empty},
-		Ptt:   &oidb.PttExtBizInfo{BytesReserve: binary.Empty, BytesPbReserve: binary.Empty, BytesGeneralFlags: binary.Empty},
+		Video: &oidb.VideoExtBizInfo{PbReserve: binary.Empty},
+		Ptt:   &oidb.PttExtBizInfo{Reserve: binary.Empty, PbReserve: binary.Empty, GeneralFlags: binary.Empty},
 	}, fstream{stream: image.Stream, size: image.Size, md5: image.Md5, sha1: image.Sha1})
 	if e != nil {
 		return nil, e
@@ -261,8 +261,8 @@ func BuildGroupVideoUploadPacket(gin uint64, video *message.ShortVideoElement) (
 			BizType:     proto.Some[uint32](0),
 			TextSummary: proto.Some(""),
 		},
-		Video: &oidb.VideoExtBizInfo{BytesPbReserve: []byte{0x80, 0x01, 0x00}},
-		Ptt:   &oidb.PttExtBizInfo{BytesReserve: binary.Empty, BytesPbReserve: binary.Empty, BytesGeneralFlags: binary.Empty},
+		Video: &oidb.VideoExtBizInfo{PbReserve: []byte{0x80, 0x01, 0x00}},
+		Ptt:   &oidb.PttExtBizInfo{Reserve: binary.Empty, PbReserve: binary.Empty, GeneralFlags: binary.Empty},
 	},
 		fstream{stream: video.Stream, size: video.Size, md5: video.Md5, sha1: video.Sha1},
 		fstream{stream: video.Thumb.Stream, size: video.Thumb.Size, md5: video.Thumb.Md5, sha1: video.Thumb.Sha1, sub_type: 100},
@@ -285,8 +285,8 @@ func BuildPrivateVideoUploadPacket(self_uid string, video *message.ShortVideoEle
 			BizType:     proto.Some[uint32](0),
 			TextSummary: proto.Some(""),
 		},
-		Video: &oidb.VideoExtBizInfo{BytesPbReserve: []byte{0x80, 0x01, 0x00}},
-		Ptt:   &oidb.PttExtBizInfo{BytesReserve: binary.Empty, BytesPbReserve: binary.Empty, BytesGeneralFlags: binary.Empty},
+		Video: &oidb.VideoExtBizInfo{PbReserve: []byte{0x80, 0x01, 0x00}},
+		Ptt:   &oidb.PttExtBizInfo{Reserve: binary.Empty, PbReserve: binary.Empty, GeneralFlags: binary.Empty},
 	},
 		fstream{stream: video.Stream, size: video.Size, md5: video.Md5, sha1: video.Sha1},
 		fstream{stream: video.Thumb.Stream, size: video.Thumb.Size, md5: video.Thumb.Md5, sha1: video.Thumb.Sha1, sub_type: 100},
@@ -306,11 +306,11 @@ func BuildGroupRecordUploadPacket(gin uint64, voice *message.VoiceElement) (*sso
 			//BizType    : proto.Some[uint32](0),
 			TextSummary: proto.Some(""),
 		},
-		Video: &oidb.VideoExtBizInfo{BytesPbReserve: binary.Empty},
+		Video: &oidb.VideoExtBizInfo{PbReserve: binary.Empty},
 		Ptt: &oidb.PttExtBizInfo{
-			BytesReserve:      []byte{0x08, 0x00, 0x38, 0x00},
-			BytesPbReserve:    binary.Empty,
-			BytesGeneralFlags: []byte{0x9a, 0x01, 0x07, 0xaa, 0x03, 0x04, 0x08, 0x08, 0x12, 0x00},
+			Reserve:      []byte{0x08, 0x00, 0x38, 0x00},
+			PbReserve:    binary.Empty,
+			GeneralFlags: []byte{0x9a, 0x01, 0x07, 0xaa, 0x03, 0x04, 0x08, 0x08, 0x12, 0x00},
 		},
 	}, fstream{stream: voice.Stream, size: voice.Size, md5: voice.Md5, sha1: voice.Sha1})
 	if e != nil {
@@ -328,11 +328,11 @@ func BuildPrivateRecordUploadPacket(self_uid string, voice *message.VoiceElement
 			//BizType    : proto.Some[uint32](0),
 			TextSummary: proto.Some(""),
 		},
-		Video: &oidb.VideoExtBizInfo{BytesPbReserve: binary.Empty},
+		Video: &oidb.VideoExtBizInfo{PbReserve: binary.Empty},
 		Ptt: &oidb.PttExtBizInfo{
-			BytesReserve:      []byte{0x08, 0x00, 0x38, 0x00},
-			BytesPbReserve:    binary.Empty,
-			BytesGeneralFlags: []byte{0x9a, 0x01, 0x0b, 0xaa, 0x03, 0x08, 0x08, 0x04, 0x12, 0x04, 0x00, 0x00, 0x00, 0x00},
+			Reserve:      []byte{0x08, 0x00, 0x38, 0x00},
+			PbReserve:    binary.Empty,
+			GeneralFlags: []byte{0x9a, 0x01, 0x0b, 0xaa, 0x03, 0x08, 0x08, 0x04, 0x12, 0x04, 0x00, 0x00, 0x00, 0x00},
 		},
 	}, fstream{stream: voice.Stream, size: voice.Size, md5: voice.Md5, sha1: voice.Sha1})
 	if e != nil {

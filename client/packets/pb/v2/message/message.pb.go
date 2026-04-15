@@ -106,39 +106,39 @@ type CustomFace struct {
 }
 
 type RichMsg struct {
-	BytesTemplate1 []byte               `protobuf:"bytes,1,opt"`
-	ServiceId      proto.Option[uint32] `protobuf:"varint,2,opt"`
-	BytesMsgResid  []byte               `protobuf:"bytes,3,opt"`
-	Rand           proto.Option[uint32] `protobuf:"varint,4,opt"`
-	Seq            proto.Option[uint32] `protobuf:"varint,5,opt"`
-	Flags          proto.Option[uint32] `protobuf:"varint,6,opt"`
+	Template1 []byte               `protobuf:"bytes,1,opt"`
+	ServiceId proto.Option[uint32] `protobuf:"varint,2,opt"`
+	MsgResid  []byte               `protobuf:"bytes,3,opt"`
+	Rand      proto.Option[uint32] `protobuf:"varint,4,opt"`
+	Seq       proto.Option[uint32] `protobuf:"varint,5,opt"`
+	Flags     proto.Option[uint32] `protobuf:"varint,6,opt"`
 }
 
 type VideoFile struct {
-	FileUuid               proto.Option[string] `protobuf:"bytes,1,opt"`
-	FileMd5                []byte               `protobuf:"bytes,2,opt"`
-	FileName               proto.Option[string] `protobuf:"bytes,3,opt"`
-	FileFormat             proto.Option[int32]  `protobuf:"varint,4,opt"`
-	FileTime               proto.Option[int32]  `protobuf:"varint,5,opt"`
-	FileSize               proto.Option[int32]  `protobuf:"varint,6,opt"`
-	ThumbWidth             proto.Option[int32]  `protobuf:"varint,7,opt"`
-	ThumbHeight            proto.Option[int32]  `protobuf:"varint,8,opt"`
-	ThumbFileMd5           []byte               `protobuf:"bytes,9,opt"`
-	Source                 []byte               `protobuf:"bytes,10,opt"`
-	ThumbFileSize          proto.Option[int32]  `protobuf:"varint,11,opt"`
-	BusiType               proto.Option[int32]  `protobuf:"varint,12,opt"`
-	FromChatType           proto.Option[int32]  `protobuf:"varint,13,opt"`
-	ToChatType             proto.Option[int32]  `protobuf:"varint,14,opt"`
-	BoolSupportProgressive proto.Option[bool]   `protobuf:"varint,15,opt"`
-	FileWidth              proto.Option[int32]  `protobuf:"varint,16,opt"`
-	FileHeight             proto.Option[int32]  `protobuf:"varint,17,opt"`
-	SubBusiType            proto.Option[int32]  `protobuf:"varint,18,opt"`
-	VideoAttr              proto.Option[int32]  `protobuf:"varint,19,opt"`
-	BytesThumbFileUrls     [][]byte             `protobuf:"bytes,20,rep"`
-	BytesVideoFileUrls     [][]byte             `protobuf:"bytes,21,rep"`
-	ThumbDownloadFlag      proto.Option[int32]  `protobuf:"varint,22,opt"`
-	VideoDownloadFlag      proto.Option[int32]  `protobuf:"varint,23,opt"`
-	PbReserve              []byte               `protobuf:"bytes,24,opt"`
+	FileUuid           proto.Option[string] `protobuf:"bytes,1,opt"`
+	FileMd5            []byte               `protobuf:"bytes,2,opt"`
+	FileName           proto.Option[string] `protobuf:"bytes,3,opt"`
+	FileFormat         proto.Option[int32]  `protobuf:"varint,4,opt"`
+	FileTime           proto.Option[int32]  `protobuf:"varint,5,opt"`
+	FileSize           proto.Option[int32]  `protobuf:"varint,6,opt"`
+	ThumbWidth         proto.Option[int32]  `protobuf:"varint,7,opt"`
+	ThumbHeight        proto.Option[int32]  `protobuf:"varint,8,opt"`
+	ThumbFileMd5       []byte               `protobuf:"bytes,9,opt"`
+	Source             []byte               `protobuf:"bytes,10,opt"`
+	ThumbFileSize      proto.Option[int32]  `protobuf:"varint,11,opt"`
+	BusiType           proto.Option[int32]  `protobuf:"varint,12,opt"`
+	FromChatType       proto.Option[int32]  `protobuf:"varint,13,opt"`
+	ToChatType         proto.Option[int32]  `protobuf:"varint,14,opt"`
+	SupportProgressive proto.Option[bool]   `protobuf:"varint,15,opt"`
+	FileWidth          proto.Option[int32]  `protobuf:"varint,16,opt"`
+	FileHeight         proto.Option[int32]  `protobuf:"varint,17,opt"`
+	SubBusiType        proto.Option[int32]  `protobuf:"varint,18,opt"`
+	VideoAttr          proto.Option[int32]  `protobuf:"varint,19,opt"`
+	ThumbFileUrls      [][]byte             `protobuf:"bytes,20,rep"`
+	VideoFileUrls      [][]byte             `protobuf:"bytes,21,rep"`
+	ThumbDownloadFlag  proto.Option[int32]  `protobuf:"varint,22,opt"`
+	VideoDownloadFlag  proto.Option[int32]  `protobuf:"varint,23,opt"`
+	PbReserve          []byte               `protobuf:"bytes,24,opt"`
 }
 
 type SourceMsg struct {
@@ -156,8 +156,8 @@ type SourceMsg struct {
 }
 
 type LightAppElem struct {
-	BytesData     []byte `protobuf:"bytes,1,opt"`
-	BytesMsgResid []byte `protobuf:"bytes,2,opt"`
+	Data     []byte `protobuf:"bytes,1,opt"`
+	MsgResid []byte `protobuf:"bytes,2,opt"`
 }
 
 type CommonElem struct {

@@ -32,7 +32,7 @@ type NTHighwayIPv4 struct {
 
 type NTHighwayDomain struct {
 	IsEnable proto.Option[bool]   `protobuf:"varint,1,opt"`
-	IP       proto.Option[string] `protobuf:"bytes,2,opt"`
+	Ip       proto.Option[string] `protobuf:"bytes,2,opt"`
 	_        [0]func()
 }
 
@@ -174,9 +174,9 @@ type MsgInfoBody struct {
 }
 
 type HashSum struct {
-	BytesPbReserveC2C *C2CSource   `protobuf:"bytes,201,opt"`
-	TroopSource       *TroopSource `protobuf:"bytes,202,opt"`
-	_                 [0]func()
+	PbReserveC2C *C2CSource   `protobuf:"bytes,201,opt"` // bytes
+	TroopSource  *TroopSource `protobuf:"bytes,202,opt"`
+	_            [0]func()
 }
 
 type C2CSource struct {
@@ -213,31 +213,31 @@ type ExtBizInfo struct {
 }
 
 type PttExtBizInfo struct {
-	SrcUin            proto.Option[uint64] `protobuf:"varint,1,opt"`
-	PttScene          proto.Option[uint32] `protobuf:"varint,2,opt"`
-	PttType           proto.Option[uint32] `protobuf:"varint,3,opt"`
-	ChangeVoice       proto.Option[uint32] `protobuf:"varint,4,opt"`
-	Waveform          []byte               `protobuf:"bytes,5,opt"`
-	AutoConvertText   proto.Option[uint32] `protobuf:"varint,6,opt"`
-	BytesReserve      []byte               `protobuf:"bytes,11,opt"`
-	BytesPbReserve    []byte               `protobuf:"bytes,12,opt"`
-	BytesGeneralFlags []byte               `protobuf:"bytes,13,opt"`
+	SrcUin          proto.Option[uint64] `protobuf:"varint,1,opt"`
+	PttScene        proto.Option[uint32] `protobuf:"varint,2,opt"`
+	PttType         proto.Option[uint32] `protobuf:"varint,3,opt"`
+	ChangeVoice     proto.Option[uint32] `protobuf:"varint,4,opt"`
+	Waveform        []byte               `protobuf:"bytes,5,opt"`
+	AutoConvertText proto.Option[uint32] `protobuf:"varint,6,opt"`
+	Reserve         []byte               `protobuf:"bytes,11,opt"`
+	PbReserve       []byte               `protobuf:"bytes,12,opt"`
+	GeneralFlags    []byte               `protobuf:"bytes,13,opt"`
 }
 
 type VideoExtBizInfo struct {
-	FromScene      proto.Option[uint32] `protobuf:"varint,1,opt"`
-	ToScene        proto.Option[uint32] `protobuf:"varint,2,opt"`
-	BytesPbReserve []byte               `protobuf:"bytes,3,opt"`
+	FromScene proto.Option[uint32] `protobuf:"varint,1,opt"`
+	ToScene   proto.Option[uint32] `protobuf:"varint,2,opt"`
+	PbReserve []byte               `protobuf:"bytes,3,opt"`
 }
 
 type PicExtBizInfo struct {
-	BizType             proto.Option[uint32] `protobuf:"varint,1,opt"`
-	TextSummary         proto.Option[string] `protobuf:"bytes,2,opt"`
-	BytesPbReserveC2C   []byte               `protobuf:"bytes,11,opt"`
-	BytesPbReserveTroop []byte               `protobuf:"bytes,12,opt"`
-	FromScene           proto.Option[uint32] `protobuf:"varint,1001,opt"`
-	ToScene             proto.Option[uint32] `protobuf:"varint,1002,opt"`
-	OldFileId           proto.Option[uint32] `protobuf:"varint,1003,opt"`
+	BizType        proto.Option[uint32] `protobuf:"varint,1,opt"`
+	TextSummary    proto.Option[string] `protobuf:"bytes,2,opt"`
+	PbReserveC2C   []byte               `protobuf:"bytes,11,opt"`
+	PbReserveTroop []byte               `protobuf:"bytes,12,opt"`
+	FromScene      proto.Option[uint32] `protobuf:"varint,1001,opt"`
+	ToScene        proto.Option[uint32] `protobuf:"varint,1002,opt"`
+	OldFileId      proto.Option[uint32] `protobuf:"varint,1003,opt"`
 }
 
 type DownloadSafeReq struct {
@@ -332,20 +332,20 @@ type DownloadInfo struct {
 }
 
 type IPv4 struct {
-	OutIP   proto.Option[uint32] `protobuf:"varint,1,opt"`
+	OutIp   proto.Option[uint32] `protobuf:"varint,1,opt"`
 	OutPort proto.Option[uint32] `protobuf:"varint,2,opt"`
-	InIP    proto.Option[uint32] `protobuf:"varint,3,opt"`
+	InIp    proto.Option[uint32] `protobuf:"varint,3,opt"`
 	InPort  proto.Option[uint32] `protobuf:"varint,4,opt"`
-	IPType  proto.Option[uint32] `protobuf:"varint,5,opt"`
+	IpType  proto.Option[uint32] `protobuf:"varint,5,opt"`
 	_       [0]func()
 }
 
 type IPv6 struct {
-	OutIP   []byte               `protobuf:"bytes,1,opt"`
+	OutIp   []byte               `protobuf:"bytes,1,opt"`
 	OutPort proto.Option[uint32] `protobuf:"varint,2,opt"`
-	InIP    []byte               `protobuf:"bytes,3,opt"`
+	InIp    []byte               `protobuf:"bytes,3,opt"`
 	InPort  proto.Option[uint32] `protobuf:"varint,4,opt"`
-	IPType  proto.Option[uint32] `protobuf:"varint,5,opt"`
+	IpType  proto.Option[uint32] `protobuf:"varint,5,opt"`
 }
 
 type UploadResp struct {

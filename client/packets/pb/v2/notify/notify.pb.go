@@ -48,7 +48,7 @@ type GroupChange struct {
 	GroupUin  proto.Option[uint32] `protobuf:"varint,1,opt"`
 	Flag      proto.Option[uint32] `protobuf:"varint,2,opt"`
 	MemberUid proto.Option[string] `protobuf:"bytes,3,opt"`
-	Type      proto.Option[uint32] `protobuf:"varint,4,opt"` // DecreaseType 131 invitor 130 operator
+	Type      proto.Option[uint32] `protobuf:"varint,4,opt"`
 	Operator  []byte               `protobuf:"bytes,5,opt"`
 	Field6    proto.Option[uint32] `protobuf:"varint,6,opt"`
 	Field7    []byte               `protobuf:"bytes,7,opt"`
@@ -163,20 +163,22 @@ type GroupRecallNudge struct {
 	_           [0]func()
 }
 
+// fix
 type NotifyMessageBody struct {
 	NotifyType       proto.Option[uint32] `protobuf:"varint,1,opt"`
 	GroupUin         proto.Option[int64]  `protobuf:"varint,4,opt"`
-	EventParam       []byte               `protobuf:"bytes,5,opt"`
+	EventParam       []byte               `protobuf:"bytes,5,opt"` // AIOGrayTipsInfo
+	RedTips          []byte               `protobuf:"bytes,9,opt"` // RedGrayTipsInfo
 	Recall           *GroupRecall         `protobuf:"bytes,11,opt"`
 	SubType          proto.Option[uint32] `protobuf:"varint,13,opt"`
 	OperatorUid      proto.Option[string] `protobuf:"bytes,21,opt"`
 	GeneralGrayTip   *GeneralGrayTipInfo  `protobuf:"bytes,26,opt"`
+	EssenceMessage   *EssenceMessage      `protobuf:"bytes,33,opt"`
 	MsgSequence      proto.Option[uint64] `protobuf:"varint,37,opt"`
 	Field39          proto.Option[uint32] `protobuf:"varint,39,opt"`
 	GroupRecallNudge *GroupRecallNudge    `protobuf:"bytes,40,opt"`
 	Reaction         *GroupReactionData0  `protobuf:"bytes,44,opt"`
 	TipsSeqId        proto.Option[uint64] `protobuf:"varint,50,opt"`
-	EssenceMessage   *EssenceMessage      `protobuf:"bytes,33,opt"`
 }
 
 type GeneralGrayTipInfo struct {

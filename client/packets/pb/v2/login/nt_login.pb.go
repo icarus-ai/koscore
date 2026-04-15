@@ -70,13 +70,13 @@ type NTLoginLongCookie struct {
 }
 
 type NTLoginErrorInfo struct {
-	ErrCode        proto.Option[uint64] `protobuf:"varint,1,opt"`
-	StrTipsTitle   proto.Option[string] `protobuf:"bytes,2,opt"`
-	StrTipsContent proto.Option[string] `protobuf:"bytes,3,opt"`
-	StrJumpWording proto.Option[string] `protobuf:"bytes,4,opt"`
-	StrJumpUrl     proto.Option[string] `protobuf:"bytes,5,opt"`
-	MsgDetail      *NTLoginErrorDetail  `protobuf:"bytes,6,opt"`
-	RptMsgButton   []*NTLoginButton     `protobuf:"bytes,7,rep"`
+	ErrCode      proto.Option[uint64] `protobuf:"varint,1,opt"`
+	TipsTitle    proto.Option[string] `protobuf:"bytes,2,opt"`
+	TipsContent  proto.Option[string] `protobuf:"bytes,3,opt"`
+	JumpWording  proto.Option[string] `protobuf:"bytes,4,opt"`
+	JumpUrl      proto.Option[string] `protobuf:"bytes,5,opt"`
+	MsgDetail    *NTLoginErrorDetail  `protobuf:"bytes,6,opt"`
+	RptMsgButton []*NTLoginButton     `protobuf:"bytes,7,rep"`
 }
 
 type NTLoginErrorDetail struct {

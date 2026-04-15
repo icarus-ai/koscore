@@ -14,7 +14,7 @@ type SsoSecureInfo struct {
 }
 
 type SsoReserveFields struct {
-	ClientIPCookie []byte               `protobuf:"bytes,8,opt"`
+	ClientIpCookie []byte               `protobuf:"bytes,8,opt"`
 	Flag           proto.Option[uint32] `protobuf:"varint,9,opt"`
 	EnvId          proto.Option[uint32] `protobuf:"varint,10,opt"`
 	LocaleId       proto.Option[uint32] `protobuf:"varint,11,opt"`
@@ -33,6 +33,6 @@ type SsoReserveFields struct {
 	SecSigFlag     proto.Option[uint32] `protobuf:"varint,25,opt"`
 	NtCoreVersion  proto.Option[uint32] `protobuf:"varint,26,opt"`
 	SsoRouteCost   proto.Option[uint32] `protobuf:"varint,27,opt"`
-	SsoIPOrigin    proto.Option[uint32] `protobuf:"varint,28,opt"`
+	SsoIpOrigin    proto.Option[uint32] `protobuf:"varint,28,opt"`
 	PresureToken   []byte               `protobuf:"bytes,30,opt"`
 }

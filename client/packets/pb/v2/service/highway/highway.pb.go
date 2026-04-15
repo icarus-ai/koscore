@@ -8,24 +8,24 @@ import (
 )
 
 type ReqDataHighwayHead struct {
-	MsgBaseHead        *DataHighwayHead     `protobuf:"bytes,1,opt"`
-	MsgSegHead         *SegHead             `protobuf:"bytes,2,opt"`
-	BytesReqExtendInfo []byte               `protobuf:"bytes,3,opt"`
-	Timestamp          proto.Option[uint64] `protobuf:"varint,4,opt"`
-	MsgLoginSigHead    *LoginSigHead        `protobuf:"bytes,5,opt"`
+	MsgBaseHead     *DataHighwayHead     `protobuf:"bytes,1,opt"`
+	MsgSegHead      *SegHead             `protobuf:"bytes,2,opt"`
+	ReqExtendInfo   []byte               `protobuf:"bytes,3,opt"`
+	Timestamp       proto.Option[uint64] `protobuf:"varint,4,opt"`
+	MsgLoginSigHead *LoginSigHead        `protobuf:"bytes,5,opt"`
 }
 
 type RespDataHighwayHead struct {
-	MsgBaseHead        *DataHighwayHead     `protobuf:"bytes,1,opt"`
-	MsgSegHead         *SegHead             `protobuf:"bytes,2,opt"`
-	ErrorCode          proto.Option[uint32] `protobuf:"varint,3,opt"`
-	AllowRetry         proto.Option[uint32] `protobuf:"varint,4,opt"`
-	CacheCost          proto.Option[uint32] `protobuf:"varint,5,opt"`
-	HtCost             proto.Option[uint32] `protobuf:"varint,6,opt"`
-	BytesRspExtendInfo []byte               `protobuf:"bytes,7,opt"`
-	Timestamp          proto.Option[uint64] `protobuf:"varint,8,opt"`
-	Range              proto.Option[uint64] `protobuf:"varint,9,opt"`
-	IsReset            proto.Option[uint32] `protobuf:"varint,10,opt"`
+	MsgBaseHead   *DataHighwayHead     `protobuf:"bytes,1,opt"`
+	MsgSegHead    *SegHead             `protobuf:"bytes,2,opt"`
+	ErrorCode     proto.Option[uint32] `protobuf:"varint,3,opt"`
+	AllowRetry    proto.Option[uint32] `protobuf:"varint,4,opt"`
+	CacheCost     proto.Option[uint32] `protobuf:"varint,5,opt"`
+	HtCost        proto.Option[uint32] `protobuf:"varint,6,opt"`
+	RspExtendInfo []byte               `protobuf:"bytes,7,opt"`
+	Timestamp     proto.Option[uint64] `protobuf:"varint,8,opt"`
+	Range         proto.Option[uint64] `protobuf:"varint,9,opt"`
+	IsReset       proto.Option[uint32] `protobuf:"varint,10,opt"`
 }
 
 type DataHighwayHead struct {
@@ -41,9 +41,9 @@ type DataHighwayHead struct {
 }
 
 type LoginSigHead struct {
-	Uint32LoginSigType proto.Option[uint32] `protobuf:"varint,1,opt"`
-	BytesLoginSig      []byte               `protobuf:"bytes,2,opt"`
-	AppId              proto.Option[uint32] `protobuf:"varint,3,opt"`
+	LoginSigType proto.Option[uint32] `protobuf:"varint,1,opt"`
+	LoginSig     []byte               `protobuf:"bytes,2,opt"`
+	AppId        proto.Option[uint32] `protobuf:"varint,3,opt"`
 }
 
 type SegHead struct {

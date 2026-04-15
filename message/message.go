@@ -209,6 +209,7 @@ func ParseMessageElements(msg []*message.Elem) (res []IMessageElement) {
 				// v2
 				if attr, e := proto.Unmarshal[message.TextResvAttr](elem.Text.PbReserve); e == nil {
 					at.TargetUin = attr.AtMemberUin.Unwrap()
+					// AtType: 1 = mention_all, 2 = mention specific user
 					if attr.AtType.Unwrap() == 2 {
 						at.TargetUid = attr.AtMemberUid.Unwrap()
 					}
@@ -453,8 +454,8 @@ func ParseMessageElements(msg []*message.Elem) (res []IMessageElement) {
 
 		// MultiMsgEntity
 		if elem.RichMsg != nil && elem.RichMsg.ServiceId.Unwrap() == 35 {
-			if elem.RichMsg.BytesTemplate1 != nil {
-				xmlData := binary.ZlibUncompress(elem.RichMsg.BytesTemplate1[1:])
+			if elem.RichMsg.Template1 != nil {
+				xmlData := binary.ZlibUncompress(elem.RichMsg.Template1[1:])
 				var multimsg MultiMessage
 				if err := xml.Unmarshal(xmlData, &multimsg); err == nil {
 					res = append(res, NewForwardWithResID(multimsg.ResId))
@@ -465,13 +466,13 @@ func ParseMessageElements(msg []*message.Elem) (res []IMessageElement) {
 		}
 
 		// LightAppEntity
-		if elem.LightAppElem != nil && len(elem.LightAppElem.BytesData) > 1 {
+		if elem.LightAppElem != nil && len(elem.LightAppElem.Data) > 1 {
 			var content []byte
-			switch elem.LightAppElem.BytesData[0] {
+			switch elem.LightAppElem.Data[0] {
 			case 0:
-				content = elem.LightAppElem.BytesData[1:]
+				content = elem.LightAppElem.Data[1:]
 			case 1:
-				content = binary.ZlibUncompress(elem.LightAppElem.BytesData[1:])
+				content = binary.ZlibUncompress(elem.LightAppElem.Data[1:])
 			}
 			// 解析出错 or 非法内容
 			if len(content) > 0 && len(content) < 1024*1024*1024 {
