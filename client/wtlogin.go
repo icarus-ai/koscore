@@ -5,10 +5,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/kernel-ai/koscore/client/event"
-	login2 "github.com/kernel-ai/koscore/client/packets/pb/v2/login"
 	"github.com/pkg/errors"
 
+	pb_login "github.com/kernel-ai/koscore/client/packets/pb/v2/login"
+
+	"github.com/kernel-ai/koscore/client/event"
 	"github.com/kernel-ai/koscore/client/packets/login"
 	"github.com/kernel-ai/koscore/client/packets/login/login_type"
 	"github.com/kernel-ai/koscore/client/packets/ntlogin"
@@ -170,7 +171,7 @@ func (m *QQClient) easyLogin() (*ntlogin_type.EasyLoginRsp, error) {
 	if e != nil {
 		return nil, errors.Wrap(e, "easy login: parse")
 	}
-	if ret.State == login2.NTLoginRetCode_SUCCESS {
+	if ret.State == pb_login.NTLoginRetCode_SUCCESS {
 		return ret, m.register()
 	}
 	return ret, nil
@@ -188,7 +189,7 @@ func (m *QQClient) UnusualEasyLogin() error {
 	if e != nil {
 		return errors.Wrap(e, "unusual easy login: parse")
 	}
-	if ret.State == login2.NTLoginRetCode_SUCCESS {
+	if ret.State == pb_login.NTLoginRetCode_SUCCESS {
 		return m.register()
 	}
 	return fmt.Errorf("unusual easy login: %s (%s)", ret.Tips.String(), ntlogin_type.NTLoginRetCodeString(ret.State))
@@ -237,9 +238,9 @@ func (m *QQClient) ExchangeEasyLogin() (login_type.LoginState, []byte, error) {
 			return 0, nil, e
 		}
 		switch rsp.State {
-		case login2.NTLoginRetCode_SUCCESS:
+		case pb_login.NTLoginRetCode_SUCCESS:
 			return login_type.LoginSuccess, nil, nil
-		case login2.NTLoginRetCode_ERROR_UNUSUAL_DEVICE:
+		case pb_login.NTLoginRetCode_ERROR_UNUSUAL_DEVICE:
 			if len(rsp.UnusualSigs) > 0 {
 				return 0, rsp.UnusualSigs, nil
 			}

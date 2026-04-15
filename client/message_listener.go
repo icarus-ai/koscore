@@ -1,9 +1,10 @@
 package client
 
 import (
+	pb_msg "github.com/kernel-ai/koscore/client/packets/pb/v2/message"
+
 	"github.com/kernel-ai/koscore/client/event"
 	"github.com/kernel-ai/koscore/client/packets/message/message_type"
-	pb_msg "github.com/kernel-ai/koscore/client/packets/pb/v2/message"
 	"github.com/kernel-ai/koscore/client/packets/pb/v2/notify"
 	"github.com/kernel-ai/koscore/client/packets/structs/sso_type"
 	"github.com/kernel-ai/koscore/client/packets/system"

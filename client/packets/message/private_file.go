@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	pkt_oidb "github.com/kernel-ai/koscore/client/packets/oidb"
+
 	"github.com/kernel-ai/koscore/client/packets/pb/v2/service/operation"
 	"github.com/kernel-ai/koscore/client/packets/structs/sso_type"
 	"github.com/kernel-ai/koscore/message"

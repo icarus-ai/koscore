@@ -5,8 +5,9 @@ import (
 	"errors"
 	"io"
 
-	"github.com/kernel-ai/koscore/client/internal/highway"
 	pkt_oidb "github.com/kernel-ai/koscore/client/packets/oidb"
+
+	"github.com/kernel-ai/koscore/client/internal/highway"
 	"github.com/kernel-ai/koscore/client/packets/pb/v2/service/oidb"
 	"github.com/kernel-ai/koscore/client/packets/structs/sso_type"
 	"github.com/kernel-ai/koscore/message"

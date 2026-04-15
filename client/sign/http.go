@@ -3,10 +3,9 @@ package sign
 import (
 	"encoding/json"
 
+	"github.com/kernel-ai/koscore/utils/comm"
 	"github.com/kernel-ai/koscore/utils/http"
 	"github.com/kernel-ai/koscore/utils/types"
-
-	"github.com/kernel-ai/koscore/utils/comm"
 )
 
 /*

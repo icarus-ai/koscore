@@ -6,6 +6,7 @@ import (
 
 	pkt_msg "github.com/kernel-ai/koscore/client/packets/message"
 	pb_msg "github.com/kernel-ai/koscore/client/packets/pb/v2/message"
+
 	"github.com/kernel-ai/koscore/client/packets/structs/sso_type"
 	"github.com/kernel-ai/koscore/message"
 	"github.com/kernel-ai/koscore/utils/crypto"

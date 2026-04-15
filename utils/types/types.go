@@ -4,8 +4,9 @@ import (
 	"encoding/hex"
 	"fmt"
 
-	"github.com/kernel-ai/koscore/utils"
 	"github.com/pkg/errors"
+
+	"github.com/kernel-ai/koscore/utils"
 )
 
 type Bytes []byte

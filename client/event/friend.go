@@ -1,8 +1,6 @@
 package event
 
-import (
-	"github.com/kernel-ai/koscore/client/packets/pb/v2/notify"
-)
+import "github.com/kernel-ai/koscore/client/packets/pb/v2/notify"
 
 type (
 	NewFriendRequest struct {

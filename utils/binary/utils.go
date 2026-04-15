@@ -11,6 +11,8 @@ import (
 	"sync"
 )
 
+var Empty []byte
+
 type zlibWriter struct {
 	w   *zlib.Writer
 	buf *bytes.Buffer

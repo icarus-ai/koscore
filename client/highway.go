@@ -10,11 +10,11 @@ import (
 	"net/url"
 	"strconv"
 
-	"github.com/RomiChan/protobuf/proto"
 	"github.com/kernel-ai/koscore/client/packets/pb/v2/service/highway"
 	"github.com/kernel-ai/koscore/utils"
 	"github.com/kernel-ai/koscore/utils/binary"
 	"github.com/kernel-ai/koscore/utils/crypto"
+	"github.com/kernel-ai/koscore/utils/proto"
 
 	hw "github.com/kernel-ai/koscore/client/internal/highway"
 	pkt_hw "github.com/kernel-ai/koscore/client/packets/highway"
@@ -122,9 +122,8 @@ func parseHighwayPacket(data io.Reader) (head *highway.RespDataHighwayHead, body
 	}
 	size := body.ReadU32() // head length
 	_ = body.ReadU32()     // body len
-	head = &highway.RespDataHighwayHead{}
 	d := body.ReadBytesNoCopy(int(int64(size)))
-	if e = proto.Unmarshal(d, head); e != nil {
+	if head, e = proto.Unmarshal[highway.RespDataHighwayHead](d); e != nil {
 		return nil, nil, e
 	}
 	if body.ReadBytesNoCopy(1)[0] != 0x29 {

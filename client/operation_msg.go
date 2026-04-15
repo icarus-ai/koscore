@@ -4,6 +4,7 @@ import (
 	"errors"
 
 	pkt_msg "github.com/kernel-ai/koscore/client/packets/message"
+
 	"github.com/kernel-ai/koscore/message"
 )
 
