@@ -1,7 +1,6 @@
 package client
 
 import (
-	"encoding/json"
 	"regexp"
 	"strconv"
 
@@ -124,8 +123,8 @@ func (m *QQClient) decodeOlPushServicePacket_group_notify_msg_0x2DC(subType int3
 		return nil
 	case 0x10, 0x11, 0x14, 0x15: // group notify msg
 		reader := binary.NewReader(msg_content)
-		groupUin := uint64(reader.ReadU32()) // group uin
-		reader.SkipBytes(1)                  // unknown byte
+		group_uin := uint64(reader.ReadU32()) // group uin
+		reader.SkipBytes(1)                   // unknown byte
 
 		pb_data := reader.ReadLengthBytes(prefix.Int16 | prefix.LengthOnly)
 		pb, err := proto.Unmarshal[notify.NotifyMessageBody](pb_data)
@@ -134,20 +133,13 @@ func (m *QQClient) decodeOlPushServicePacket_group_notify_msg_0x2DC(subType int3
 		}
 
 		if pb.Recall != nil {
+			group_uin = uint64(pb.GroupUin.Unwrap())
+			operator_uid := pb.Recall.OperatorUid.Unwrap()
 			for _, rm := range pb.Recall.RecallMessages {
 				if rm.Type.Unwrap() == 2 {
 					continue
 				}
-				ev := &event.GroupRecall{
-					GroupEvent: event.GroupEvent{
-						GroupUin: uint64(pb.GroupUin.Unwrap()),
-						UserUid:  rm.AuthorUid.Unwrap(),
-					},
-					OperatorUid: pb.Recall.OperatorUid.Unwrap(),
-					Sequence:    rm.Sequence.Unwrap(),
-					Time:        int64(rm.Time.Unwrap()),
-					Random:      rm.Random.Unwrap(),
-				}
+				ev := event.ParseGroupRecallEvent(group_uin, operator_uid, rm)
 				_ = m.ResolveUin(ev)
 				m.Events.GroupRecall.dispatch(m, ev)
 			}
@@ -155,7 +147,7 @@ func (m *QQClient) decodeOlPushServicePacket_group_notify_msg_0x2DC(subType int3
 		}
 
 		if pb.GeneralGrayTip != nil {
-			m.grayTipProcessor(groupUin, pkg, pb, pb.GeneralGrayTip)
+			m.grayTipProcessor(group_uin, pkg, pb, pb.GeneralGrayTip)
 			return nil
 		}
 
@@ -167,7 +159,7 @@ func (m *QQClient) decodeOlPushServicePacket_group_notify_msg_0x2DC(subType int3
 			}
 			if tips.LuckyFlag == 1 { // 运气王提示
 				m.Events.GroupNotify.dispatch(m, &event.GroupRedBagLuckyKingNotifyEvent{
-					GroupUin:  groupUin,
+					GroupUin:  group_uin,
 					Sender:    tips.SenderUin,
 					LuckyKing: tips.LuckyUin,
 				})
@@ -183,30 +175,9 @@ func (m *QQClient) decodeOlPushServicePacket_group_notify_msg_0x2DC(subType int3
 			if len(tips.Content) > 0 {
 				switch pb.SubType.Unwrap() {
 				case 6: // GroupMemberSpecialTitle
-					re := regexp.MustCompile(`<({.*?})>`)
-					matches := re.FindAllStringSubmatch(tips.Content, -1)
-					if len(matches) != 2 {
-						return nil
-					}
-					var medalData event.JSONParam
-					if err = json.Unmarshal([]byte(matches[1][1]), &medalData); err != nil {
-						return nil
-					}
-					m.Events.MemberSpecialTitleUpdated.dispatch(m, &event.MemberSpecialTitleUpdated{
-						GroupEvent: event.GroupEvent{
-							GroupUin: groupUin,
-							UserUin:  tips.ReceiverUin,
-						},
-						NewTitle: medalData.Text,
-					})
+					m.Events.MemberSpecialTitleUpdated.dispatch(m, event.ParseGroupMemberSpecialTitleUpdatedEvent(tips, group_uin))
 				case 12: // group name update
-					ev := &event.GroupNameUpdated{
-						GroupEvent: event.GroupEvent{
-							GroupUin: groupUin,
-							UserUid:  pb.OperatorUid.Unwrap(),
-						},
-						NewName: tips.Content,
-					}
+					ev := event.ParseGroupNameUpdatedEvent(group_uin, pb.OperatorUid.Unwrap(), tips.Content)
 					_ = m.ResolveUin(ev)
 					m.Events.GroupNameUpdated.dispatch(m, ev)
 				}
@@ -215,7 +186,7 @@ func (m *QQClient) decodeOlPushServicePacket_group_notify_msg_0x2DC(subType int3
 		// ***** HAS_OLD_CODE END *****
 
 		if pb.EssenceMessage != nil {
-			// pb.ServiceType == 27 // essence
+			// pb.SubType == 27 // essence
 			ev := event.ParseGroupDigestEvent(pb.EssenceMessage)
 			//_ = m.ResolveUin(ev)
 			m.Events.GroupDigest.dispatch(m, ev)
@@ -223,7 +194,7 @@ func (m *QQClient) decodeOlPushServicePacket_group_notify_msg_0x2DC(subType int3
 		}
 
 		if pb.GroupRecallNudge != nil {
-			// pb.ServiceType == 32 // group recall poke
+			// pb.SubType == 32 // group recall poke
 			ev := &event.GroupPokeRecallEvent{
 				GroupEvent: event.GroupEvent{
 					GroupUin: uint64(pb.GroupRecallNudge.GroupUin.Unwrap()),
@@ -236,18 +207,8 @@ func (m *QQClient) decodeOlPushServicePacket_group_notify_msg_0x2DC(subType int3
 		}
 
 		if pb.Reaction != nil {
-			// pb.ServiceType == 13 // group reaction
-			ev := &event.GroupReactionEvent{
-				GroupEvent: event.GroupEvent{
-					GroupUin: uint64(pb.GroupUin.Unwrap()),
-					UserUid:  pb.Reaction.Data.Data.Data.OperatorUid.Unwrap(),
-				},
-				TargetSeq: pb.Reaction.Data.Data.Target.Sequence.Unwrap(),
-				IsAdd:     pb.Reaction.Data.Data.Data.Type.Unwrap() == 1,
-				Code:      pb.Reaction.Data.Data.Data.Code.Unwrap(),
-				Count:     pb.Reaction.Data.Data.Data.CurrentCount.Unwrap(),
-			}
-			ev.IsEmoji = len(ev.Code) > 3
+			// pb.SubType == 13 // group reaction
+			ev := event.ParseGroupReactionEvent(pb)
 			_ = m.ResolveUin(ev)
 			m.Events.GroupReaction.dispatch(m, ev)
 			return nil

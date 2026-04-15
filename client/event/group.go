@@ -153,13 +153,11 @@ func (g *GroupNameUpdated) ResolveUin(f func(uid string, groupUin ...uint64) uin
 	g.UserUin = f(g.UserUid, g.GroupUin)
 }
 
-func ParseGroupNameUpdatedEvent(event *notify.NotifyMessageBody, groupName string) *GroupNameUpdated {
+func ParseGroupNameUpdatedEvent(group_uin uint64, operator_uid string, groupName string) *GroupNameUpdated {
 	return &GroupNameUpdated{
-		NewName: groupName,
-		GroupEvent: GroupEvent{
-			GroupUin: uint64(event.GroupUin.Unwrap()),
-			UserUid:  event.OperatorUid.Unwrap(),
-		}}
+		NewName:    groupName,
+		GroupEvent: GroupEvent{GroupUin: group_uin, UserUid: operator_uid},
+	}
 }
 
 func (g *GroupMemberJoinRequest) ResolveUin(f func(uid string, groupUin ...uint64) uint64) {
@@ -234,15 +232,14 @@ func (g *GroupRecall) ResolveUin(f func(uid string, groupUin ...uint64) uint64) 
 	g.UserUin = f(g.UserUid, g.GroupUin)
 }
 
-func ParseGroupRecallEvent(event *notify.NotifyMessageBody) *GroupRecall {
-	info := event.Recall.RecallMessages[0]
+func ParseGroupRecallEvent(group_uin uint64, operator_uid string, info *notify.RecallMessage) *GroupRecall {
 	return &GroupRecall{
-		OperatorUid: event.Recall.OperatorUid.Unwrap(),
+		OperatorUid: operator_uid,
 		Sequence:    info.Sequence.Unwrap(),
 		Time:        int64(info.Time.Unwrap()),
 		Random:      info.Random.Unwrap(),
 		GroupEvent: GroupEvent{
-			GroupUin: uint64(event.GroupUin.Unwrap()),
+			GroupUin: group_uin,
 			UserUid:  info.AuthorUid.Unwrap(),
 		}}
 }
@@ -277,7 +274,7 @@ func ParseGroupDigestEvent(event *notify.EssenceMessage) *GroupDigestEvent {
 		}}
 }
 
-func ParseGroupMemberSpecialTitleUpdatedEvent(event *notify.GroupSpecialTitle, groupUin uint64) *MemberSpecialTitleUpdated {
+func ParseGroupMemberSpecialTitleUpdatedEvent(event *notify.AIOGrayTipsInfo, groupUin uint64) *MemberSpecialTitleUpdated {
 	re := regexp.MustCompile(`<({.*?})>`)
 	matches := re.FindAllStringSubmatch(event.Content, -1)
 	if len(matches) != 2 {
@@ -288,11 +285,9 @@ func ParseGroupMemberSpecialTitleUpdatedEvent(event *notify.GroupSpecialTitle, g
 		return nil
 	}
 	return &MemberSpecialTitleUpdated{
-		NewTitle: medalData.Text,
-		GroupEvent: GroupEvent{
-			GroupUin: groupUin,
-			UserUin:  uint64(event.TargetUin),
-		}}
+		NewTitle:   medalData.Text,
+		GroupEvent: GroupEvent{GroupUin: groupUin, UserUin: event.ReceiverUin},
+	}
 }
 
 func (g *GroupReactionEvent) ResolveUin(f func(uid string, groupUin ...uint64) uint64) {
@@ -300,15 +295,16 @@ func (g *GroupReactionEvent) ResolveUin(f func(uid string, groupUin ...uint64) u
 }
 
 func ParseGroupReactionEvent(event *notify.NotifyMessageBody) *GroupReactionEvent {
-	code := event.Reaction.Data.Data.Data.Code.Unwrap()
+	reaction := event.Reaction.Data.Data
+	code := reaction.Data.Code.Unwrap()
 	return &GroupReactionEvent{
-		TargetSeq: event.Reaction.Data.Data.Target.Sequence.Unwrap(),
-		IsAdd:     event.Reaction.Data.Data.Data.Type.Unwrap() == 1,
+		TargetSeq: reaction.Target.Sequence.Unwrap(),
+		IsAdd:     reaction.Data.Type.Unwrap() == 1,
 		IsEmoji:   len(code) > 3,
 		Code:      code,
-		Count:     event.Reaction.Data.Data.Data.CurrentCount.Unwrap(),
+		Count:     reaction.Data.CurrentCount.Unwrap(),
 		GroupEvent: GroupEvent{
 			GroupUin: uint64(event.GroupUin.Unwrap()),
-			UserUid:  event.Reaction.Data.Data.Data.OperatorUid.Unwrap(),
+			UserUid:  reaction.Data.OperatorUid.Unwrap(),
 		}}
 }
