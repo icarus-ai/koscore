@@ -10,7 +10,7 @@ import (
 type KeyExchangeRequest struct {
 	PublicKey  []byte               `protobuf:"bytes,1,opt"`
 	Type       proto.Option[uint32] `protobuf:"varint,2,opt"`
-	Secret     []byte               `protobuf:"bytes,3,opt"`
+	Secret     []byte               `protobuf:"bytes,3,opt"` // buf_secret
 	Timestamp  proto.Option[int64]  `protobuf:"varint,4,opt"`
 	VerifyHash []byte               `protobuf:"bytes,5,opt"`
 }

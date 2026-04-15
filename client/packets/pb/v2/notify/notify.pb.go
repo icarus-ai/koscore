@@ -48,7 +48,7 @@ type GroupChange struct {
 	GroupUin  proto.Option[uint32] `protobuf:"varint,1,opt"`
 	Flag      proto.Option[uint32] `protobuf:"varint,2,opt"`
 	MemberUid proto.Option[string] `protobuf:"bytes,3,opt"`
-	Type      proto.Option[uint32] `protobuf:"varint,4,opt"`
+	Type      proto.Option[uint32] `protobuf:"varint,4,opt"` // DecreaseType 131 invitor 130 operator
 	Operator  []byte               `protobuf:"bytes,5,opt"`
 	Field6    proto.Option[uint32] `protobuf:"varint,6,opt"`
 	Field7    []byte               `protobuf:"bytes,7,opt"`
