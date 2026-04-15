@@ -5,9 +5,9 @@ import (
 
 	pkt_msg "github.com/kernel-ai/koscore/client/packets/message"
 	pb_msg "github.com/kernel-ai/koscore/client/packets/pb/v2/message"
-	pb_hw "github.com/kernel-ai/koscore/client/packets/pb/v2/service/operation"
-
 	"github.com/kernel-ai/koscore/client/packets/pb/v2/service/oidb"
+	"github.com/kernel-ai/koscore/client/packets/pb/v2/service/operation"
+
 	"github.com/kernel-ai/koscore/message"
 	"github.com/kernel-ai/koscore/utils"
 	"github.com/kernel-ai/koscore/utils/crypto"
@@ -33,7 +33,7 @@ func (m *QQClient) UploadGroupImage(gin uint64, image *message.ImageElement) (*m
 		return nil, err
 	}
 	if md5, ext := pkt_msg.NTV2RICH_MEDIA_IMAGE.CommonGenerateHighwayExt(upload, image.Stream, image.Size, nil); ext != nil {
-		//m.LOGD("group image upload ukey: %s", ukey)
+		//m.LOGD("group image upload ukey: %s", upload.UKey.Unwrap())
 		if err = m.highwayUpload(1004, image.Stream, uint64(image.Size), md5, ext); err != nil {
 			return nil, err
 		}
@@ -68,7 +68,7 @@ func (m *QQClient) UploadPrivateImage(uin uint64, image *message.ImageElement) (
 			return nil, err
 		}
 	}
-	image.CompatFace, _ = proto.Unmarshal[pb_msg.CustomFace](upload.CompatQMsg)
+	image.CompatImage, _ = proto.Unmarshal[pb_msg.NotOnlineImage](upload.CompatQMsg)
 	image.MsgInfo = upload.MsgInfo
 	image.FileUuid = upload.MsgInfo.MsgInfoBody[0].Index.FileUuid.Unwrap()
 	return image, nil
@@ -84,6 +84,7 @@ func (m *QQClient) UploadGroupShortVideo(gin uint64, video *message.ShortVideoEl
 	}
 	defer utils.CloseIO(video.Stream)
 	defer utils.CloseIO(video.Thumb.Stream)
+	video.IsGroup = true
 	pkt, err := pkt_msg.BuildGroupVideoUploadPacket(gin, video)
 	if err != nil {
 		return nil, err
@@ -128,6 +129,7 @@ func (m *QQClient) UploadPrivateShortVideo(uin uint64, video *message.ShortVideo
 	}
 	defer utils.CloseIO(video.Stream)
 	defer utils.CloseIO(video.Thumb.Stream)
+	video.IsGroup = false
 	pkt, err := pkt_msg.BuildPrivateVideoUploadPacket(m.GetUid(uin), video)
 	if err != nil {
 		return nil, err
@@ -170,6 +172,7 @@ func (m *QQClient) UploadGroupRecord(gin uint64, voice *message.VoiceElement) (*
 		return nil, errors.New("voice is nil")
 	}
 	defer utils.CloseIO(voice.Stream)
+	voice.IsGroup = true
 	pkt, err := pkt_msg.BuildGroupRecordUploadPacket(gin, voice)
 	if err != nil {
 		return nil, err
@@ -201,6 +204,7 @@ func (m *QQClient) UploadPrivateRecord(uin uint64, voice *message.VoiceElement) 
 		return nil, errors.New("voice is nil")
 	}
 	defer utils.CloseIO(voice.Stream)
+	voice.IsGroup = false
 	pkt, err := pkt_msg.BuildPrivateRecordUploadPacket(m.GetUid(uin), voice)
 	if err != nil {
 		return nil, err
@@ -319,7 +323,7 @@ func (m *QQClient) UploadGroupFile(gin uint64, file *message.FileElement, parent
 
 	if !upload.FileExist.Unwrap() {
 		ext, err := build_highway_file_ex(m.Uin(), gin, 0,
-			&pb_hw.ExcitingFileEntry{
+			&operation.ExcitingFileEntry{
 				FileSize:  proto.Some(int64(file.FileSize)),
 				Md5:       file.FileMd5,
 				CheckKey:  upload.CheckKey,
@@ -366,7 +370,7 @@ func (m *QQClient) UploadPrivateFile(uin uint64, file *message.FileElement) (*me
 
 	if !upload.FileExist.Unwrap() {
 		ext, err := build_highway_file_ex(m.Uin(), 0, 1,
-			&pb_hw.ExcitingFileEntry{
+			&operation.ExcitingFileEntry{
 				FileSize:  proto.Some(int64(file.FileSize)),
 				Md5:       file.FileMd5,
 				CheckKey:  file.FileSha1,
@@ -387,18 +391,18 @@ func (m *QQClient) UploadPrivateFile(uin uint64, file *message.FileElement) (*me
 	return file, nil
 }
 
-func build_highway_file_ex(bot_uin, gin uint64, field200 int32, entry *pb_hw.ExcitingFileEntry, file_name string, ip string, port uint32) ([]byte, error) {
-	return proto.Marshal(&pb_hw.FileUploadExt{
+func build_highway_file_ex(bot_uin, gin uint64, field200 int32, entry *operation.ExcitingFileEntry, file_name string, ip string, port uint32) ([]byte, error) {
+	return proto.Marshal(&operation.FileUploadExt{
 		Unknown1: proto.Some[int32](100),
 		Unknown2: proto.Some[int32](1),
 		//Unknown200: field200,
-		Entry: &pb_hw.FileUploadEntry{
-			BusiBuff: &pb_hw.ExcitingBusiInfo{
+		Entry: &operation.FileUploadEntry{
+			BusiBuff: &operation.ExcitingBusiInfo{
 				SenderUin:   proto.Some(int64(bot_uin)),
 				ReceiverUin: proto.Some(int64(gin)),
 				GroupCode:   proto.Some(int64(gin)),
 			},
-			ClientInfo: &pb_hw.ExcitingClientInfo{
+			ClientInfo: &operation.ExcitingClientInfo{
 				ClientType:   proto.Some[int32](3),
 				AppId:        proto.Some("100"),
 				TerminalType: proto.Some[int32](3),
@@ -406,11 +410,11 @@ func build_highway_file_ex(bot_uin, gin uint64, field200 int32, entry *pb_hw.Exc
 				Unknown:      proto.Some[int32](4),
 			},
 			FileEntry:    entry,
-			FileNameInfo: &pb_hw.ExcitingFileNameInfo{FileName: proto.Some(file_name)},
-			Host: &pb_hw.ExcitingHostConfig{
-				Hosts: []*pb_hw.ExcitingHostInfo{{
+			FileNameInfo: &operation.ExcitingFileNameInfo{FileName: proto.Some(file_name)},
+			Host: &operation.ExcitingHostConfig{
+				Hosts: []*operation.ExcitingHostInfo{{
 					Port: proto.Some[uint32](port),
-					Url:  &pb_hw.ExcitingUrlInfo{Unknown: proto.Some[int32](1), Host: proto.Some(ip)},
+					Url:  &operation.ExcitingUrlInfo{Unknown: proto.Some[int32](1), Host: proto.Some(ip)},
 				}}}},
 	})
 }

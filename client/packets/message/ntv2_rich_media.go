@@ -7,7 +7,6 @@ import (
 
 	"github.com/kernel-ai/koscore/client/internal/highway"
 	pkt_oidb "github.com/kernel-ai/koscore/client/packets/oidb"
-
 	"github.com/kernel-ai/koscore/client/packets/pb/v2/service/oidb"
 	"github.com/kernel-ai/koscore/client/packets/structs/sso_type"
 	"github.com/kernel-ai/koscore/message"
@@ -52,7 +51,7 @@ func (typ ntv2_rich_media) CommonGenerateHighwayExt(upload *oidb.UploadResp, str
 			UKey:        upload.UKey,
 			Network:     typ.common_ConvertIPv4(upload.IPv4S),
 			MsgInfoBody: upload.MsgInfo.MsgInfoBody,
-			BlockSize:   proto.Some(io_size),
+			BlockSize:   proto.Some(uint32(highway.BlockSize)),
 			Hash:        hash,
 		})
 		return
@@ -68,7 +67,7 @@ func (typ ntv2_rich_media) CommonGenerateHighwayExt(upload *oidb.UploadResp, str
 		UKey:        subFileInfo.UKey,
 		Network:     typ.common_ConvertIPv4(subFileInfo.IPv4S),
 		MsgInfoBody: upload.MsgInfo.MsgInfoBody,
-		BlockSize:   proto.Some(io_size),
+		BlockSize:   proto.Some(uint32(highway.BlockSize)),
 		Hash:        &oidb.NTHighwayHash{FileSha1: [][]byte{sha}},
 	})
 	return
@@ -117,17 +116,17 @@ func (typ ntv2_rich_media) build_scene(id any) *oidb.SceneInfo {
 	return scene
 }
 
-func (typ ntv2_rich_media) build_file(stream io.ReadSeeker, io_size uint32, md5, sha1 []byte) (*oidb.FileInfo, error) {
-	md5str := hex.EncodeToString(md5)
+func (typ ntv2_rich_media) build_file(fs fstream) (*oidb.FileInfo, error) {
+	md5str := hex.EncodeToString(fs.md5)
 
 	info := &oidb.FileInfo{
-		FileSize: proto.Some(io_size),
+		FileSize: proto.Some(fs.size),
 		FileHash: proto.Some(md5str),
-		FileSha1: proto.Some(hex.EncodeToString(sha1)),
+		FileSha1: proto.Some(hex.EncodeToString(fs.sha1)),
 	}
 	switch typ {
 	case NTV2RICH_MEDIA_IMAGE:
-		format, size, err := utils.ImageResolve(stream)
+		format, size, err := utils.ImageResolve(fs.stream)
 		if err != nil {
 			return nil, err
 		}
@@ -144,7 +143,7 @@ func (typ ntv2_rich_media) build_file(stream io.ReadSeeker, io_size uint32, md5,
 		info.Type = &oidb.FileType{Type: proto.Some[uint32](2)}
 		info.FileName = proto.Some(md5str + ".mp4") // default to mp4
 	case NTV2RICH_MEDIA_RECORD:
-		audio_info, err := audio.Decode(stream)
+		audio_info, err := audio.Decode(fs.stream)
 		if err != nil {
 			return nil, err
 		}
@@ -168,13 +167,13 @@ type fstream struct {
 
 func (typ ntv2_rich_media) build_upload(id any, ext *oidb.ExtBizInfo, fsinfo ...fstream) (*oidb.NTV2RichMediaReq, error) {
 	var files []*oidb.UploadInfo
-	file, err := typ.build_file(fsinfo[0].stream, fsinfo[0].size, fsinfo[0].md5, fsinfo[0].sha1)
+	file, err := typ.build_file(fsinfo[0])
 	if err != nil {
 		return nil, err
 	}
 	files = append(files, &oidb.UploadInfo{FileInfo: file, SubFileType: proto.Some(fsinfo[0].sub_type)})
 	if len(fsinfo) == 2 { // video thumb sub_file_type 100
-		if file, err = NTV2RICH_MEDIA_IMAGE.build_file(fsinfo[1].stream, fsinfo[1].size, fsinfo[1].md5, fsinfo[1].sha1); err != nil {
+		if file, err = NTV2RICH_MEDIA_IMAGE.build_file(fsinfo[1]); err != nil {
 			return nil, err
 		}
 		files = append(files, &oidb.UploadInfo{FileInfo: file, SubFileType: proto.Some(fsinfo[1].sub_type)})

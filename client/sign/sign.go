@@ -3,6 +3,8 @@ package sign
 import (
 	"errors"
 	"math"
+
+	"github.com/kernel-ai/koscore/utils/comm"
 )
 
 const serverLatencyDown = math.MaxUint32
@@ -18,9 +20,11 @@ var (
 var signMap map[string]uint8 // 只在启动时初始化, 无并发问题
 
 func ContainSignPKG(cmd string) bool {
-	//_, ok := signMap[cmd]
-	//return ok
-	return true
+	_, ok := signMap[cmd]
+	if !ok {
+		comm.LOGD(cmd)
+	}
+	return ok
 }
 
 func AddSignPKG(pkg string) {
@@ -48,7 +52,6 @@ func init() {
 		"trpc.login.ecdh.EcdhService.SsoNTLoginPasswordLoginUnusualDevice",
 		"trpc.login.ecdh.EcdhService.SsoNTLoginRefreshTicket",
 		"trpc.login.ecdh.EcdhService.SsoNTLoginRefreshA2",
-
 		"OidbSvcTrpcTcp.0x11ec_1",
 		"OidbSvcTrpcTcp.0x758_1", // create group
 		"OidbSvcTrpcTcp.0x7c1_1",

@@ -46,10 +46,11 @@ func (m *QQClient) ensureHighwayServers() error {
 
 		m.hw_session.SigSession = rsp.RspBody.SigSession
 		m.hw_session.SessionKey = rsp.RspBody.SessionKey
+
 		for _, info := range rsp.RspBody.Addrs {
 			if info.ServiceType.Unwrap() == 1 {
 				for _, addr := range info.Addrs {
-					//m.LOGD("add highway server %s:%d", binary.UInt32ToIPV4Address(addr.IP), addr.Port)
+					m.LOGD("add highway server %s:%d", binary.UInt32ToIPV4Address(uint32(addr.Ip.Unwrap())), addr.Port)
 					m.hw_session.AppendAddr(uint32(addr.Ip.Unwrap()), addr.Port.Unwrap())
 				}
 			}

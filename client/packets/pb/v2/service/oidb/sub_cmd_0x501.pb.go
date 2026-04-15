@@ -45,7 +45,7 @@ type SrvAddrs struct {
 
 type IpAddr struct {
 	Type proto.Option[uint32] `protobuf:"varint,1,opt"`
-	Ip   proto.Option[int32]  `protobuf:"zigzag32,2,opt"`
+	Ip   proto.Option[uint32] `protobuf:"fixed32,2,opt"`
 	Port proto.Option[uint32] `protobuf:"varint,3,opt"`
 	Area proto.Option[uint32] `protobuf:"varint,4,opt"`
 	_    [0]func()

@@ -103,7 +103,7 @@ func (m *QQClient) ListGroupRootFiles(groupUin uint64) ([]*entity.GroupFile, []*
 	return m.ListGroupFilesByFolder(groupUin, "/")
 }
 
-// Deprecated, udid and ttl
+// Deprecated, uuid and ttl
 func (m *QQClient) GenFileNode(name, md5, sha1, uuid string, size, ttl uint32, isnt bool) *pb_oidb.IndexNode {
 	return &pb_oidb.IndexNode{
 		Info: &pb_oidb.FileInfo{
