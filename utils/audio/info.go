@@ -5,12 +5,12 @@ package audio
 import (
 	sysbin "encoding/binary"
 	"errors"
-	"fmt"
 	"io"
 	"strings"
 
 	"github.com/kernel-ai/koscore/utils"
 	"github.com/kernel-ai/koscore/utils/binary"
+	"github.com/kernel-ai/koscore/utils/exception"
 )
 
 type Type int
@@ -57,7 +57,7 @@ func decode(r io.ReadSeeker, _f bool) (*Info, error) {
 	case string(buf) == "#!SILK":
 		ver := reader.ReadBytes(3)
 		if string(ver) != "_V3" {
-			return nil, fmt.Errorf("unsupported silk version: %s", utils.B2S(ver))
+			return nil, exception.NewFormat("unsupported silk version: %s", utils.B2S(ver))
 		}
 		data := reader.ReadAll()
 		size := len(data)

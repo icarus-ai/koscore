@@ -17,6 +17,7 @@ import (
 
 	"github.com/kernel-ai/koscore/client/packets/pb/v2/service/highway"
 	"github.com/kernel-ai/koscore/utils/binary"
+	"github.com/kernel-ai/koscore/utils/exception"
 )
 
 // see com/tencent/mobileqq/highway/utils/BaseConstants.java#L120-L121
@@ -111,7 +112,7 @@ func readResponse(r *binary.NetworkReader) (*highway.RespDataHighwayHead, error)
 	hl, _ := r.ReadInt32()
 	a2, _ := r.ReadInt32()
 	if hl > highwayMaxResponseSize || a2 > highwayMaxResponseSize {
-		return nil, fmt.Errorf("highway response invild. head size: %v body size: %v", hl, a2)
+		return nil, exception.NewFormat("highway response invild. head size: %v body size: %v", hl, a2)
 	}
 	head, _ := r.ReadBytes(int(hl))
 	_, _ = r.ReadBytes(int(a2)) // skip payload

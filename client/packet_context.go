@@ -1,18 +1,17 @@
 package client
 
 import (
+	"errors"
 	"fmt"
 	"runtime/debug"
 	"time"
 
 	"github.com/RomiChan/syncx"
-	"github.com/pkg/errors"
-
 	"github.com/kernel-ai/koscore/client/event"
-	"github.com/kernel-ai/koscore/client/internal"
 	"github.com/kernel-ai/koscore/client/internal/network"
 	"github.com/kernel-ai/koscore/client/packets/structs"
 	"github.com/kernel-ai/koscore/client/packets/structs/sso_type"
+	"github.com/kernel-ai/koscore/utils/exception"
 )
 
 type handlerCallFn func(sso *sso_type.SsoPacket, err error)
@@ -23,7 +22,7 @@ type handlerMessage struct {
 
 type PacketContext struct {
 	*QQClient
-	sock     *internal.SocketContext
+	sock     *network.SocketContext
 	handlers syncx.Map[uint32, handlerCallFn]
 }
 
@@ -35,7 +34,7 @@ func (m *PacketContext) dispatchPacket(payload []byte) {
 		}
 	}()
 
-	//m.LOGD("PacketContext::DispatchPacket: raw %d %X", len(data), data)
+	//m.LOGD("PacketContext::dispatchPacket: raw %d %X", len(payload), payload)
 	sso, e := structs.ParseSsoPacket(m.session, payload)
 	if e != nil {
 		m.LOGW("dispatch: parse sso packet: %v", e)
@@ -44,6 +43,8 @@ func (m *PacketContext) dispatchPacket(payload []byte) {
 		}
 		return
 	}
+
+	//m.LOGD("dispatch: %v %v %X", sso.Command, sso.Sequence, sso.Data)
 	if sso.RetCode == 0 {
 		m.message_handle_parse_packet(sso)
 		return
@@ -54,11 +55,11 @@ func (m *PacketContext) dispatchPacket(payload []byte) {
 	switch sso.RetCode {
 	case -10001, -10008:
 		if fn, ok := m.handlers.LoadAndDelete(sso.Sequence); ok {
-			fn(sso, event.ErrSessionExpired)
+			fn(sso, exception.ErrSessionExpired)
 		}
 	case -10003:
 		if fn, ok := m.handlers.LoadAndDelete(sso.Sequence); ok {
-			fn(sso, event.ErrAuthenticationFailed)
+			fn(sso, exception.ErrAuthenticationFailed)
 		}
 	default:
 		m.LOGE("parse incoming packet error: %s (%d)", sso.Extra, sso.RetCode)
@@ -107,7 +108,7 @@ func (m *PacketContext) SendPacketAndWait(pkt *sso_type.SsoPacket) (*sso_type.Ss
 
 func NewPacketContext(wt_ctx *QQClient) *PacketContext {
 	ctx := &PacketContext{QQClient: wt_ctx}
-	ctx.sock = internal.NewSocketContext(
+	ctx.sock = network.NewSocketContext(
 		ctx.dispatchPacket,
 		ctx.quickReconnect,
 		ctx.plannedDisconnect,

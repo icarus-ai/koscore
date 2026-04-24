@@ -12,9 +12,10 @@ import (
 	"github.com/kernel-ai/koscore/client/packets/structs/sso_type"
 	"github.com/kernel-ai/koscore/utils/binary"
 	"github.com/kernel-ai/koscore/utils/binary/prefix"
+	"github.com/kernel-ai/koscore/utils/exception"
 	"github.com/kernel-ai/koscore/utils/proto"
 	"github.com/kernel-ai/koscore/utils/types"
-	//"github.com/kernel-ai/koscore/utils/comm"
+	// "github.com/kernel-ai/koscore/utils/comm"
 )
 
 func BuildLoginPacket(version *auth.AppInfo, device *auth.DeviceInfo, session *auth.Session, req *login_type.LoginReq) *sso_type.SsoPacket {
@@ -45,7 +46,7 @@ func ParseLoginPacket(session *auth.Session, pkt *sso_type.SsoPacket) (*login_ty
 	//comm.LOGD("rsp: %X", rsp)
 
 	if cmd != 0x810 {
-		return nil, fmt.Errorf("logins::ParsePacket: cmd: %02X", cmd)
+		return nil, exception.NewFormat("logins::ParsePacket: cmd: %02X", cmd)
 	}
 
 	reader := binary.NewReader(rsp)

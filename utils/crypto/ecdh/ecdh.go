@@ -16,14 +16,14 @@ var (
 	k_two  = big.NewInt(2)
 )
 
-type EcdhProvider struct {
+type Provider struct {
 	curve  *EllipticCurve
 	secret *big.Int
 	public EllipticPoint
 }
 
-func NewEcdhProvider(curve *EllipticCurve) (ec *EcdhProvider, e error) {
-	ec = &EcdhProvider{curve: curve}
+func NewEcdhProvider(curve *EllipticCurve) (ec *Provider, e error) {
+	ec = &Provider{curve: curve}
 	if ec.secret, e = ec.createSecret(); e != nil {
 		return nil, e
 	}
@@ -33,8 +33,8 @@ func NewEcdhProvider(curve *EllipticCurve) (ec *EcdhProvider, e error) {
 	return ec, nil
 }
 
-func NewEcdhProviderSecret(curve *EllipticCurve, secret_key []byte) (ec *EcdhProvider, e error) {
-	ec = &EcdhProvider{curve: curve}
+func NewEcdhProviderSecret(curve *EllipticCurve, secret_key []byte) (ec *Provider, e error) {
+	ec = &Provider{curve: curve}
 	if ec.secret, e = ec.unpackSecret(secret_key); e != nil {
 		return nil, e
 	}
@@ -45,7 +45,7 @@ func NewEcdhProviderSecret(curve *EllipticCurve, secret_key []byte) (ec *EcdhPro
 }
 
 // 密钥交换
-func (ctx *EcdhProvider) KeyExchange(pub_key []byte, is_hash bool) ([]byte, error) {
+func (ctx *Provider) KeyExchange(pub_key []byte, is_hash bool) ([]byte, error) {
 	ss, e := ctx.unpackPublic(pub_key)
 	if e != nil {
 		return nil, e
@@ -58,7 +58,7 @@ func (ctx *EcdhProvider) KeyExchange(pub_key []byte, is_hash bool) ([]byte, erro
 }
 
 // 打包公钥
-func (ctx *EcdhProvider) PackPublic(compress bool) []byte {
+func (ctx *Provider) PackPublic(compress bool) []byte {
 	curve := ctx.curve
 	pub := ctx.public
 	if compress {
@@ -83,7 +83,7 @@ func (ctx *EcdhProvider) PackPublic(compress bool) []byte {
 }
 
 // 打包私钥
-func (ctx *EcdhProvider) PackSecret() []byte {
+func (ctx *Provider) PackSecret() []byte {
 	raw := ctx.secret.Bytes()
 	size := len(raw)
 	res := make([]byte, size+4)
@@ -92,7 +92,7 @@ func (ctx *EcdhProvider) PackSecret() []byte {
 	return res[:size+4]
 }
 
-func (ctx *EcdhProvider) packShared(shared EllipticPoint, is_hash bool) []byte {
+func (ctx *Provider) packShared(shared EllipticPoint, is_hash bool) []byte {
 	x := ToFixedBytes(shared.X, ctx.curve.Size)
 	if !is_hash {
 		return x
@@ -101,7 +101,7 @@ func (ctx *EcdhProvider) packShared(shared EllipticPoint, is_hash bool) []byte {
 	return hash[:]
 }
 
-func (ctx *EcdhProvider) unpackPublic(pub_key []byte) (EllipticPoint, error) {
+func (ctx *Provider) unpackPublic(pub_key []byte) (EllipticPoint, error) {
 	curve := ctx.curve
 	size := curve.Size
 	l := len(pub_key)
@@ -134,18 +134,18 @@ func (ctx *EcdhProvider) unpackPublic(pub_key []byte) (EllipticPoint, error) {
 	return NewEllipticPoint(px, py), nil
 }
 
-func (ctx *EcdhProvider) unpackSecret(sec []byte) (*big.Int, error) {
+func (ctx *Provider) unpackSecret(sec []byte) (*big.Int, error) {
 	if len(sec) == int(sec[3])+4 {
 		return new(big.Int).SetBytes(sec[4:]), nil
 	}
 	return nil, errors.New("length does not match")
 }
 
-func (ctx *EcdhProvider) createPublic() (EllipticPoint, error) {
+func (ctx *Provider) createPublic() (EllipticPoint, error) {
 	return ctx.createShared(ctx.secret, ctx.curve.G)
 }
 
-func (ctx *EcdhProvider) createSecret() (*big.Int, error) {
+func (ctx *Provider) createSecret() (*big.Int, error) {
 	size := ctx.curve.Size
 	buf := make([]byte, size)
 
@@ -170,7 +170,7 @@ func (ctx *EcdhProvider) createSecret() (*big.Int, error) {
 	}
 }
 
-func (ctx *EcdhProvider) createShared(sec *big.Int, pub EllipticPoint) (point EllipticPoint, err error) {
+func (ctx *Provider) createShared(sec *big.Int, pub EllipticPoint) (point EllipticPoint, err error) {
 	curve := ctx.curve
 	// sec % curve.N == 0
 	if Mod(sec, curve.N).Cmp(k_zero) == 0 || pub.IsDefault() {
@@ -199,7 +199,7 @@ func (ctx *EcdhProvider) createShared(sec *big.Int, pub EllipticPoint) (point El
 	return ctx.jacobianToAffine(pr), nil
 }
 
-func (ctx *EcdhProvider) jacobianDouble(p JacobianPoint) JacobianPoint {
+func (ctx *Provider) jacobianDouble(p JacobianPoint) JacobianPoint {
 	if p.IsInfinity() {
 		return p
 	}
@@ -220,7 +220,7 @@ func (ctx *EcdhProvider) jacobianDouble(p JacobianPoint) JacobianPoint {
 	return NewJacobianPoint(x3, y3, z3)
 }
 
-func (ctx *EcdhProvider) jacobianAdd(p1, p2 JacobianPoint) JacobianPoint {
+func (ctx *Provider) jacobianAdd(p1, p2 JacobianPoint) JacobianPoint {
 	if p1.IsInfinity() {
 		return p2
 	}
@@ -257,7 +257,7 @@ func (ctx *EcdhProvider) jacobianAdd(p1, p2 JacobianPoint) JacobianPoint {
 	return NewJacobianPoint(x3, y3, z3)
 }
 
-func (ctx *EcdhProvider) jacobianToAffine(p JacobianPoint) EllipticPoint {
+func (ctx *Provider) jacobianToAffine(p JacobianPoint) EllipticPoint {
 	if p.IsInfinity() {
 		return EllipticPoint{}
 	}

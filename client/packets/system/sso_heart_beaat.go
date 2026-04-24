@@ -7,8 +7,14 @@ import (
 	"github.com/kernel-ai/koscore/utils/proto"
 )
 
+// 08011202080018002000
 func BuildSsoHeartBeatPacket() *sso_type.SsoPacket {
-	data, _ := proto.Marshal(&system.SsoHeartBeatRequest{Type: proto.Some[uint32](1)})
+	data, _ := proto.Marshal(&system.SsoHeartBeatRequest{
+		Type:         proto.Some[uint32](1),
+		LocalSilence: &system.SilenceState{LocalSilence: proto.Some[uint32](0)},
+		BatteryState: proto.Some[uint32](0),
+		Time:         proto.Some[uint64](0),
+	})
 	return system_type.AttributeSsoHeartBeat.NewSsoPacket(0, data)
 }
 

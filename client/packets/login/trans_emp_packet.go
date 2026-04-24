@@ -1,8 +1,6 @@
 package login
 
 import (
-	"fmt"
-
 	"github.com/kernel-ai/koscore/client/auth"
 	"github.com/kernel-ai/koscore/client/packets/login/login_type"
 	"github.com/kernel-ai/koscore/client/packets/login/wtlogin"
@@ -10,6 +8,7 @@ import (
 	"github.com/kernel-ai/koscore/client/packets/structs/sso_type"
 	"github.com/kernel-ai/koscore/utils/binary"
 	"github.com/kernel-ai/koscore/utils/binary/prefix"
+	"github.com/kernel-ai/koscore/utils/exception"
 	"github.com/kernel-ai/koscore/utils/proto"
 )
 
@@ -74,6 +73,6 @@ func ParseTransEmpPacket[T login_type.TransEmpRsp31 | login_type.TransEmpRsp12](
 		}
 		return any(emp).(*T), nil
 	default:
-		return nil, fmt.Errorf("not supported exception: unknown trans_emp command: %d", cmd)
+		return nil, exception.NewNotSupportedException("unknown trans_emp command: %d", cmd)
 	}
 }

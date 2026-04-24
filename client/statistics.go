@@ -21,7 +21,7 @@ type Statistics struct {
 
 func (m *QQClient) GetStatistics() *Statistics { return &m.stat }
 
-// MarshalJSON encodes the wrapped statistics into JSON.
+// encodes the wrapped statistics into JSON.
 func (m *Statistics) MarshalJSON() ([]byte, error) {
 	var w bytes.Buffer
 	w.Grow(256)

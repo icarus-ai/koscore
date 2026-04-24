@@ -190,9 +190,9 @@ func (g *GroupInvite) ResolveUin(f func(uid string, groupUin ...uint64) uint64) 
 	g.InvitorUin = f(g.InvitorUid, g.GroupUin)
 }
 
-// 被邀请加群
-func ParseInviteNotice(event *notify.GroupInvite) *GroupInvite {
-	return &GroupInvite{GroupUin: uint64(event.Body.GroupUin.Unwrap()), InvitorUid: event.Body.InviterUid.Unwrap()}
+// 机器人被邀请加群
+func ParseInviteNotice(event *notify.GroupInvite0X57) *GroupInvite {
+	return &GroupInvite{GroupUin: uint64(event.GroupUin), InvitorUid: event.InvitorUid}
 }
 
 func (g *GroupMemberIncrease) ResolveUin(f func(uid string, groupUin ...uint64) uint64) {

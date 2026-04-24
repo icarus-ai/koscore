@@ -7,6 +7,7 @@ import (
 	"io"
 	"net"
 	"sync"
+	"time"
 
 	"github.com/pkg/errors"
 )
@@ -50,42 +51,25 @@ func (t *TCPClient) Connect(addr string) error {
 
 func (t *TCPClient) Write(buf []byte) error {
 	if conn := t.getConn(); conn != nil {
+		_ = conn.SetWriteDeadline(time.Now().Add(10 * time.Second))
 		_, err := conn.Write(buf)
-		if err != nil {
-			t.unexpectedClose(err)
-			return ErrConnectionClosed
+		if err == nil {
+			return nil
 		}
-		return nil
+		t.unexpectedClose(err)
 	}
 	return ErrConnectionClosed
 }
 
-// 读取size长度字节 并将size添加到首
-func (t *TCPClient) ReadBytes_AddHeadSizeU32(l int) ([]byte, error) {
-	buf := make([]byte, l+4)
-	if conn := t.getConn(); conn != nil {
-		_, err := io.ReadFull(conn, buf[4:])
-		if err != nil {
-			// time.Sleep(time.Millisecond * 100) // 服务器会发送offline包后立即断开连接, 此时还没解析, 可能还是得加锁
-			t.unexpectedClose(err)
-			return nil, ErrConnectionClosed
-		}
-		binary.BigEndian.PutUint32(buf, uint32(l))
-		return buf, nil
-	}
-	return nil, ErrConnectionClosed
-}
-
 func (t *TCPClient) ReadBytes(l int) ([]byte, error) {
-	buf := make([]byte, l)
 	if conn := t.getConn(); conn != nil {
+		buf := make([]byte, l)
 		_, err := io.ReadFull(conn, buf)
-		if err != nil {
-			// time.Sleep(time.Millisecond * 100) // 服务器会发送offline包后立即断开连接, 此时还没解析, 可能还是得加锁
-			t.unexpectedClose(err)
-			return nil, ErrConnectionClosed
+		if err == nil {
+			return buf, nil
 		}
-		return buf, nil
+		// time.Sleep(time.Millisecond * 100) // 服务器会发送offline包后立即断开连接, 此时还没解析, 可能还是得加锁
+		t.unexpectedClose(err)
 	}
 	return nil, ErrConnectionClosed
 }

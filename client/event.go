@@ -75,11 +75,6 @@ type Events struct {
 	// client event
 	Disconnected EventHandle[*event.Disconnected]
 
-	FriendPoke       EventHandle[*event.FriendPokeEvent]
-	FriendPokeRecall EventHandle[*event.FriendPokeRecallEvent]
-	GroupPoke        EventHandle[*event.GroupPokeEvent]
-	GroupPokeRecall  EventHandle[*event.GroupPokeRecallEvent]
-
 	MessageReceived atomic.Int64
 	LastMessageTime atomic.Int64
 }

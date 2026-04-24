@@ -6,13 +6,11 @@ import (
 	"github.com/kernel-ai/koscore/utils"
 )
 
-const SIGN_STAT_HEAD = "sign.stat:\n"
-
-func (c *ClientV2) GetStat() (ret string) {
+func (c *Client) GetStat() (ret string) {
 	c.lock.Lock()
 	defer c.lock.Unlock()
 	for _, i := range c.instances {
-		ret += utils.Ternary(i.latency.Load() < serverLatencyDown, "\non: ", "\noff: ")
+		ret += utils.Ternary(i.latency.Load() < server_latency_down, "\non: ", "\noff: ")
 		ret += c.GetSignHost(i.server)
 	}
 	if len(ret) > 0 {
@@ -21,7 +19,7 @@ func (c *ClientV2) GetStat() (ret string) {
 	return
 }
 
-func (c *ClientV2) GetSignHost(uri string) string {
+func (c *Client) GetSignHost(uri string) string {
 	if idx := strings.Index(uri, "//"); idx > 0 {
 		uri = uri[idx+2:]
 	}

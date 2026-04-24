@@ -4,20 +4,20 @@ package highway
 
 import (
 	"crypto/md5"
-	"fmt"
 	"io"
 	"strconv"
 	"sync"
 	"sync/atomic"
 
-	"github.com/fumiama/gofastTEA"
 	"github.com/pkg/errors"
 	"golang.org/x/sync/errgroup"
 
 	"github.com/RomiChan/protobuf/proto"
+	"github.com/fumiama/gofastTEA"
 
 	"github.com/kernel-ai/koscore/client/packets/pb/v2/service/highway"
 	"github.com/kernel-ai/koscore/utils/binary"
+	"github.com/kernel-ai/koscore/utils/exception"
 )
 
 // 视频必须是1024*1024
@@ -113,7 +113,7 @@ func (s *Session) uploadSingle(trans *Transaction) ([]byte, error) {
 			return nil, errors.Wrap(err, "highway upload error")
 		}
 		if rspHead.ErrorCode.Unwrap() != 0 {
-			return nil, fmt.Errorf("upload failed: %d", rspHead.ErrorCode.Unwrap())
+			return nil, exception.NewFormat("upload failed: %d", rspHead.ErrorCode.Unwrap())
 		}
 		if rspHead.RspExtendInfo != nil {
 			rspExt = rspHead.RspExtendInfo
@@ -210,7 +210,7 @@ func (s *Session) Upload(trans *Transaction) ([]byte, error) {
 				return errors.Wrap(err, "highway upload error")
 			}
 			if rspHead.ErrorCode.Unwrap() != 0 {
-				return fmt.Errorf("upload failed: %d", rspHead.ErrorCode.Unwrap())
+				return exception.NewFormat("upload failed: %d", rspHead.ErrorCode.Unwrap())
 			}
 			if last && rspHead.RspExtendInfo != nil {
 				rspExt = rspHead.RspExtendInfo

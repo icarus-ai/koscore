@@ -5,6 +5,7 @@ import (
 	"unsafe"
 
 	"github.com/RomiChan/syncx"
+
 	"github.com/kernel-ai/koscore/client/entity"
 )
 

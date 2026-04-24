@@ -6,6 +6,7 @@ import (
 	"github.com/kernel-ai/koscore/client/auth"
 	"github.com/kernel-ai/koscore/client/packets/pb/v2/login"
 	"github.com/kernel-ai/koscore/utils/crypto"
+	"github.com/kernel-ai/koscore/utils/exception"
 	"github.com/kernel-ai/koscore/utils/proto"
 	"github.com/kernel-ai/koscore/utils/types"
 )
@@ -13,7 +14,7 @@ import (
 // PC
 func nt_login_encode_common[T any](version *auth.AppInfo, device *auth.DeviceInfo, session *auth.Session, body *T) ([]byte, error) {
 	if session.State.KeyExchange == nil {
-		return nil, fmt.Errorf("invalid operation exception: key exchange session is not initialized.")
+		return nil, exception.NewOperationException("key exchange session is not initialized.")
 	}
 	data, e := proto.Marshal(nt_login_build_common(version, device, session, body))
 	if e != nil {
@@ -32,7 +33,7 @@ func nt_login_encode_common[T any](version *auth.AppInfo, device *auth.DeviceInf
 
 func nt_login_decode_common[T any](session *auth.Session, payload []byte) (login.NTLoginRetCode, *login.NTLoginErrorInfo, *T, error) {
 	if session.State.KeyExchange == nil {
-		return 0, nil, nil, fmt.Errorf("invalid operation exception: key exchange session is not initialized.")
+		return 0, nil, nil, exception.NewOperationException("key exchange session is not initialized.")
 	}
 
 	forward, e := proto.Unmarshal[login.NTLoginForwardRequest](payload)

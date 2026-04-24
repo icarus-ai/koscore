@@ -1,7 +1,6 @@
 package oidb
 
 import (
-	"errors"
 	"fmt"
 	"time"
 
@@ -9,6 +8,7 @@ import (
 	"github.com/kernel-ai/koscore/client/packets/pb/v2/common"
 	"github.com/kernel-ai/koscore/client/packets/pb/v2/service/operation"
 	"github.com/kernel-ai/koscore/client/packets/structs/sso_type"
+	"github.com/kernel-ai/koscore/utils/exception"
 	"github.com/kernel-ai/koscore/utils/proto"
 )
 
@@ -155,7 +155,7 @@ func ParseFetchStrangerPacket(data []byte) (*entity.User, error) {
 
 	nickname_bytes, ok := byt_map[20002]
 	if !ok {
-		return nil, errors.New("operation exception: Stranger not found")
+		return nil, exception.NewOperationException("Stranger not found")
 	}
 
 	// can't not get uid

@@ -3,12 +3,12 @@ package auth
 import (
 	"bytes"
 	"compress/gzip"
-	"errors"
 	"sync/atomic"
 
 	"github.com/kernel-ai/koscore/utils/binary"
 	"github.com/kernel-ai/koscore/utils/binary/prefix"
 	"github.com/kernel-ai/koscore/utils/crypto"
+	"github.com/kernel-ai/koscore/utils/exception"
 	"github.com/kernel-ai/koscore/utils/proto"
 	"github.com/kernel-ai/koscore/utils/types"
 	// "github.com/kernel-ai/koscore/utils/comm"
@@ -29,13 +29,14 @@ func (m *State) clear() {
 }
 func (m *BotInfo) clear() { m.Age, m.Gender, m.Name, m.Uin, m.Uid = 0, 0, "", 0, "" }
 
-func NewSession() *Session {
+func NewSession(uin uint64) *Session {
 	session := &Session{
 		Sig:   &WLoginSigs{},
 		State: &State{},
 		Info:  &BotInfo{},
 	}
 	session.Clear()
+	session.Info.Uin = uin
 	return session
 }
 
@@ -58,14 +59,12 @@ func (m *Session) Marshal() []byte {
 		ToBytes()
 }
 
-var ErrDataHashMismatch = errors.New("data hash mismatch")
-
 func UnmarshalSigInfo(data []byte, verify bool) (*Session, error) {
 	byt := binary.NewReader(data)
 	hash := byt.ReadLengthBytes(prefix.Int16 | prefix.LengthOnly)
 	data = uncompress(byt.ReadLengthBytes(prefix.Int16 | prefix.LengthOnly))
 	if verify && !bytes.Equal(hash, crypto.MD5Digest(data)) {
-		return nil, ErrDataHashMismatch
+		return nil, exception.ErrDataHashMismatch
 	}
 	return proto.Unmarshal[Session](data)
 }

@@ -1,17 +1,17 @@
 package client
 
 import (
+	pb_oidb "github.com/kernel-ai/koscore/client/packets/pb/v2/service/oidb"
+
 	"github.com/kernel-ai/koscore/client/entity"
 	"github.com/kernel-ai/koscore/client/packets/oidb"
 	"github.com/kernel-ai/koscore/utils"
 	"github.com/kernel-ai/koscore/utils/proto"
-
-	pb_oidb "github.com/kernel-ai/koscore/client/packets/pb/v2/service/oidb"
 )
 
 // 获取群文件系统信息
-func (m *QQClient) GetGroupFileSystemInfo(groupUin uint64) (*entity.GroupFileSystemInfo, error) {
-	pkt, err := oidb.BuildGroupFileCountReq(groupUin)
+func (m *QQClient) GetGroupFileSystemInfo(group_uin uint64) (*entity.GroupFileSystemInfo, error) {
+	pkt, err := oidb.BuildGroupFileCountReq(group_uin)
 	if err != nil {
 		return nil, err
 	}
@@ -23,7 +23,7 @@ func (m *QQClient) GetGroupFileSystemInfo(groupUin uint64) (*entity.GroupFileSys
 		return nil, err
 	}
 
-	pkt, err = oidb.BuildGroupFileSpaceReq(groupUin)
+	pkt, err = oidb.BuildGroupFileSpaceReq(group_uin)
 	if err != nil {
 		return nil, err
 	}
@@ -36,7 +36,7 @@ func (m *QQClient) GetGroupFileSystemInfo(groupUin uint64) (*entity.GroupFileSys
 	}
 
 	return &entity.GroupFileSystemInfo{
-		GroupUin:   groupUin,
+		GroupUin:   group_uin,
 		FileCount:  count.FileCount,
 		LimitCount: count.LimitCount,
 		TotalSpace: space.TotalSpace,
@@ -45,13 +45,13 @@ func (m *QQClient) GetGroupFileSystemInfo(groupUin uint64) (*entity.GroupFileSys
 }
 
 // 获取群目录指定文件夹列表
-func (m *QQClient) ListGroupFilesByFolder(groupUin uint64, target_dir string) ([]*entity.GroupFile, []*entity.GroupFolder, error) {
+func (m *QQClient) ListGroupFilesByFolder(group_uin uint64, target_dir string) ([]*entity.GroupFile, []*entity.GroupFolder, error) {
 	var startIndex uint32
 	var fileCount uint32 = 20
 	var files []*entity.GroupFile
 	var folders []*entity.GroupFolder
 	for {
-		pkt, err := oidb.BuildGroupFileListReq(groupUin, target_dir, startIndex, fileCount)
+		pkt, err := oidb.BuildGroupFileListReq(group_uin, target_dir, startIndex, fileCount)
 		if err != nil {
 			return files, folders, err
 		}
@@ -65,7 +65,7 @@ func (m *QQClient) ListGroupFilesByFolder(groupUin uint64, target_dir string) ([
 		for _, fe := range res.List.Items {
 			if fe.FileInfo != nil {
 				files = append(files, &entity.GroupFile{
-					GroupUin:      groupUin,
+					GroupUin:      group_uin,
 					FileId:        fe.FileInfo.FileId,
 					FileName:      fe.FileInfo.FileName,
 					BusId:         fe.FileInfo.BusId,
@@ -80,7 +80,7 @@ func (m *QQClient) ListGroupFilesByFolder(groupUin uint64, target_dir string) ([
 			}
 			if fe.FolderInfo != nil {
 				folders = append(folders, &entity.GroupFolder{
-					GroupUin:       groupUin,
+					GroupUin:       group_uin,
 					FolderId:       fe.FolderInfo.FolderId,
 					FolderName:     fe.FolderInfo.FolderName,
 					CreateTime:     fe.FolderInfo.CreateTime,
@@ -99,8 +99,8 @@ func (m *QQClient) ListGroupFilesByFolder(groupUin uint64, target_dir string) ([
 }
 
 // 获取群根目录文件列表
-func (m *QQClient) ListGroupRootFiles(groupUin uint64) ([]*entity.GroupFile, []*entity.GroupFolder, error) {
-	return m.ListGroupFilesByFolder(groupUin, "/")
+func (m *QQClient) ListGroupRootFiles(group_uin uint64) ([]*entity.GroupFile, []*entity.GroupFolder, error) {
+	return m.ListGroupFilesByFolder(group_uin, "/")
 }
 
 // Deprecated, uuid and ttl

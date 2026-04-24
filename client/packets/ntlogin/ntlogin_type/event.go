@@ -10,12 +10,7 @@ type INTLoginRsp struct {
 	Tips  types.Strings
 }
 
-type UnusualEasyLoginReq struct{}
-
 type NewDeviceLoginReq struct{ Sig []byte }
-
-type RefreshTicketReq struct{}
-type RefreshA2Req struct{}
 
 type PasswordLoginReq struct {
 	password string

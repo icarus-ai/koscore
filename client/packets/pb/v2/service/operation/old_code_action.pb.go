@@ -26,3 +26,23 @@ type SetStatusResponse struct {
 	Message string `protobuf:"bytes,2,opt"`
 	_       [0]func()
 }
+
+// 魔法表情 key
+type MarketFaceKeyReq struct {
+	Field1 uint32                `protobuf:"varint,1,opt"`
+	Info   *MarketFaceKeyReqInfo `protobuf:"bytes,5,opt"`
+	_      [0]func()
+}
+
+type MarketFaceKeyReqInfo struct {
+	FaceIds []string `protobuf:"bytes,3,rep"`
+}
+
+type MarketFaceKeyRsp struct {
+	Info *MarketFaceKeyRspInfo `protobuf:"bytes,5,opt"`
+	_    [0]func()
+}
+
+type MarketFaceKeyRspInfo struct {
+	Keys []string `protobuf:"bytes,1,rep"`
+}

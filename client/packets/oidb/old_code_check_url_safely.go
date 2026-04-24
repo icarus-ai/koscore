@@ -1,11 +1,10 @@
 package oidb
 
 import (
-	"errors"
-
 	"github.com/RomiChan/protobuf/proto"
 	"github.com/kernel-ai/koscore/client/packets/pb/v2/service/oidb"
 	"github.com/kernel-ai/koscore/client/packets/structs/sso_type"
+	"github.com/kernel-ai/koscore/utils/exception"
 )
 
 // ref https://github.com/Mrs4s/MiraiGo/blob/master/client/security.go
@@ -54,7 +53,7 @@ func ParseURLCheckResponse(data []byte) (URLSecurityLevel, error) {
 		return URLSecurityLevelUnknown, e
 	}
 	if rsp.CheckUrlRsp == nil || len(rsp.CheckUrlRsp.Results) == 0 {
-		return URLSecurityLevelUnknown, errors.New("response is empty")
+		return URLSecurityLevelUnknown, exception.ErrEmptyRsp
 	}
 	if rsp.CheckUrlRsp.Results[0].JumpUrl.IsSome() {
 		return URLSecurityLevelDanger, nil

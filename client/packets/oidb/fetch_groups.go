@@ -119,7 +119,7 @@ func ParseFetchGroupMembersPacket(data []byte) ([]*entity.GroupMember, []byte, e
 	}
 	//lgrv2.c#
 	//group := cache.GetGroupInfo(uint32(rsp.GroupUin.Unwrap()))
-	//if group == nil { return nil, nil, fmt.Errorf("invalid target exception: %d", rsp.GroupUin.Unwrap()) }
+	//if group == nil { return nil, nil, exception.NewFormat("invalid target exception: %d", rsp.GroupUin.Unwrap()) }
 	var ret []*entity.GroupMember
 	for _, raw := range rsp.Members {
 		ret = append(ret, &entity.GroupMember{

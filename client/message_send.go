@@ -2,7 +2,6 @@ package client
 
 import (
 	"errors"
-	"fmt"
 
 	pkt_msg "github.com/kernel-ai/koscore/client/packets/message"
 	pb_msg "github.com/kernel-ai/koscore/client/packets/pb/v2/message"
@@ -10,6 +9,7 @@ import (
 	"github.com/kernel-ai/koscore/client/packets/structs/sso_type"
 	"github.com/kernel-ai/koscore/message"
 	"github.com/kernel-ai/koscore/utils/crypto"
+	"github.com/kernel-ai/koscore/utils/exception"
 	"github.com/kernel-ai/koscore/utils/proto"
 )
 
@@ -23,23 +23,24 @@ func (m *QQClient) SendRawMessage(route *pb_msg.SendRoutingHead, body *pb_msg.Me
 		return
 	}
 	if rsp, err = pkt_msg.ParseMessagePacket(pkt.Data); err != nil {
+		m.LOGW("parse raw message rsp packet: %X", pkt.Data)
 		return
 	}
 	if rsp.Result.Unwrap() != 0 {
-		return nil, 0, 0, fmt.Errorf("operation exception: %s (%d)", rsp.ErrMsg.Unwrap(), rsp.Result.Unwrap())
+		return nil, 0, 0, exception.NewOperationExceptionCode(rsp.Result.Unwrap(), rsp.ErrMsg.Unwrap())
 	}
 	seq = rsp.Sequence.Unwrap()
 	if seq == 0 {
 		seq = rsp.ClientSequence.Unwrap()
 	}
 	if seq == 0 {
-		err = errors.New("ret group sequence 0")
+		err = errors.New("ret sequence 0")
 	}
 	return
 }
 
-func (m *QQClient) SendGroupMessage(gin uint64, elements []message.IMessageElement, needPreprocess ...bool) (*message.GroupMessage, error) {
-	if needPreprocess == nil || needPreprocess[0] {
+func (m *QQClient) SendGroupMessage(gin uint64, elements []message.IMessageElement, need_preprocess ...bool) (*message.GroupMessage, error) {
+	if need_preprocess == nil || need_preprocess[0] {
 		elements = m.preProcessGroupMessage(gin, elements)
 	}
 	rsp, seq, random, err := m.SendRawMessage(&pb_msg.SendRoutingHead{
@@ -58,22 +59,26 @@ func (m *QQClient) SendGroupMessage(gin uint64, elements []message.IMessageEleme
 			Time:      rsp.SendTime.Unwrap(),
 			Elements:  elements,
 			Sender: message.Sender{
-				Uin:      m.Uin(),
-				Uid:      m.Uid(),
-				Nickname: m.Nick(),
-				CardName: m.GetCachedMemberInfo(m.Uin(), gin).MemberCard,
+				Uin:      m.session.Info.Uin,
+				Uid:      m.session.Info.Uid,
+				Nickname: m.session.Info.Name,
+				CardName: m.GetCachedMemberInfo(m.session.Info.Uin, gin).MemberCard,
 				IsFriend: false,
 			},
 		},
 	}, nil
 }
 
-func (m *QQClient) SendPrivateMessage(uin uint64, elements []message.IMessageElement, needPreprocess ...bool) (*message.PrivateMessage, error) {
-	if needPreprocess == nil || needPreprocess[0] {
+func (m *QQClient) SendPrivateMessage(uin uint64, elements []message.IMessageElement, need_preprocess ...bool) (*message.PrivateMessage, error) {
+	uid, err := m.GetUid(uin)
+	if err != nil {
+		return nil, err
+	}
+	if need_preprocess == nil || need_preprocess[0] {
 		elements = m.preProcessPrivateMessage(uin, elements)
 	}
 	rsp, seq, random, err := m.SendRawMessage(&pb_msg.SendRoutingHead{
-		C2C: &pb_msg.C2C{PeerUin: proto.Some(int64(uin)), PeerUid: proto.Some(m.GetUid(uin))},
+		C2C: &pb_msg.C2C{PeerUin: proto.Some(int64(uin)), PeerUid: proto.Some(uid)},
 	}, message.PackElementsToBody(elements))
 	if err != nil {
 		return nil, err
@@ -86,9 +91,9 @@ func (m *QQClient) SendPrivateMessage(uin uint64, elements []message.IMessageEle
 			Time:      rsp.SendTime.Unwrap(),
 			Elements:  elements,
 			Sender: message.Sender{
-				Uin:      m.Uin(),
-				Uid:      m.Uid(),
-				Nickname: m.Nick(),
+				Uin:      m.session.Info.Uin,
+				Uid:      m.session.Info.Uid,
+				Nickname: m.session.Info.Name,
 				IsFriend: true,
 			},
 		},
@@ -96,8 +101,12 @@ func (m *QQClient) SendPrivateMessage(uin uint64, elements []message.IMessageEle
 }
 
 // 发送私聊文件
-func (m *QQClient) SendPrivateFile(uin uint64, localFilePath, filename string) error {
-	fsem, e := message.NewLocalFile(localFilePath, filename)
+func (m *QQClient) SendPrivateFile(uin uint64, local_path, file_name string) error {
+	uid, e := m.GetUid(uin)
+	if e != nil {
+		return e
+	}
+	fsem, e := message.NewLocalFile(local_path, file_name)
 	if e != nil {
 		return e
 	}
@@ -109,24 +118,21 @@ func (m *QQClient) SendPrivateFile(uin uint64, localFilePath, filename string) e
 		Trans0X211: &pb_msg.Trans0X211{
 			ToUin: proto.Some(int64(uin)),
 			CcCmd: proto.Some[uint32](4),
-			Uid:   proto.Some(m.GetUid(uin)),
+			Uid:   proto.Some(uid),
 		},
 	}, message.PackElementsToBody([]message.IMessageElement{fsem}))
 	if e != nil {
 		return e
 	}
-	if rsp.Sequence.Unwrap() == 0 {
+	if rsp.Sequence.Unwrap() == 0 && rsp.ClientSequence.Unwrap() == 0 {
 		return errors.New("ret private file sequence 0")
-	}
-	if rsp.ClientSequence.Unwrap() == 0 {
-		return errors.New("ret private file client sequence 0")
 	}
 	return nil
 }
 
 // 发送群文件
-func (m *QQClient) SendGroupFile(gin uint64, local_path, filename, target_dir string) error {
-	fsem, e := message.NewLocalFile(local_path, filename)
+func (m *QQClient) SendGroupFile(gin uint64, local_path, file_name, target_dir string) error {
+	fsem, e := message.NewLocalFile(local_path, file_name)
 	if e != nil {
 		return e
 	}
@@ -143,7 +149,7 @@ func (m *QQClient) BuildFakeMessage(nodes []*message.ForwardNode) []*pb_msg.Comm
 	for idx, node := range nodes {
 		body[idx] = &pb_msg.CommonMessage{
 			RoutingHead: &pb_msg.RoutingHead{
-				FromUid: proto.Some(m.GetUid(node.SenderId)),
+				FromUid: proto.Some(m.get_uid(node.SenderId)),
 				FromUin: proto.Some(int64(node.SenderId)),
 			},
 			ContentHead: &pb_msg.ContentHead{
@@ -163,11 +169,11 @@ func (m *QQClient) BuildFakeMessage(nodes []*message.ForwardNode) []*pb_msg.Comm
 			m.preProcessGroupMessage(node.GroupId, node.Message)
 		} else {
 			body[idx].RoutingHead.CommonC2C = &pb_msg.CommonC2C{Name: proto.Some(node.SenderName)}
-			body[idx].RoutingHead.ToUid = proto.Some(m.Uid())
-			body[idx].RoutingHead.ToUin = proto.Some(int64(m.Uin()))
+			body[idx].RoutingHead.ToUid = proto.Some(m.session.Info.Uid)
+			body[idx].RoutingHead.ToUin = proto.Some(int64(m.session.Info.Uin))
 			body[idx].ContentHead.SubType = proto.Some[int32](4)
 			body[idx].ContentHead.DivSeq = proto.Some[int32](4)
-			m.preProcessPrivateMessage(m.Uin(), node.Message)
+			m.preProcessPrivateMessage(m.session.Info.Uin, node.Message)
 		}
 		body[idx].MessageBody = message.PackElementsToBody(node.Message)
 	}
@@ -176,11 +182,11 @@ func (m *QQClient) BuildFakeMessage(nodes []*message.ForwardNode) []*pb_msg.Comm
 
 // *****
 
-func (m *QQClient) preProcessGroupMessage(groupUin uint64, elements []message.IMessageElement) []message.IMessageElement {
+func (m *QQClient) preProcessGroupMessage(group_uin uint64, elements []message.IMessageElement) []message.IMessageElement {
 	for _, element := range elements {
 		switch elem := element.(type) {
 		case *message.AtElement:
-			if mem := m.GetCachedMemberInfo(elem.TargetUin, groupUin); mem != nil {
+			if mem := m.GetCachedMemberInfo(elem.TargetUin, group_uin); mem != nil {
 				elem.TargetUid = mem.Uid
 				elem.Display = "@" + mem.DisplayName()
 			}
@@ -188,7 +194,7 @@ func (m *QQClient) preProcessGroupMessage(groupUin uint64, elements []message.IM
 			if elem.MsgInfo != nil {
 				continue
 			}
-			if _, err := m.UploadGroupImage(groupUin, elem); err != nil {
+			if _, err := m.UploadGroupImage(group_uin, elem); err != nil {
 				m.LOGE("%v", err)
 			} else if elem.MsgInfo == nil {
 				m.LOGE("UploadGroupImage failed")
@@ -197,7 +203,7 @@ func (m *QQClient) preProcessGroupMessage(groupUin uint64, elements []message.IM
 			if elem.MsgInfo != nil {
 				continue
 			}
-			if _, err := m.UploadGroupRecord(groupUin, elem); err != nil {
+			if _, err := m.UploadGroupRecord(group_uin, elem); err != nil {
 				m.LOGE("%v", err)
 			} else if elem.MsgInfo == nil {
 				m.LOGE("UploadGroupRecord failed")
@@ -206,7 +212,7 @@ func (m *QQClient) preProcessGroupMessage(groupUin uint64, elements []message.IM
 			if elem.MsgInfo != nil {
 				continue
 			}
-			if _, err := m.UploadGroupShortVideo(groupUin, elem); err != nil {
+			if _, err := m.UploadGroupShortVideo(group_uin, elem); err != nil {
 				m.LOGE("%v", err)
 			} else if elem.MsgInfo == nil {
 				m.LOGE("UploadGroupVideo failed")
@@ -218,7 +224,7 @@ func (m *QQClient) preProcessGroupMessage(groupUin uint64, elements []message.IM
 				elem.Nodes = forward.Nodes
 			}
 			if elem.ResId == "" && len(elem.Nodes) != 0 {
-				if _, err := m.UploadForwardMsg(elem, groupUin); err != nil {
+				if _, err := m.UploadForwardMsg(elem, group_uin); err != nil {
 					m.LOGE("%v", err)
 				}
 			}
@@ -227,14 +233,14 @@ func (m *QQClient) preProcessGroupMessage(groupUin uint64, elements []message.IM
 	return elements
 }
 
-func (m *QQClient) preProcessPrivateMessage(targetUin uint64, elements []message.IMessageElement) []message.IMessageElement {
+func (m *QQClient) preProcessPrivateMessage(target_uin uint64, elements []message.IMessageElement) []message.IMessageElement {
 	for _, element := range elements {
 		switch elem := element.(type) {
 		case *message.ImageElement:
 			if elem.MsgInfo != nil {
 				continue
 			}
-			if _, err := m.UploadPrivateImage(targetUin, elem); err != nil {
+			if _, err := m.UploadPrivateImage(target_uin, elem); err != nil {
 				m.LOGE("%v", err)
 			} else if elem.MsgInfo == nil {
 				m.LOGE("UploadPrivateImage failed")
@@ -243,7 +249,7 @@ func (m *QQClient) preProcessPrivateMessage(targetUin uint64, elements []message
 			if elem.MsgInfo != nil {
 				continue
 			}
-			if _, err := m.UploadPrivateRecord(targetUin, elem); err != nil {
+			if _, err := m.UploadPrivateRecord(target_uin, elem); err != nil {
 				m.LOGE("%v", err)
 			} else if elem.MsgInfo == nil {
 				m.LOGE("UploadPrivateRecord failed")
@@ -252,7 +258,7 @@ func (m *QQClient) preProcessPrivateMessage(targetUin uint64, elements []message
 			if elem.MsgInfo != nil {
 				continue
 			}
-			if _, err := m.UploadPrivateShortVideo(targetUin, elem); err != nil {
+			if _, err := m.UploadPrivateShortVideo(target_uin, elem); err != nil {
 				m.LOGE("%v", err)
 			} else if elem.MsgInfo == nil {
 				m.LOGE("UploadPrivateVideo failed")
@@ -260,7 +266,7 @@ func (m *QQClient) preProcessPrivateMessage(targetUin uint64, elements []message
 		case *message.ForwardMessage:
 			if elem.ResId != "" && len(elem.Nodes) == 0 {
 				forward, _ := m.FetchForwardMsg(elem.ResId, false)
-				elem.SelfId = m.Uin()
+				elem.SelfId = m.session.Info.Uin
 				elem.Nodes = forward.Nodes
 			}
 			if elem.ResId == "" && len(elem.Nodes) != 0 {

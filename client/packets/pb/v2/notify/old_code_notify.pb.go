@@ -45,29 +45,13 @@ type GroupAdminExtra struct {
 	_         [0]func()
 }
 
-type GroupInvitation struct {
-	Cmd  int32           `protobuf:"varint,1,opt"`
-	Info *InvitationInfo `protobuf:"bytes,2,opt"`
-	_    [0]func()
-}
-
-type InvitationInfo struct {
-	Inner *InvitationInner `protobuf:"bytes,1,opt"`
-	_     [0]func()
-}
-
-type InvitationInner struct {
+type GroupInvite0X57 struct {
 	GroupUin   uint32 `protobuf:"varint,1,opt"`
-	Field2     uint32 `protobuf:"varint,2,opt"`
-	Field3     uint32 `protobuf:"varint,3,opt"`
-	Field4     uint32 `protobuf:"varint,4,opt"`
-	TargetUid  string `protobuf:"bytes,5,opt"`
-	InvitorUid string `protobuf:"bytes,6,opt"`
-	Field7     uint32 `protobuf:"varint,7,opt"`
-	Field9     uint32 `protobuf:"varint,9,opt"`
-	Field10    []byte `protobuf:"bytes,10,opt"`
-	Field11    uint32 `protobuf:"varint,11,opt"`
-	Field12    string `protobuf:"bytes,12,opt"`
+	Field2     uint32 `protobuf:"varint,2,opt"` // 1
+	Field3     uint32 `protobuf:"varint,3,opt"` // 4
+	Field4     uint32 `protobuf:"varint,4,opt"` // 0
+	InvitorUid string `protobuf:"bytes,5,opt"`
+	Hashes     []byte `protobuf:"bytes,6,opt"`
 }
 
 type GroupMute struct {
@@ -89,13 +73,6 @@ type GroupMuteData struct {
 type GroupMuteState struct {
 	TargetUid proto.Option[string] `protobuf:"bytes,1,opt"`
 	Duration  uint32               `protobuf:"varint,2,opt"` // uint.MaxValue = Mute else Lift
-	_         [0]func()
-}
-
-type GroupSpecialTitle struct {
-	Content   string `protobuf:"bytes,2,opt"`
-	Field3    uint32 `protobuf:"varint,3,opt"`
-	TargetUin uint32 `protobuf:"varint,5,opt"`
 	_         [0]func()
 }
 
@@ -132,4 +109,22 @@ type RenameData struct {
 	Field1   uint32 `protobuf:"varint,1,opt"` // 20002
 	NickName string `protobuf:"bytes,2,opt"`
 	_        [0]func()
+}
+
+// StatSvc.SvcReqMSFLoginNotify
+type LoginNotify struct {
+	SubAppId uint32             `protobuf:"varint,2,opt"`
+	Status   uint32             `protobuf:"varint,4,opt"`
+	Infos    []*LoginNotifyInfo `protobuf:"bytes,5,rep"`
+}
+
+type LoginNotifyInfo struct {
+	SubAppId uint32 `protobuf:"varint,2,opt"`
+	// uint32 field3      = 3;
+	// uint32 field4      = 4;
+	DeviceName string `protobuf:"bytes,5,opt"`
+	Field6     []byte `protobuf:"bytes,6,opt"`
+	// uint32 field7      = 7;
+	AppId       uint32 `protobuf:"varint,8,opt"`
+	PackageName string `protobuf:"bytes,9,opt"` //uint32 field11     = 11;
 }

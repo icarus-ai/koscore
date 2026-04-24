@@ -22,7 +22,7 @@ type Exchanger interface {
 }
 
 type exchanger struct {
-	provider *EcdhProvider
+	provider *Provider
 	public   []byte
 	shared   []byte
 	compress bool

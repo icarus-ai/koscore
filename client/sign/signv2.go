@@ -9,18 +9,17 @@ import (
 	"time"
 
 	"github.com/kernel-ai/koscore/client/auth"
-	"github.com/kernel-ai/koscore/client/packets/pb/v2/common"
 	"github.com/kernel-ai/koscore/utils"
 	"github.com/kernel-ai/koscore/utils/binary"
 	"github.com/kernel-ai/koscore/utils/types"
-	//"github.com/kernel-ai/koscore/utils/comm"
+	// "github.com/kernel-ai/koscore/utils/comm"
 )
 
 type (
-	ClientV2 struct {
+	Client struct {
 		lock         sync.RWMutex
 		signCount    atomic.Uint32
-		instances    []*remoteV2
+		instances    []*remote
 		app          *auth.AppInfo
 		lastTestTime time.Time
 
@@ -28,27 +27,27 @@ type (
 		uin    uint32
 	}
 
-	remoteV2 struct {
+	remote struct {
 		server  string
 		headers types.MapSS
 		latency atomic.Uint32
 	}
 )
 
-func NewSignerV2(uin uint32, app *auth.AppInfo, device *auth.DeviceInfo, sign_server_token []string) *ClientV2 {
-	var servs []*remoteV2
+func NewSignerV2(uin uint32, app *auth.AppInfo, device *auth.DeviceInfo, sign_server_token []string) *Client {
+	var servs []*remote
 	for i := 0; i < len(sign_server_token); i += 2 {
-		servs = append(servs, &remoteV2{server: sign_server_token[i], headers: types.MapSS{
+		servs = append(servs, &remote{server: sign_server_token[i], headers: types.MapSS{
 			"Authorization": "Bearer " + sign_server_token[i+1],
 			"User-Agent":    "kosbot qq/" + app.CurrentVersion,
 		}})
 	}
-	client := &ClientV2{instances: servs, uin: uin, app: app, device: device}
+	client := &Client{instances: servs, uin: uin, app: app, device: device}
 	go client.test()
 	return client
 }
 
-func (c *ClientV2) Reset() {
+func (c *Client) Reset() {
 	c.lock.Lock()
 	defer c.lock.Unlock()
 	for _, i := range c.instances {
@@ -56,42 +55,42 @@ func (c *ClientV2) Reset() {
 	}
 }
 
-func (c *ClientV2) Release()                           {}
-func (c *ClientV2) AddRequestHeader(heads types.MapSS) {}
-func (c *ClientV2) AddSignServer(servers ...string)    {}
+func (c *Client) Release()                           {}
+func (c *Client) AddRequestHeader(heads types.MapSS) {}
+func (c *Client) AddSignServer(servers ...string)    {}
 
-func (c *ClientV2) GetSignServer() []string {
+func (c *Client) GetSignServer() []string {
 	c.lock.RLock()
 	defer c.lock.RUnlock()
-	return utils.Map(c.instances, func(sign *remoteV2) string { return sign.server })
+	return utils.Map(c.instances, func(sign *remote) string { return sign.server })
 }
 
-func (c *ClientV2) SetAppInfo(app *auth.AppInfo) {
+func (c *Client) SetAppInfo(app *auth.AppInfo) {
 	c.lock.Lock()
 	defer c.lock.Unlock()
 	c.app = app
 }
 
-func (c *ClientV2) getAvailableSign() *remoteV2 {
+func (c *Client) getAvailableSign() *remote {
 	c.lock.RLock()
 	defer c.lock.RUnlock()
 	for _, i := range c.instances {
-		if i.latency.Load() < serverLatencyDown {
+		if i.latency.Load() < server_latency_down {
 			return i
 		}
 	}
 	return nil
 }
 
-func (c *ClientV2) sortByLatency() {
+func (c *Client) sortByLatency() {
 	c.lock.Lock()
 	defer c.lock.Unlock()
-	sort.SliceStable(c.instances, func(i, j int) bool {
-		return c.instances[i].latency.Load() < c.instances[j].latency.Load()
-	})
+	if len(c.instances) > 1 {
+		sort.SliceStable(c.instances, func(i, k int) bool { return c.instances[i].latency.Load() < c.instances[k].latency.Load() })
+	}
 }
 
-func (c *ClientV2) Sign(cmd string, seq uint32, data []byte) (*common.SsoSecureInfo, error) {
+func (c *Client) Sign(cmd string, seq uint32, data []byte) (*Value, error) {
 	if !ContainSignPKG(cmd) {
 		return nil, nil
 	}
@@ -105,27 +104,23 @@ func (c *ClientV2) Sign(cmd string, seq uint32, data []byte) (*common.SsoSecureI
 	if sign := c.getAvailableSign(); sign != nil {
 		rsp, e := sign.sign(cmd, seq, data, c.uin, c.device.GUID.ToLowHexStr(), c.app.QUA)
 		if e == nil {
-			if !bytes.Contains(rsp.Value.Extra, []byte(c.app.QUA)) {
+			if !bytes.Contains(rsp.Extra, []byte(c.app.QUA)) {
 				return nil, ErrVersionMismatch
 			}
 			//comm.LOGD("signed for [%s:%d] %X", cmd, seq, rsp.Value.Sign)
 			c.signCount.Add(1)
-			if rsp.Value.Token == nil {
-				rsp.Value.Token = binary.Empty
+			if rsp.Token == nil {
+				rsp.Token = binary.Empty
 			}
-			return &common.SsoSecureInfo{
-				SecSign:  rsp.Value.Sign,
-				SecToken: rsp.Value.Token,
-				SecExtra: rsp.Value.Extra,
-			}, nil
+			return rsp, nil
 		}
-		sign.latency.Store(serverLatencyDown)
+		sign.latency.Store(server_latency_down)
 	}
 	go c.test() // 全寄了, 重新再测下
 	return nil, ErrAllSignServiceDown
 }
 
-func (c *ClientV2) test() {
+func (c *Client) test() {
 	c.lock.Lock()
 	if time.Now().Before(c.lastTestTime.Add(10 * time.Minute)) {
 		c.lock.Unlock()
@@ -139,31 +134,31 @@ func (c *ClientV2) test() {
 	c.sortByLatency()
 }
 
-func (i *remoteV2) sign(cmd string, seq uint32, buf []byte, uin uint32, guid, qua string) (*ResponseV2, error) {
+func (i *remote) sign(cmd string, seq uint32, buf []byte, uin uint32, guid, qua string) (*Value, error) {
 	s := fmt.Sprintf(`{"command":"%s","seq":"%d","body":"%x","uin":"%d","guid":"%s","qua":"%s"}`, cmd, seq, buf, uin, guid, qua)
-	rsp, e := httpPost[ResponseV2](i.server, utils.S2B(s), i.headers)
+	rsp, e := http_post[rsp_sign_v2](i.server, utils.S2B(s), i.headers)
 	if e != nil {
 		return nil, e
 	}
 	if len(rsp.Value.Sign) == 0 {
 		return nil, k_err_sign_rsp
 	}
-	return &rsp, nil
+	return &rsp.Value, nil
 }
 
-func (i *remoteV2) test(uin uint32, guid string, qua string) {
+func (i *remote) test(uin uint32, guid string, qua string) {
 	ts := time.Now().UnixMilli()
 	rsp, e := i.sign("wtlogin.login", 1, []byte{11, 45, 14}, uin, guid, qua)
-	if e != nil || len(rsp.Value.Sign) == 0 {
+	if e != nil || len(rsp.Sign) == 0 {
 		//comm.LOGW("测试签名服务器: %s时出现错误: %v", i.server, e)
-		i.latency.Store(serverLatencyDown)
+		i.latency.Store(server_latency_down)
 		//???return
 	}
 	// 有长连接的情况，取两次平均值
 	rsp, e = i.sign("wtlogin.login", 1, []byte{11, 45, 14}, uin, guid, qua)
-	if e != nil || len(rsp.Value.Sign) == 0 {
+	if e != nil || len(rsp.Sign) == 0 {
 		//comm.LOGW("测试签名服务器: %s时出现错误: %v", i.server, e)
-		i.latency.Store(serverLatencyDown)
+		i.latency.Store(server_latency_down)
 		return
 	}
 	// 粗略计算，应该足够了

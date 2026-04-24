@@ -1,11 +1,10 @@
 package client
 
 import (
-	"errors"
-
 	pkt_msg "github.com/kernel-ai/koscore/client/packets/message"
 
 	"github.com/kernel-ai/koscore/message"
+	"github.com/kernel-ai/koscore/utils/exception"
 )
 
 // 获取群聊历史消息
@@ -20,14 +19,18 @@ func (m *QQClient) GetGroupMessages(gin, start_seq, end_seq uint64) ([]*message.
 	}
 	var msgs []*message.GroupMessage
 	for _, msg := range rsp {
-		msgs = append(msgs, message.ParseGroupMessage(m.Uin(), msg))
+		msgs = append(msgs, message.ParseGroupMessage(m.session.Info.Uin, msg))
 	}
 	return msgs, nil
 }
 
 // 获取私聊历史消息
 func (m *QQClient) GetPrivateMessages(peer_uin uint64, timestamp, count uint32) ([]*message.PrivateMessage, error) {
-	pkt, err := m.sendOidbPacketAndWait(pkt_msg.BuildGetRoamMessagePacket(m.GetUid(peer_uin), timestamp, count))
+	uid, err := m.GetUid(peer_uin)
+	if err != nil {
+		return nil, err
+	}
+	pkt, err := m.sendOidbPacketAndWait(pkt_msg.BuildGetRoamMessagePacket(uid, timestamp, count))
 	if err != nil {
 		return nil, err
 	}
@@ -37,13 +40,17 @@ func (m *QQClient) GetPrivateMessages(peer_uin uint64, timestamp, count uint32) 
 	}
 	var msgs []*message.PrivateMessage
 	for _, msg := range rsp {
-		msgs = append(msgs, message.ParsePrivateMessage(m.Uin(), msg))
+		msgs = append(msgs, message.ParsePrivateMessage(m.session.Info.Uin, msg))
 	}
 	return msgs, nil
 }
 
 func (m *QQClient) GetC2CMessages(peer_uin, start_seq, end_seq uint64) ([]*message.TempMessage, error) {
-	pkt, err := m.sendOidbPacketAndWait(pkt_msg.BuildGetC2CMessagePacket(m.GetUid(peer_uin), start_seq, end_seq))
+	uid, err := m.GetUid(peer_uin)
+	if err != nil {
+		return nil, err
+	}
+	pkt, err := m.sendOidbPacketAndWait(pkt_msg.BuildGetC2CMessagePacket(uid, start_seq, end_seq))
 	if err != nil {
 		return nil, err
 	}
@@ -53,7 +60,7 @@ func (m *QQClient) GetC2CMessages(peer_uin, start_seq, end_seq uint64) ([]*messa
 	}
 	var msgs []*message.TempMessage
 	for _, msg := range rsp {
-		msgs = append(msgs, message.ParseTempMessage(m.Uin(), msg))
+		msgs = append(msgs, message.ParseTempMessage(m.session.Info.Uin, msg))
 	}
 	return msgs, nil
 }
@@ -65,13 +72,17 @@ func (m *QQClient) RecallGroupMessage(gin, seq uint64) error {
 		return err
 	}
 	if len(pkt.Data) == 0 {
-		return errors.New("empty response data")
+		return exception.ErrEmptyRsp
 	}
 	return nil
 }
 
 // 撤回私聊消息
 func (m *QQClient) RecallFriendMessage(uin, seq, random, client_seq uint64, timestamp uint32) error {
-	_, err := m.sendOidbPacketAndWait(pkt_msg.BuildC2CRecallMessagePacket(m.GetUid(uin), seq, random, client_seq, timestamp))
+	uid, err := m.GetUid(uin)
+	if err != nil {
+		return err
+	}
+	_, err = m.sendOidbPacketAndWait(pkt_msg.BuildC2CRecallMessagePacket(uid, seq, random, client_seq, timestamp))
 	return err // sbtx不报错
 }

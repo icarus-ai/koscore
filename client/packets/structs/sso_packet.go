@@ -1,11 +1,10 @@
 package structs
 
 import (
-	"fmt"
-
 	"github.com/kernel-ai/koscore/client/auth"
 	"github.com/kernel-ai/koscore/client/packets/pb/v2/common"
 	"github.com/kernel-ai/koscore/client/packets/structs/sso_type"
+	"github.com/kernel-ai/koscore/utils/exception"
 )
 
 func BuildSsoPacket(version *auth.AppInfo, device *auth.DeviceInfo, session *auth.Session, packet *sso_type.SsoPacket, info *common.SsoSecureInfo) (d []byte, e error) {
@@ -15,7 +14,7 @@ func BuildSsoPacket(version *auth.AppInfo, device *auth.DeviceInfo, session *aut
 	case sso_type.RequestSimple:
 		return buildServicePackerProtocol13(session, packet, buildSsoPackerProtocol13(version, session, packet, info))
 	default:
-		return nil, fmt.Errorf("invalid operation exception: unknown request type: %d", packet.RequestType)
+		return nil, exception.NewOperationException("unknown request type: %d", packet.RequestType)
 	}
 }
 

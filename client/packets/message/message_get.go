@@ -1,11 +1,10 @@
 package message
 
 import (
-	"fmt"
-
 	"github.com/kernel-ai/koscore/client/packets/message/message_type"
 	"github.com/kernel-ai/koscore/client/packets/pb/v2/message"
 	"github.com/kernel-ai/koscore/client/packets/structs/sso_type"
+	"github.com/kernel-ai/koscore/utils/exception"
 	"github.com/kernel-ai/koscore/utils/proto"
 )
 
@@ -27,7 +26,7 @@ func ParseGetGroupMessagePacket(data []byte) ([]*message.CommonMessage, error) {
 		return nil, e
 	}
 	if rsp.RetCode.Unwrap() != 0 {
-		return nil, fmt.Errorf("%s (%d)", rsp.ErrorMsg.Unwrap(), rsp.RetCode.Unwrap())
+		return nil, exception.NewFormat("%s (%d)", rsp.ErrorMsg.Unwrap(), rsp.RetCode.Unwrap())
 	}
 	return rsp.Body.Messages, nil
 }
@@ -66,7 +65,7 @@ func ParseGetC2CMessagePacket(data []byte) ([]*message.CommonMessage, error) {
 		return nil, e
 	}
 	if rsp.RetCode.Unwrap() != 0 {
-		return nil, fmt.Errorf("%s (%d)", rsp.Message.Unwrap(), rsp.RetCode.Unwrap())
+		return nil, exception.NewFormat("%s (%d)", rsp.Message.Unwrap(), rsp.RetCode.Unwrap())
 	}
 	return rsp.Messages, nil
 }

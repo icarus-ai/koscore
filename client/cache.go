@@ -4,10 +4,19 @@ import (
 	"time"
 
 	"github.com/kernel-ai/koscore/client/entity"
+	"github.com/kernel-ai/koscore/utils/exception"
 )
 
+func (m *QQClient) GetUid(uin uint64, gin ...uint64) (string, error) {
+	uid := m.get_uid(uin, gin...)
+	if uid == "" {
+		return "", exception.NewInvalidTargetException(uin, gin...)
+	}
+	return uid, nil
+}
+
 // GetUid 获取缓存中对应uin的uid
-func (m *QQClient) GetUid(uin uint64, gin ...uint64) string {
+func (m *QQClient) get_uid(uin uint64, gin ...uint64) string {
 	if uin == 0 {
 		return ""
 	}

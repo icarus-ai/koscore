@@ -1,21 +1,20 @@
-package message
+package oidb
 
 import (
 	"errors"
 	"fmt"
 
-	pkt_oidb "github.com/kernel-ai/koscore/client/packets/oidb"
-
 	"github.com/kernel-ai/koscore/client/packets/pb/v2/service/operation"
 	"github.com/kernel-ai/koscore/client/packets/structs/sso_type"
 	"github.com/kernel-ai/koscore/message"
 	"github.com/kernel-ai/koscore/utils/crypto"
+	"github.com/kernel-ai/koscore/utils/exception"
 	"github.com/kernel-ai/koscore/utils/proto"
 )
 
 func BuildPrivateFSUploadPacket(self_uid, target_uid string, file *message.FileElement) (*sso_type.SsoPacket, error) {
 	md510MCheckSum, _ := crypto.ComputeMd5AndLengthWithLimit(file.FileStream, 10*1024*1024)
-	return pkt_oidb.BuildOidbPacket(0xE37, 1700, &operation.OfflineFileUploadRequest{
+	return BuildOidbPacket(0xE37, 1700, &operation.OfflineFileUploadRequest{
 		Command: proto.Some[uint32](1700),
 		Seq:     proto.Some[int32](0),
 		Upload: &operation.ApplyUploadReqV3{
@@ -37,19 +36,19 @@ func BuildPrivateFSUploadPacket(self_uid, target_uid string, file *message.FileE
 }
 
 func ParsePrivateFSUploadPacket(data []byte) (*operation.ApplyUploadRespV3, error) {
-	rsp, e := pkt_oidb.ParseOidbPacket[operation.OfflineFileUploadResponse](data)
+	rsp, e := ParseOidbPacket[operation.OfflineFileUploadResponse](data)
 	if e != nil {
 		return nil, e
 	}
 	upload := rsp.Upload
 	if upload.RetCode.Unwrap() != 0 {
-		return nil, fmt.Errorf("operation exception: %s (%d)", upload.RetMsg.Unwrap(), upload.RetCode.Unwrap())
+		return nil, exception.NewOperationExceptionCode(upload.RetCode.Unwrap(), upload.RetMsg.Unwrap())
 	}
 	return upload, nil
 }
 
 func BuildPrivateFSDownloadPacket(self_uid, uuid, hash string) (*sso_type.SsoPacket, error) {
-	return pkt_oidb.BuildOidbPacket(0xE37, 1200, &operation.OidbSvcTrpcTcp0XE37_1200{
+	return BuildOidbPacket(0xE37, 1200, &operation.OidbSvcTrpcTcp0XE37_1200{
 		SubCommand: 1200,
 		Field2:     1,
 		Field101:   3,
@@ -67,7 +66,7 @@ func BuildPrivateFSDownloadPacket(self_uid, uuid, hash string) (*sso_type.SsoPac
 }
 
 func ParsePrivateFSDownloadPacket(data []byte) (string, error) {
-	rsp, e := pkt_oidb.ParseOidbPacket[operation.OidbSvcTrpcTcp0XE37_1200Response](data)
+	rsp, e := ParseOidbPacket[operation.OidbSvcTrpcTcp0XE37_1200Response](data)
 	if e != nil {
 		return "", e
 	}

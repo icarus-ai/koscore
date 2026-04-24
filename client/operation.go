@@ -1,7 +1,7 @@
 package client
 
 import (
-	"github.com/pkg/errors"
+	"errors"
 
 	pkt_msg "github.com/kernel-ai/koscore/client/packets/message"
 
@@ -85,8 +85,8 @@ func (m *QQClient) FetchGroups() ([]*entity.Group, error) {
 }
 
 // 获取对应群的所有群成员信息，使用token可以获取下一页的群成员信息
-func (m *QQClient) FetchGroupMembers(groupUin uint64, token []byte) ([]*entity.GroupMember, []byte, error) {
-	pkt, err := oidb.BuildFetchGroupMembersPacket(groupUin, token)
+func (m *QQClient) FetchGroupMembers(group_uin uint64, token []byte) ([]*entity.GroupMember, []byte, error) {
+	pkt, err := oidb.BuildFetchGroupMembersPacket(group_uin, token)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -97,8 +97,8 @@ func (m *QQClient) FetchGroupMembers(groupUin uint64, token []byte) ([]*entity.G
 }
 
 // 获取群信息 => FetchGroupInfo strange 是否陌生群聊
-func (m *QQClient) FetchGroupExtra(groupUin uint64, strange bool) (*operation.FetchGroupExtraResponseInfoResult, error) {
-	pkt, err := oidb.BuildFetchGroupExtraPacket(groupUin, strange)
+func (m *QQClient) FetchGroupExtra(group_uin uint64, strange bool) (*operation.FetchGroupExtraResponseInfoResult, error) {
+	pkt, err := oidb.BuildFetchGroupExtraPacket(group_uin, strange)
 	if err != nil {
 		return nil, err
 	}
@@ -109,15 +109,15 @@ func (m *QQClient) FetchGroupExtra(groupUin uint64, strange bool) (*operation.Fe
 }
 
 // 获取加群请求信息 => GetGroupSystemMessages
-func (m *QQClient) FetchGroupNotice(start, count uint64, isfiltered bool, gin ...uint64) (*entity.GroupSystemMessages, error) {
-	pkt, err := oidb.BuildFetchGroupNotificationsPacket(count, start, isfiltered)
+func (m *QQClient) FetchGroupNotice(start, count uint64, is_filtered bool, gin ...uint64) (*entity.GroupSystemMessages, error) {
+	pkt, err := oidb.BuildFetchGroupNotificationsPacket(count, start, is_filtered)
 	if err != nil {
 		return nil, err
 	}
 	if pkt, err = m.sendOidbPacketAndWait(pkt); err != nil {
 		return nil, err
 	}
-	ret, err := oidb.ParseFetchGroupNotificationsPacket(&m.cache, isfiltered, pkt.Data, gin...)
+	ret, err := oidb.ParseFetchGroupNotificationsPacket(&m.cache, is_filtered, pkt.Data, gin...)
 	if err != nil {
 		return nil, err
 	}
@@ -142,20 +142,20 @@ func (m *QQClient) FetchGroupNotice(start, count uint64, isfiltered bool, gin ..
 }
 
 // 处理加群请求
-func (m *QQClient) SetGroupRequest(isFiltered bool, operate entity.GroupRequestOperate, sequence uint64, typ uint32, groupUin uint64, message string) error {
-	pkt, err := oidb.BuildSetGroupRequestPcket(isFiltered, operate, sequence, typ, groupUin, message)
+func (m *QQClient) SetGroupRequest(is_filtered bool, operate entity.GroupRequestOperate, sequence uint64, typ uint32, group_uin uint64, msg string) error {
+	pkt, err := oidb.BuildSetGroupRequestPacket(is_filtered, operate, sequence, typ, group_uin, msg)
 	if err != nil {
 		return err
 	}
 	if pkt, err = m.sendOidbPacketAndWait(pkt); err != nil {
 		return err
 	}
-	return oidb.ParseSetGroupRequestPaacket(pkt.Data)
+	return oidb.CheckError(pkt.Data)
 }
 
-// 上传合并转发消息 groupUin should be the group number where the uploader is located or 0 (c2c)
-func (m *QQClient) UploadForwardMsg(forward *message.ForwardMessage, groupUin uint64) (*message.ForwardMessage, error) {
-	pkt := pkt_msg.BuildMultiMsgUploadPacket(m.Uid(), groupUin, m.BuildFakeMessage(forward.Nodes), m.version)
+// 上传合并转发消息 group_uin should be the group number where the uploader is located or 0 (c2c)
+func (m *QQClient) UploadForwardMsg(forward *message.ForwardMessage, group_uin uint64) (*message.ForwardMessage, error) {
+	pkt := pkt_msg.BuildMultiMsgUploadPacket(m.session.Info.Uid, group_uin, m.BuildFakeMessage(forward.Nodes), m.version)
 	pkt, err := m.sendOidbPacketAndWait(pkt)
 	if err != nil {
 		return nil, err
@@ -169,11 +169,11 @@ func (m *QQClient) UploadForwardMsg(forward *message.ForwardMessage, groupUin ui
 }
 
 // 获取合并转发消息
-func (m *QQClient) FetchForwardMsg(resid string, isgroup bool) (msg *message.ForwardMessage, err error) {
+func (m *QQClient) FetchForwardMsg(resid string, is_group bool) (msg *message.ForwardMessage, err error) {
 	if resid == "" {
 		return msg, errors.New("empty resid")
 	}
-	pkt, err := m.sendOidbPacketAndWait(pkt_msg.BuildMultiMsgDownloadPcket(m.Uid(), resid, isgroup, m.version))
+	pkt, err := m.sendOidbPacketAndWait(pkt_msg.BuildMultiMsgDownloadPcket(m.session.Info.Uid, resid, is_group, m.version))
 	if err != nil {
 		return nil, err
 	}
@@ -191,13 +191,13 @@ func (m *QQClient) FetchForwardMsg(resid string, isgroup bool) (msg *message.For
 			Time:     uint32(b.ContentHead.Time.Unwrap()),
 		}
 		if forward.IsGroup = b.RoutingHead.Group != nil; forward.IsGroup {
-			ms := message.ParseGroupMessage(m.Uin(), b)
+			ms := message.ParseGroupMessage(m.session.Info.Uin, b)
 			m.PreprocessGroupMessageEvent(ms)
 			forward.Nodes[idx].GroupId = ms.GroupUin
 			forward.Nodes[idx].SenderName = ms.Sender.CardName
 			forward.Nodes[idx].Message = ms.Elements
 		} else {
-			ms := message.ParsePrivateMessage(m.Uin(), b)
+			ms := message.ParsePrivateMessage(m.session.Info.Uin, b)
 			m.PreprocessPrivateMessageEvent(ms)
 			forward.Nodes[idx].SenderName = ms.Sender.Nickname
 			forward.Nodes[idx].Message = ms.Elements
@@ -205,4 +205,115 @@ func (m *QQClient) FetchForwardMsg(resid string, isgroup bool) (msg *message.For
 	}
 
 	return forward, nil
+}
+
+// 设置群消息表态
+func (m *QQClient) SetGroupReaction(group_uin, sequence uint64, code string, is_Add bool) error {
+	pkt, err := oidb.BuildGroupReactionPacket(group_uin, sequence, code, is_Add)
+	if err != nil {
+		return err
+	}
+	if pkt, err = m.sendOidbPacketAndWait(pkt); err != nil {
+		return err
+	}
+	return oidb.CheckError(pkt.Data)
+}
+
+// 群全员禁言
+func (m *QQClient) SetGroupGlobalMute(group_uin uint64, is_mute bool) error {
+	pkt, err := oidb.BuildSetGroupGlobalMutePacket(group_uin, is_mute)
+	if err != nil {
+		return err
+	}
+	if pkt, err = m.sendOidbPacketAndWait(pkt); err != nil {
+		return err
+	}
+	return oidb.ParseSetGroupGlobalMutePacket(pkt.Data)
+}
+
+// 设置群聊名称
+func (m *QQClient) SetGroupName(group_uin uint64, name string) error {
+	pkt, err := oidb.BuildSetGroupNamePacket(group_uin, name)
+	if err != nil {
+		return err
+	}
+	if pkt, err = m.sendOidbPacketAndWait(pkt); err != nil {
+		return err
+	}
+	return oidb.CheckError(pkt.Data)
+}
+
+// 设置群成员昵称
+func (m *QQClient) SetGroupMemberName(group_uin, uin uint64, name string) error {
+	uid, err := m.GetUid(uin, group_uin)
+	if err != nil {
+		return err
+	}
+	pkt, err := oidb.BuildSetGroupMemberNamePacket(group_uin, uid, name)
+	if err != nil {
+		return err
+	}
+	if pkt, err = m.sendOidbPacketAndWait(pkt); err != nil {
+		return err
+	}
+	if err = oidb.CheckError(pkt.Data); err != nil {
+		return err
+	}
+	if g := m.GetCachedMemberInfo(uin, group_uin); g != nil {
+		g.MemberCard = name
+		m.cache.RefreshGroupMember(group_uin, g)
+	}
+	return nil
+}
+
+// 设置群成员专属头衔
+func (m *QQClient) SetGroupMemberSpecialTitle(group_uin, uin uint64, title string) error {
+	uid, err := m.GetUid(uin, group_uin)
+	if err != nil {
+		return err
+	}
+	pkt, err := oidb.BuildSetGroupMemberSpecialTitlePacket(group_uin, uid, title)
+	if err != nil {
+		return err
+	}
+	if pkt, err = m.sendOidbPacketAndWait(pkt); err != nil {
+		return err
+	}
+	return oidb.CheckError(pkt.Data)
+}
+
+// 退出群聊
+func (m *QQClient) SetGroupLeave(group_uin uint64) error {
+	pkt, err := oidb.BuildSetGroupLeavePacket(group_uin)
+	if err != nil {
+		return err
+	}
+	if pkt, err = m.sendOidbPacketAndWait(pkt); err != nil {
+		return err
+	}
+	return oidb.CheckError(pkt.Data)
+}
+
+// 戳一戳群友
+func (m *QQClient) GroupPoke(group_uin, uin uint64) error {
+	pkt, err := oidb.BuildNudgePacket(group_uin, uin)
+	if err != nil {
+		return err
+	}
+	if pkt, err = m.sendOidbPacketAndWait(pkt); err != nil {
+		return err
+	}
+	return oidb.CheckError(pkt.Data)
+}
+
+// 戳一戳好友
+func (m *QQClient) FriendPoke(uin uint64) error {
+	pkt, err := oidb.BuildNudgePacket(0, uin)
+	if err != nil {
+		return err
+	}
+	if pkt, err = m.sendOidbPacketAndWait(pkt); err != nil {
+		return err
+	}
+	return oidb.CheckError(pkt.Data)
 }

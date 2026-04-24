@@ -8,36 +8,33 @@ import (
 	"math/rand"
 	"net/http"
 	"net/url"
-	"strconv"
 
 	"github.com/kernel-ai/koscore/client/packets/pb/v2/service/highway"
 	"github.com/kernel-ai/koscore/utils"
 	"github.com/kernel-ai/koscore/utils/binary"
 	"github.com/kernel-ai/koscore/utils/crypto"
+	"github.com/kernel-ai/koscore/utils/exception"
 	"github.com/kernel-ai/koscore/utils/proto"
 
 	hw "github.com/kernel-ai/koscore/client/internal/highway"
 	pkt_hw "github.com/kernel-ai/koscore/client/packets/highway"
 )
 
-//var m_hw_session *hw.Session
-/*
-func (c *QQClient) initHighwayServers() {
-	c.hw_session.Uin      = &c.transport.Sig.Uin
-	c.hw_session.AppId    = uint32(c.transport.Version.AppId)
-	c.hw_session.SubAppId = uint32(c.transport.Version.SubAppId)
+func (m *QQClient) initHighwayServers() {
+	m.hw_session.Uin = &m.session.Info.Uin
+	m.hw_session.AppId = m.version.AppId
+	m.hw_session.SubAppId = m.version.SubAppId
 }
-*/
 
 func (m *QQClient) ensureHighwayServers() error {
 	if m.hw_session.SsoAddr == nil || m.hw_session.SigSession == nil || m.hw_session.SessionKey == nil {
 		pkt, err := m.sendOidbPacketAndWait(pkt_hw.BuildHighWayURLReq(m.session.Sig.A2))
 		if err != nil {
-			return fmt.Errorf("get highway server: %w", err)
+			return exception.NewFormat("get highway server: %w", err)
 		}
 		rsp, err := pkt_hw.ParseHighWayURLReq(pkt.Data)
 		if err != nil {
-			return fmt.Errorf("parse highway server: %w", err)
+			return exception.NewFormat("parse highway server: %w", err)
 		}
 
 		m.hw_session.SigSession = rsp.RspBody.SigSession
@@ -58,7 +55,7 @@ func (m *QQClient) ensureHighwayServers() error {
 	return nil
 }
 
-func (m *QQClient) highwayUpload(commonId int, r io.Reader, fileSize uint64, md5 []byte, extendInfo []byte) error {
+func (m *QQClient) highwayUpload(common_id uint32, r io.Reader, file_size uint64, md5 []byte, extend_info []byte) error {
 	// 能close的io就close
 	defer utils.CloseIO(r)
 	err := m.ensureHighwayServers()
@@ -66,13 +63,13 @@ func (m *QQClient) highwayUpload(commonId int, r io.Reader, fileSize uint64, md5
 		return err
 	}
 	trans := &hw.Transaction{
-		CommandId: uint32(commonId),
+		CommandId: common_id,
 		Body:      r,
 		Sum:       md5,
-		Size:      fileSize,
+		Size:      file_size,
 		Ticket:    m.hw_session.SigSession,
 		LoginSig:  m.session.Sig.A2,
-		Ext:       extendInfo,
+		Ext:       extend_info,
 	}
 	if _, err = m.hw_session.Upload(trans); err == nil {
 		return nil
@@ -80,11 +77,11 @@ func (m *QQClient) highwayUpload(commonId int, r io.Reader, fileSize uint64, md5
 	// fallback to http upload
 	servers := m.hw_session.SsoAddr
 	saddr := servers[rand.Intn(len(servers))]
-	server := fmt.Sprintf("http://%s:%d/cgi-bin/httpconn?htcmd=0x6FF0087&uin=%d", binary.UInt32ToIPV4Address(saddr.IP), saddr.Port, m.Uin())
+	server := fmt.Sprintf("http://%s:%d/cgi-bin/httpconn?htcmd=0x6FF0087&uin=%d", binary.UInt32ToIPV4Address(saddr.IP), saddr.Port, m.session.Info.Uin)
 	buffer := make([]byte, hw.BlockSize)
-	for offset := uint64(0); offset < fileSize; offset += hw.BlockSize {
-		if hw.BlockSize > fileSize-offset {
-			buffer = buffer[:fileSize-offset]
+	for offset := uint64(0); offset < file_size; offset += hw.BlockSize {
+		if hw.BlockSize > file_size-offset {
+			buffer = buffer[:file_size-offset]
 		}
 		if _, err = io.ReadFull(r, buffer); err != nil {
 			return err
@@ -101,38 +98,37 @@ func (m *QQClient) highwayUploadBlock(trans *hw.Transaction, server string, offs
 	isEnd := offset+blksz == trans.Size
 	payload, err := sendHighwayPacket(trans.Build(&m.hw_session, offset, uint32(blksz), blkmd5), blk, server, isEnd)
 	if err != nil {
-		return fmt.Errorf("send highway packet: %w", err)
+		return exception.NewFormat("send highway packet: %w", err)
 	}
 	defer payload.Close()
-	rsphead, _, err := parseHighwayPacket(payload)
-	if err != nil {
-		return fmt.Errorf("parse highway packet: %w", err)
+	if _, _, err = parseHighwayPacket(payload); err != nil {
+		return err
 	}
-	//m.LOGD("Highway Block Result: %d | %d | %x | %v", rsphead.ErrorCode, rsphead.MsgSegHead.RetCode.Unwrap(), rsphead.BytesRspExtendInfo, rspbody)
-	if rsphead.ErrorCode.Unwrap() != 0 {
-		return errors.New("highway error code: " + strconv.Itoa(int(rsphead.ErrorCode.Unwrap())))
-	}
+	//m.LOGD("highway block result: %d | %d | %x | %v", rsphead.ErrorCode, rsphead.MsgSegHead.RetCode.Unwrap(), rsphead.BytesRspExtendInfo, rspbody)
 	return nil
 }
 
 func parseHighwayPacket(data io.Reader) (head *highway.RespDataHighwayHead, body *binary.Reader, e error) {
 	body = binary.ParseReader(data)
 	if body.ReadBytesNoCopy(1)[0] != 0x28 {
-		return nil, nil, errors.New("invalid highway packet")
+		return nil, nil, exception.New("parse highway packet: invalid highway packet")
 	}
 	size := body.ReadU32() // head length
 	_ = body.ReadU32()     // body len
 	d := body.ReadBytesNoCopy(int(int64(size)))
 	if head, e = proto.Unmarshal[highway.RespDataHighwayHead](d); e != nil {
-		return nil, nil, e
+		return nil, nil, exception.NewUnmarshalProtoException(e, "parse highway packet")
 	}
 	if body.ReadBytesNoCopy(1)[0] != 0x29 {
-		return nil, nil, errors.New("invalid highway head")
+		return nil, nil, exception.New("parse highway packet: invalid highway head")
+	}
+	if head.ErrorCode.Unwrap() != 0 {
+		e = exception.NewOperationExceptionCode(head.ErrorCode.Unwrap(), "parse highway packet: code")
 	}
 	return
 }
 
-func sendHighwayPacket(packet *highway.ReqDataHighwayHead, block []byte, serverURL string, end bool) (io.ReadCloser, error) {
+func sendHighwayPacket(packet *highway.ReqDataHighwayHead, block []byte, server_url string, end bool) (io.ReadCloser, error) {
 	data, err := proto.Marshal(packet)
 	if err != nil {
 		return nil, err
@@ -141,7 +137,7 @@ func sendHighwayPacket(packet *highway.ReqDataHighwayHead, block []byte, serverU
 	if data, err = io.ReadAll(&buf); err != nil {
 		return nil, err
 	}
-	return postHighwayContent(bytes.NewReader(data), serverURL, end)
+	return postHighwayContent(bytes.NewReader(data), server_url, end)
 	/*
 	   return postHighwayContent(
 
@@ -156,9 +152,9 @@ func sendHighwayPacket(packet *highway.ReqDataHighwayHead, block []byte, serverU
 	*/
 }
 
-func postHighwayContent(content io.Reader, serverURL string, end bool) (io.ReadCloser, error) {
+func postHighwayContent(content io.Reader, server_url string, end bool) (io.ReadCloser, error) {
 	// Parse server URL
-	server, err := url.Parse(serverURL)
+	server, err := url.Parse(server_url)
 	if err != nil {
 		return nil, err
 	}

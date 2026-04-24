@@ -1,7 +1,6 @@
 package wtlogin
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/fumiama/gofastTEA"
@@ -11,6 +10,7 @@ import (
 	"github.com/kernel-ai/koscore/utils/binary"
 	"github.com/kernel-ai/koscore/utils/binary/prefix"
 	"github.com/kernel-ai/koscore/utils/crypto/ecdh"
+	"github.com/kernel-ai/koscore/utils/exception"
 )
 
 func BuildTransEmp31(version *auth.AppInfo, device *auth.DeviceInfo, session *auth.Session, unusualSig []byte, qrcode_size uint32) []byte {
@@ -126,7 +126,7 @@ func buildPacket(version *auth.AppInfo, session *auth.Session, command uint16, p
 		} else {
 			key = session.Sig.RandomKey
 		}
-	default: // ("argument out of range exception: %d", method)
+	default: // NewArgumenttOfRangeException("unknown method: %d", method)
 	}
 	cipher := tea.NewTeaCipher(key).Encrypt(payload)
 
@@ -196,14 +196,14 @@ func Parse(session *auth.Session, data []byte) (cmd uint16, rsp []byte, e error)
 		//comm.LOGD("wtlogin::Parse:4 key: %d %02X %02X", len(key), len(key), key) // 0x19-2=0x17 == 25-2=23)
 		key, e = ecdh.S192.Exange(key)
 		if e != nil {
-			return cmd, nil, fmt.Errorf("key exchange: %v", e)
+			return cmd, nil, exception.NewFormat("key exchange: %v", e)
 		}
 		encrypt_data = byt.ReadAll()
 		//comm.LOGD("wtlogin::Parse:4 key: %d %02X %02X", len(key), len(key), key)
 		//comm.LOGD("wtlogin::Parse:4 encrypt_data: %d %02X %02X", len(encrypt_data), len(encrypt_data), encrypt_data)
 		//comm.LOGD("----- ----- ----- ----- ***** -----")
 	default:
-		return cmd, nil, fmt.Errorf("unknown encrypt type: %d", encrypt_type)
+		return cmd, nil, exception.NewFormat("unknown encrypt type: %d", encrypt_type)
 	}
 
 	rsp = tea.NewTeaCipher(key).Decrypt(encrypt_data)
@@ -215,7 +215,7 @@ func ParseCode2dPacket(session *auth.Session, data []byte) (cmd uint16, rsp []by
 	//comm.LOGD("raw: %d %02X %02X", len(data), len(data), data)
 	//comm.LOGD("----- ----- ----- ----- ***** -----")
 	encrypt := data[1]
-	layer := binary.B2U16(data[2:4])
+	layer := utils.B_U16(data[2:4])
 	data = data[5 : layer+5]
 	if encrypt != 0 {
 		data = tea.NewTeaCipher(session.Sig.StKey).Decrypt(data)

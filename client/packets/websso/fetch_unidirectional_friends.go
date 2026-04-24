@@ -3,12 +3,10 @@ package websso
 import (
 	"encoding/base64"
 	"encoding/json"
-	"fmt"
-
-	"github.com/pkg/errors"
 
 	"github.com/kernel-ai/koscore/client/entity"
 	"github.com/kernel-ai/koscore/utils"
+	"github.com/kernel-ai/koscore/utils/exception"
 )
 
 type web_rsp struct {
@@ -26,10 +24,10 @@ type web_rsp struct {
 func ParseUnidirectionalFriendsPacket(data []byte) ([]*entity.User, error) {
 	var rsp web_rsp
 	if err := json.Unmarshal(data, &rsp); err != nil {
-		return nil, errors.Wrap(err, "unmarshal json error")
+		return nil, exception.NewUnmarshalJsonException(err, "web sso")
 	}
 	if rsp.ErrorCode != 0 {
-		return nil, fmt.Errorf("web sso request error: %v", rsp.ErrorCode)
+		return nil, exception.NewFormat("web sso request error: %v", rsp.ErrorCode)
 	}
 
 	decodeBase64String := func(str string) string {

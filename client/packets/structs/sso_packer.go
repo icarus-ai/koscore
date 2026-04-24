@@ -1,14 +1,13 @@
 package structs
 
 import (
-	"fmt"
-
 	"github.com/kernel-ai/koscore/client/auth"
 	"github.com/kernel-ai/koscore/client/packets/pb/v2/common"
 	"github.com/kernel-ai/koscore/client/packets/structs/sso_type"
 	"github.com/kernel-ai/koscore/utils/binary"
 	"github.com/kernel-ai/koscore/utils/binary/prefix"
 	"github.com/kernel-ai/koscore/utils/crypto"
+	"github.com/kernel-ai/koscore/utils/exception"
 	"github.com/kernel-ai/koscore/utils/proto"
 )
 
@@ -46,13 +45,13 @@ const __hex = "0123456789abcdef"
 
 func writeSsoReservedField(version *auth.AppInfo, session *auth.Session, writer *binary.Builder, info *common.SsoSecureInfo) {
 	trace := make([]byte, 55)
-	trace[0], trace[1], trace[2], trace[35], trace[52], trace[53], trace[54] = '0', '1', '-', '-', '-', '0', '1'
 	for i := 3; i < 35; i++ {
 		trace[i] = __hex[crypto.RandU32()&0x0F]
 	}
 	for i := 36; i < 52; i++ {
 		trace[i] = __hex[crypto.RandU32()&0x0F]
 	}
+	trace[0], trace[1], trace[2], trace[35], trace[52], trace[53], trace[54] = '0', '1', '-', '-', '-', '0', '1'
 	reserved := &common.SsoReserveFields{
 		TraceParent: proto.Some(string(trace)),
 		Uid:         proto.Some(session.Info.Uid),
@@ -63,10 +62,8 @@ func writeSsoReservedField(version *auth.AppInfo, session *auth.Session, writer 
 		reserved.NtCoreVersion = proto.Some[uint32](100)
 	}
 	/*
-	   {
-	   	data, _ := proto.Marshal(reserved)
-	   	comm.LOGD("WriteSsoReservedField: %d %X", len(data), data)
-	   }
+		d, _ := proto.Marshal(reserved)
+		comm.LOGD("WriteSsoReservedField: %d %X", len(d), d)
 	*/
 	data, _ := proto.Marshal(reserved)
 	writer.WriteLenBarrier(binary.NewBuilder().WriteBytes(data), prefix.Int32, true)
@@ -100,7 +97,7 @@ func parseSsoPacker(pkt *sso_type.SsoPacket) (*sso_type.SsoPacket, error) {
 		case 1:
 			pkt.Data = binary.ZlibUncompress(body)
 		default:
-			return nil, fmt.Errorf("SsoPacker::Parse: argument out of range exception: %d", dataFlag)
+			return nil, exception.NewArgumentOfRangeException("SsoPacker::Parse: unknown data flag: %d", dataFlag)
 		}
 	}
 	return pkt, nil

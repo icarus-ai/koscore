@@ -1,7 +1,6 @@
 package client
 
 import (
-	"fmt"
 	"strings"
 	"time"
 
@@ -9,13 +8,13 @@ import (
 
 	pb_login "github.com/kernel-ai/koscore/client/packets/pb/v2/login"
 
-	"github.com/kernel-ai/koscore/client/event"
 	"github.com/kernel-ai/koscore/client/packets/login"
 	"github.com/kernel-ai/koscore/client/packets/login/login_type"
 	"github.com/kernel-ai/koscore/client/packets/ntlogin"
 	"github.com/kernel-ai/koscore/client/packets/ntlogin/ntlogin_type"
 	"github.com/kernel-ai/koscore/client/packets/system"
 	"github.com/kernel-ai/koscore/client/packets/system/system_type"
+	"github.com/kernel-ai/koscore/utils/exception"
 )
 
 func (m *QQClient) heart_beat_loop(interval time.Duration) {
@@ -42,24 +41,25 @@ func (m *QQClient) heart_beat_loop(interval time.Duration) {
 }
 
 // protocol pc tx_interval 360s
+// 设置在线状态 并且发送心跳
 func (m *QQClient) sso_heart_beat_loop(interval time.Duration) {
 	if m.Online.Load() {
 		return
 	}
+	m.Online.Store(true)
 	ticker := time.NewTicker(interval * time.Second)
 	pkt := system.BuildSsoHeartBeatPacket()
 	go func() {
 		for m.Online.Load() {
 			<-ticker.C
-			//m.LOGD("sso_heart_beat: send: cmd: %s seq: %d data: %X", sso.Command, sso.Sequence, sso.Data)
 			pkt.Sequence = m.session.GetAndIncreaseSequence()
+			//m.LOGD("sso_heart_beat: send: cmd: %s seq: %d data: %X", sso.Command, sso.Sequence, sso.Data)
 			rsp, e := m.sso_context.SendPacketAndWait(pkt)
 			if e != nil {
 				m.LOGW("sso_heart_beat: send: %v", e)
 				continue
 			}
-			_, e = system.ParseSsoHeartBeatPacket(rsp)
-			if e != nil {
+			if _, e = system.ParseSsoHeartBeatPacket(rsp); e != nil {
 				m.LOGW("sso_heart_beat: rsp: %v", e)
 			}
 		}
@@ -137,12 +137,12 @@ func (m *QQClient) register() error {
 	}
 	rsp := system.ParseInfoSyncPacket(sso)
 	if strings.Contains(rsp.Message, "register success") {
-		m.Online.Store(true)
+		m.setSessionId()
 		m.sso_heart_beat_loop(270)
 		//if protocol.IsAndroid { _timers[ExchangeEmpTag].Change(TimeSpan.Zero, TimeSpan.FromDays(1)) }
 		return nil
 	}
-	return fmt.Errorf("register: %s", rsp.Message)
+	return exception.NewFormat("register: %s", rsp.Message)
 }
 
 func (m *QQClient) keyExchange() error {
@@ -192,7 +192,7 @@ func (m *QQClient) UnusualEasyLogin() error {
 	if ret.State == pb_login.NTLoginRetCode_SUCCESS {
 		return m.register()
 	}
-	return fmt.Errorf("unusual easy login: %s (%s)", ret.Tips.String(), ntlogin_type.NTLoginRetCodeString(ret.State))
+	return exception.NewFormat("unusual easy login: %s (%s)", ret.Tips.String(), ntlogin_type.NTLoginRetCodeString(ret.State))
 }
 
 func (m *QQClient) Logout() error {
@@ -210,7 +210,7 @@ func (m *QQClient) Logout() error {
 		m.sso_context.Disconnect()
 		return nil
 	}
-	return fmt.Errorf("logout: %s", rsp.Msg.Unwrap())
+	return exception.NewFormat("logout: %s", rsp.Msg.Unwrap())
 }
 
 // 快读登录
@@ -218,7 +218,7 @@ func (m *QQClient) FastLogin() error {
 	m.heart_beat_loop(2)
 	if len(m.session.Sig.A2) > 0 && len(m.session.Sig.D2) > 0 {
 		if m.Online.Load() {
-			return event.ErrAlreadyOnline
+			return exception.ErrAlreadyOnline
 		}
 		m.LOGD("valid session detected, doing online task")
 		return m.register()
@@ -246,7 +246,7 @@ func (m *QQClient) ExchangeEasyLogin() (login_type.LoginState, []byte, error) {
 			}
 			return 0, nil, errors.New("easy login: unusual sigs nil")
 		default:
-			return 0, nil, fmt.Errorf("easy login: state: %d, %s", rsp.State, rsp.Tips.String())
+			return 0, nil, exception.NewFormat("easy login: state: %d, %s", rsp.State, rsp.Tips.String())
 		}
 	}
 	return login_type.LoginUnknown, nil, nil

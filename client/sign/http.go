@@ -3,9 +3,9 @@ package sign
 import (
 	"encoding/json"
 
-	"github.com/kernel-ai/koscore/utils/comm"
 	"github.com/kernel-ai/koscore/utils/http"
 	"github.com/kernel-ai/koscore/utils/types"
+	//"github.com/kernel-ai/koscore/utils/comm"
 )
 
 /*
@@ -18,7 +18,7 @@ func httpGet[T any](uri string, heads types.MapSS) (target T, e error) {
 }
 */
 
-func httpPost[T any](uri string, data []byte, heads types.MapSS) (target T, e error) {
+func http_post[T any](uri string, data []byte, heads types.MapSS) (target T, e error) {
 	heads["Content-Type"] = "application/json"
 	if data, e = http.Post(uri, data, heads); e != nil {
 		return
@@ -29,7 +29,8 @@ func httpPost[T any](uri string, data []byte, heads types.MapSS) (target T, e er
 	return
 }
 
-func httpPost2[T any](uri string, data []byte, heads types.MapSS) (target T, e error) {
+/*
+func http_post_debug[T any](uri string, data []byte, heads types.MapSS) (target T, e error) {
 	heads["Content-Type"] = "application/json"
 	comm.LOGW("sign: %s", uri)
 	comm.LOGW("  > body: %s", string(data))
@@ -43,8 +44,7 @@ func httpPost2[T any](uri string, data []byte, heads types.MapSS) (target T, e e
 		comm.LOGW("   > json unmarshal: %v", e)
 		return
 	}
-	if rsp, ok := any(target).(ResponseV2); ok {
-		comm.LOGW("  > Y: %X - %X - %s", rsp.Value.Sign, rsp.Value.Token, string(rsp.Value.Extra))
-	}
+	if rsp, ok := any(target).(rsp_sign_v2); ok { comm.LOGW("  > Y: %X - %X - %s", rsp.Value.Sign, rsp.Value.Token, string(rsp.Value.Extra)) }
 	return
 }
+*/

@@ -5,13 +5,13 @@ import (
 	"compress/gzip"
 	"crypto/tls"
 	"errors"
-	"fmt"
 	"io"
 	"net"
 	"net/http"
 	"strings"
 	"time"
 
+	"github.com/kernel-ai/koscore/utils/exception"
 	"github.com/kernel-ai/koscore/utils/types"
 )
 
@@ -91,5 +91,5 @@ func doHTTP(req *http.Request) ([]byte, error) {
 		}
 		return data, e
 	}
-	return nil, fmt.Errorf("fail: http.status.code: %d", rsp.StatusCode)
+	return nil, exception.NewFormat("fail: http.status.code: %d", rsp.StatusCode)
 }

@@ -1,14 +1,13 @@
 package message
 
 import (
-	"errors"
-
 	"github.com/kernel-ai/koscore/client/auth"
 	"github.com/kernel-ai/koscore/client/packets/message/message_type"
 	"github.com/kernel-ai/koscore/client/packets/pb/v2/message"
 	"github.com/kernel-ai/koscore/client/packets/structs/sso_type"
 	"github.com/kernel-ai/koscore/utils"
 	"github.com/kernel-ai/koscore/utils/binary"
+	"github.com/kernel-ai/koscore/utils/exception"
 	"github.com/kernel-ai/koscore/utils/proto"
 )
 
@@ -84,7 +83,7 @@ func ParseMultiMsgUploadPacket(data []byte) (*message.LongMsgSendRsp, error) {
 		return nil, e
 	}
 	if rsp.SendRsp == nil {
-		return nil, errors.New("empty response data")
+		return nil, exception.ErrEmptyRsp
 	}
 	return rsp.SendRsp, nil
 }
@@ -95,7 +94,7 @@ func ParseMultiMsgDownloadPacket(data []byte) ([]*message.CommonMessage, error) 
 		return nil, e
 	}
 	if rsp.RecvRsp == nil || rsp.RecvRsp.Payload == nil {
-		return nil, errors.New("empty response data")
+		return nil, exception.ErrEmptyRsp
 	}
 
 	trans, e := proto.Unmarshal[message.PbMultiMsgTransmit](binary.GZipUncompress(rsp.RecvRsp.Payload))
@@ -110,5 +109,5 @@ func ParseMultiMsgDownloadPacket(data []byte) ([]*message.CommonMessage, error) 
 			}
 		}
 	}
-	return nil, errors.New("empty response data")
+	return nil, exception.ErrEmptyRsp
 }

@@ -6,6 +6,7 @@ import (
 	"github.com/kernel-ai/koscore/client/packets/pb/v2/service/oidb"
 	"github.com/kernel-ai/koscore/client/packets/structs/sso_type"
 	"github.com/kernel-ai/koscore/utils"
+	"github.com/kernel-ai/koscore/utils/exception"
 	"github.com/kernel-ai/koscore/utils/proto"
 )
 
@@ -31,7 +32,7 @@ func ParseOidbPacket[T any](body []byte, nobody ...bool) (*T, error) {
 		return nil, e
 	}
 	if base.Result.Unwrap() != 0 {
-		return nil, fmt.Errorf("operation exception: %s (%d)", base.Message.Unwrap(), base.Result.Unwrap())
+		return nil, exception.NewOperationExceptionCode(base.Result.Unwrap(), base.Message.Unwrap())
 	}
 	if len(nobody) > 0 && nobody[0] {
 		return nil, nil
@@ -43,3 +44,10 @@ func CheckError(data []byte) error {
 	_, e := ParseOidbPacket[uint8](data, true)
 	return e
 }
+
+func CheckTypedError[T any](data []byte) error {
+	_, e := ParseOidbPacket[T](data)
+	return e
+}
+
+func ParseTypedError[T any](data []byte) (*T, error) { return ParseOidbPacket[T](data) }

@@ -9,6 +9,7 @@ import (
 	"golang.org/x/net/publicsuffix"
 
 	"github.com/kernel-ai/koscore/client/auth"
+	"github.com/kernel-ai/koscore/client/event"
 	"github.com/kernel-ai/koscore/client/internal/cache"
 	"github.com/kernel-ai/koscore/client/internal/highway"
 	"github.com/kernel-ai/koscore/client/sign"
@@ -29,40 +30,46 @@ type QQClient struct {
 
 	Online atomic.Bool
 
+	decoders event.DecodersEvent
+
+	Uin uint64
+
 	*Events
 	logger
 }
 
-func (m *QQClient) SetLogger(log logger) {
-	if log != nil {
-		m.logger = log
-	}
+func (m *QQClient) RegistryDecodersEvent(fn_name string, fn event.DecodersCall) {
+	m.decoders[fn_name] = fn
 }
+
 func (m *QQClient) GetSignProvider() sign.Provider     { return m.sig_context }
 func (m *QQClient) SetSignProvider(prov sign.Provider) { m.sig_context = prov }
-func (m *QQClient) UseSig(info *auth.Session)          { m.session = info }
 func (m *QQClient) GetDevice() *auth.DeviceInfo        { return m.device }
 func (m *QQClient) SetDevice(info *auth.DeviceInfo)    { m.device = info }
 func (m *QQClient) GetVersion() *auth.AppInfo          { return m.version }
 func (m *QQClient) SetVersion(info *auth.AppInfo) {
 	m.version = info
-	m.hw_session.AppId = info.AppId
-	m.hw_session.SubAppId = info.SubAppId
+	m.initHighwayServers()
 }
 
+func (m *QQClient) UseSig(info *auth.Session) {
+	m.session = info
+	m.setSessionId()
+}
+
+func (m *QQClient) SetLogger(v logger) {
+	if v != nil {
+		m.logger = v
+	}
+}
 func (m *QQClient) SetCustomServer(v []netip.AddrPort) { m.sso_context.sock.SetCustomServer(v) }
 
-func (m *QQClient) Uin() uint64  { return m.session.Info.Uin }
-func (m *QQClient) Uid() string  { return m.session.Info.Uid }
-func (m *QQClient) Nick() string { return m.session.Info.Name }
-
-// 设置qq已经上线
-func (m *QQClient) setOnline() { m.Online.Store(true) }
+func (m *QQClient) setSessionId() { m.Uin = m.session.Info.Uin }
 
 func NewClient(uin uint64, password string) *QQClient {
 	cookie, _ := cookiejar.New(&cookiejar.Options{PublicSuffixList: publicsuffix.List})
 	ctx := &QQClient{
-		session:       auth.NewSession(),
+		session:       auth.NewSession(uin),
 		is_heart_beat: false,
 		logger:        log_t{},
 		Events:        newEventCall(),
@@ -70,10 +77,9 @@ func NewClient(uin uint64, password string) *QQClient {
 			client: &http.Client{Jar: cookie},
 			sKey:   &keyInfo{},
 		},
+		decoders: make(event.DecodersEvent),
 	}
-	ctx.session.Info.Uin = uin
 	ctx.sso_context = NewPacketContext(ctx)
-	ctx.hw_session.Uin = &ctx.session.Info.Uin
 	return ctx
 }
 

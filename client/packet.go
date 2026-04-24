@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/kernel-ai/koscore/utils/exception"
 	"github.com/pkg/errors"
 
 	"github.com/kernel-ai/koscore/client/packets/pb/v2/common"
@@ -15,11 +16,13 @@ import (
 
 func (m *PacketContext) uniPacket(packet *sso_type.SsoPacket) (seq uint32, d []byte, e error) {
 	var info *common.SsoSecureInfo = nil
+	var val *sign.Value = nil
 	if sign.ContainSignPKG(packet.Command) {
-		info, e = m.sig_context.Sign(packet.Command, packet.Sequence, packet.Data)
+		val, e = m.sig_context.Sign(packet.Command, packet.Sequence, packet.Data)
 		if e != nil {
 			return
 		}
+		info = &common.SsoSecureInfo{SecSign: val.Sign, SecToken: val.Token, SecExtra: val.Extra}
 	}
 	d, e = structs.BuildSsoPacket(m.version, m.device, m.session, packet, info)
 	seq = packet.Sequence
@@ -55,7 +58,7 @@ func (m *QQClient) webSsoRequest(host, webcmd, data string) (string, error) {
 	}
 	rsp, e := proto.Unmarshal[common.WebSsoResponseBody](sso.Data)
 	if e != nil {
-		return "", errors.Wrap(e, "unmarshal response error")
+		return "", exception.NewUnmarshalProtoException(e, "response")
 	}
 	return rsp.Data.Unwrap(), nil
 }

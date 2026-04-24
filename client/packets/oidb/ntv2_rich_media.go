@@ -1,11 +1,9 @@
-package message
+package oidb
 
 import (
 	"encoding/hex"
 	"errors"
 	"io"
-
-	pkt_oidb "github.com/kernel-ai/koscore/client/packets/oidb"
 
 	"github.com/kernel-ai/koscore/client/internal/highway"
 	"github.com/kernel-ai/koscore/client/packets/pb/v2/service/oidb"
@@ -228,7 +226,7 @@ func BuildGroupImageUploadPacket(gin uint64, image *message.ImageElement) (*sso_
 	if e != nil {
 		return nil, e
 	}
-	return pkt_oidb.BuildOidbPacket(0x11C4, 100, body, false, false)
+	return BuildOidbPacket(0x11C4, 100, body, false, false)
 }
 
 func BuildPrivateImageUploadPacket(self_uid string, image *message.ImageElement) (*sso_type.SsoPacket, error) {
@@ -247,7 +245,7 @@ func BuildPrivateImageUploadPacket(self_uid string, image *message.ImageElement)
 	if e != nil {
 		return nil, e
 	}
-	return pkt_oidb.BuildOidbPacket(0x11C5, 100, body, false, false)
+	return BuildOidbPacket(0x11C5, 100, body, false, false)
 }
 
 func BuildGroupVideoUploadPacket(gin uint64, video *message.ShortVideoElement) (*sso_type.SsoPacket, error) {
@@ -271,7 +269,7 @@ func BuildGroupVideoUploadPacket(gin uint64, video *message.ShortVideoElement) (
 	if e != nil {
 		return nil, e
 	}
-	return pkt_oidb.BuildOidbPacket(0x11EA, 100, body, false, false)
+	return BuildOidbPacket(0x11EA, 100, body, false, false)
 }
 
 func BuildPrivateVideoUploadPacket(self_uid string, video *message.ShortVideoElement) (*sso_type.SsoPacket, error) {
@@ -295,7 +293,7 @@ func BuildPrivateVideoUploadPacket(self_uid string, video *message.ShortVideoEle
 	if e != nil {
 		return nil, e
 	}
-	return pkt_oidb.BuildOidbPacket(0x11E9, 100, body, false, false)
+	return BuildOidbPacket(0x11E9, 100, body, false, false)
 }
 
 func BuildGroupRecordUploadPacket(gin uint64, voice *message.VoiceElement) (*sso_type.SsoPacket, error) {
@@ -317,7 +315,7 @@ func BuildGroupRecordUploadPacket(gin uint64, voice *message.VoiceElement) (*sso
 	if e != nil {
 		return nil, e
 	}
-	return pkt_oidb.BuildOidbPacket(0x126E, 100, body, false, false)
+	return BuildOidbPacket(0x126E, 100, body, false, false)
 }
 
 func BuildPrivateRecordUploadPacket(self_uid string, voice *message.VoiceElement) (*sso_type.SsoPacket, error) {
@@ -339,7 +337,7 @@ func BuildPrivateRecordUploadPacket(self_uid string, voice *message.VoiceElement
 	if e != nil {
 		return nil, e
 	}
-	return pkt_oidb.BuildOidbPacket(0x126D, 100, body, false, false)
+	return BuildOidbPacket(0x126D, 100, body, false, false)
 }
 
 // new ImageGroupUploadEventResp(response.Upload.MsgInfo, response.Upload.CompatQMsg, Common.GenerateExt(response.Upload)))
@@ -350,7 +348,7 @@ func BuildPrivateRecordUploadPacket(self_uid string, voice *message.VoiceElement
 // new RecordGroupUploadEventResp(response.Upload.MsgInfo, response.Upload.CompatQMsg, Common.GenerateExt(response.Upload)));
 
 func ParseNTv2RichMediaUploadPacket(data []byte) (*oidb.UploadResp, error) {
-	rsp, e := pkt_oidb.ParseOidbPacket[oidb.NTV2RichMediaResp](data)
+	rsp, e := ParseOidbPacket[oidb.NTV2RichMediaResp](data)
 	if e != nil {
 		return nil, e
 	}
@@ -370,7 +368,7 @@ func BuildGroupImageDownloadPacket(gin uint64, node *oidb.IndexNode) (*sso_type.
 	if e != nil {
 		return nil, e
 	}
-	return pkt_oidb.BuildOidbPacket(0x11C4, 200, body, false, false)
+	return BuildOidbPacket(0x11C4, 200, body, false, false)
 }
 
 func BuildPrivateImageDownloadPacket(self_uid string, node *oidb.IndexNode) (*sso_type.SsoPacket, error) {
@@ -381,7 +379,7 @@ func BuildPrivateImageDownloadPacket(self_uid string, node *oidb.IndexNode) (*ss
 	if e != nil {
 		return nil, e
 	}
-	return pkt_oidb.BuildOidbPacket(0x11C5, 200, body, false, false)
+	return BuildOidbPacket(0x11C5, 200, body, false, false)
 }
 
 func BuildGroupVideoDownloadPacket(gin uint64, node *oidb.IndexNode) (*sso_type.SsoPacket, error) {
@@ -392,7 +390,7 @@ func BuildGroupVideoDownloadPacket(gin uint64, node *oidb.IndexNode) (*sso_type.
 	if e != nil {
 		return nil, e
 	}
-	return pkt_oidb.BuildOidbPacket(0x11EA, 200, body, false, false)
+	return BuildOidbPacket(0x11EA, 200, body, false, false)
 }
 
 func BuildPrivateVideoDownloadPacket(self_uid string, node *oidb.IndexNode) (*sso_type.SsoPacket, error) {
@@ -403,7 +401,7 @@ func BuildPrivateVideoDownloadPacket(self_uid string, node *oidb.IndexNode) (*ss
 	if e != nil {
 		return nil, e
 	}
-	return pkt_oidb.BuildOidbPacket(0x11E9, 200, body, false, false)
+	return BuildOidbPacket(0x11E9, 200, body, false, false)
 }
 
 func BuildGroupRecordDownloadPacket(gin uint64, node *oidb.IndexNode) (*sso_type.SsoPacket, error) {
@@ -414,7 +412,7 @@ func BuildGroupRecordDownloadPacket(gin uint64, node *oidb.IndexNode) (*sso_type
 	if e != nil {
 		return nil, e
 	}
-	return pkt_oidb.BuildOidbPacket(0x126E, 200, body, false, false)
+	return BuildOidbPacket(0x126E, 200, body, false, false)
 }
 
 func BuildPrivateRecordDownloadPacket(self_uid string, node *oidb.IndexNode) (*sso_type.SsoPacket, error) {
@@ -425,11 +423,11 @@ func BuildPrivateRecordDownloadPacket(self_uid string, node *oidb.IndexNode) (*s
 	if e != nil {
 		return nil, e
 	}
-	return pkt_oidb.BuildOidbPacket(0x126D, 200, body, false, false)
+	return BuildOidbPacket(0x126D, 200, body, false, false)
 }
 
 func ParseNTv2RichMediaRspDownload(data []byte) (string, error) {
-	rsp, e := pkt_oidb.ParseOidbPacket[oidb.NTV2RichMediaResp](data)
+	rsp, e := ParseOidbPacket[oidb.NTV2RichMediaResp](data)
 	if e != nil {
 		return "", e
 	}

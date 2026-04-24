@@ -1,4 +1,4 @@
-package internal
+package network
 
 import (
 	"net"
@@ -9,8 +9,8 @@ import (
 
 	"github.com/pkg/errors"
 
-	"github.com/kernel-ai/koscore/client/internal/network"
 	"github.com/kernel-ai/koscore/utils"
+	//"github.com/kernel-ai/koscore/utils/comm"
 )
 
 type SocketContext struct {
@@ -20,7 +20,7 @@ type SocketContext struct {
 	//context BotContext
 	servers         []netip.AddrPort
 	customs         []netip.AddrPort
-	sock            network.TCPClient
+	sock            TCPClient
 	alive           bool
 	currServerIndex int
 	retryTimes      int
@@ -95,8 +95,8 @@ func (m *SocketContext) sort_servers() {
 func NewSocketContext(
 	onRecvPacket func(data []byte),
 	onQuickReconnect func(),
-	plannedDisconnect func(*network.TCPClient),
-	unexpectedDisconnect func(*network.TCPClient, error),
+	plannedDisconnect func(*TCPClient),
+	unexpectedDisconnect func(*TCPClient, error),
 ) *SocketContext {
 	ctx := &SocketContext{
 		alive:            false,
@@ -148,25 +148,30 @@ func (m *SocketContext) Connect() error {
 
 // 通过循环来不停接收数据包
 func (m *SocketContext) netLoop() {
-	errCount := 0
+	err_count := 0
 	//comm.LOGD("netLoop: m.alive %v", m.alive)
 	for m.alive {
 		l, err := m.sock.ReadInt32()
-		//comm.LOGD("netLoop: m.TCP.ReadInt32() %v %v", err, l)
 		if err != nil {
+			//comm.LOGD("net loop: m.sock.ReadInt32: %v size: %v", err, l)
 			time.Sleep(time.Millisecond * 500)
 			continue
 		}
 		if l < 4 || l > 1024*1024*10 { // max 10MB
-			//comm.LOGD("parse incoming packet error: invalid packet length %v", l)
-			errCount++
-			if errCount > 2 {
+			//comm.LOGD("net loop: parse incoming packet error: invalid packet length %v", l)
+			err_count++
+			if err_count > 2 {
+				err_count = 0
 				go m.onQuickReconnect()
-				errCount = 0
 			}
 			continue
 		}
-		packet, _ := m.sock.ReadBytes_AddHeadSizeU32(int(l) - 4)
+		packet, err := m.sock.ReadBytes(int(l) - 4)
+		if err != nil {
+			//comm.LOGD("net loop: m.sock.ReadBytes: %v size: %v", err, l)
+			time.Sleep(time.Millisecond * 500)
+			continue
+		}
 		go m.onRecvPacket(packet)
 	}
 }

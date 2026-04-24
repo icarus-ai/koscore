@@ -53,12 +53,12 @@ func (m *QQClient) GetSkey() (string, error) {
 		return "", e
 	}
 	jump := "https%3A%2F%2Fh5.qzone.qq.com%2Fqqnt%2Fqzoneinpcqq%2Ffriend%3Frefresh%3D0%26clientuin%3D0%26darkMode%3D0&keyindex=19&random=2599"
-	u, _ := url.Parse(fmt.Sprintf("https://ssl.ptlogin2.qq.com/jump?ptlang=1033&clientuin=%d&clientkey=%s&u1=%s", m.Uin(), key.ClientKey, jump))
+	u, _ := url.Parse(fmt.Sprintf("https://ssl.ptlogin2.qq.com/jump?ptlang=1033&clientuin=%d&clientkey=%s&u1=%s", m.session.Info.Uin, key.ClientKey, jump))
 	rsp, e := m.ticket.client.Get(u.String())
 	if e != nil {
 		return "", e
 	}
-	rsp.Body.Close()
+	_ = rsp.Body.Close()
 	for _, cookie := range m.ticket.client.Jar.Cookies(u) {
 		if cookie.Name == "skey" {
 			m.ticket.sKey.key = cookie.Value
@@ -112,11 +112,7 @@ func (m *QQClient) GetCookies(domain string) (*Cookies, error) {
 			expireTime: time.Now().Add(24 * time.Hour),
 		})
 	}
-	return &Cookies{
-		uin:   m.Uin(),
-		SKey:  skey,
-		PsKey: token,
-	}, nil
+	return &Cookies{uin: m.session.Info.Uin, SKey: skey, PsKey: token}, nil
 }
 
 func GTK(s string) int {

@@ -2,10 +2,10 @@ package flash_trans
 
 import (
 	"crypto/sha1"
-	"errors"
 
 	"github.com/kernel-ai/koscore/client/packets/pb/v2/service/operation"
 	"github.com/kernel-ai/koscore/utils/crypto"
+	"github.com/kernel-ai/koscore/utils/exception"
 	"github.com/kernel-ai/koscore/utils/http"
 	"github.com/kernel-ai/koscore/utils/proto"
 )
@@ -34,8 +34,8 @@ func UploadFile(appid uint32, ukey string, body *Stream) error {
 	}
 	req := &operation.FlashTransferUploadReq{
 		AppId:  proto.Some(appid),
-		FieId1: proto.Some[uint32](0),
-		FieId3: proto.Some[uint32](2),
+		Field1: proto.Some[uint32](0),
+		Field3: proto.Some[uint32](2),
 		Body:   req_body,
 	}
 	req_head := map[string]string{
@@ -58,14 +58,14 @@ func UploadFile(appid uint32, ukey string, body *Stream) error {
 		req_body.Body = data
 		data, _ = proto.Marshal(req)
 		if data, _ = http.Post(BASE_URI, data, req_head); data == nil {
-			return errors.New("rsp nil")
+			return exception.ErrEmptyRsp
 		}
 		rsp, e := proto.Unmarshal[operation.FlashTransferUploadResp](data)
 		if e != nil {
 			return e
 		}
 		if rsp.Status.Unwrap() != "success" {
-			return errors.New("status: " + rsp.Status.Unwrap())
+			return exception.NewFormat("status: %s", rsp.Status.Unwrap())
 		}
 		hash_ctx.Reset()
 	}

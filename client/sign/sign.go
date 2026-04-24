@@ -3,11 +3,12 @@ package sign
 import (
 	"errors"
 	"math"
+	"strings"
 
 	"github.com/kernel-ai/koscore/utils/comm"
 )
 
-const serverLatencyDown = math.MaxUint32
+const server_latency_down = math.MaxUint32
 
 var (
 	ErrVersionMismatch    = errors.New("sign version mismatch")
@@ -17,24 +18,23 @@ var (
 
 // signExtraHexLower = fmt.Sprintf("%x", proto.DynamicMessage{2: c.app.PackageSign}.Encode())
 
-var signMap map[string]uint8 // 只在启动时初始化, 无并发问题
+var sign_map map[string]uint8 // 只在启动时初始化, 无并发问题
 
 func ContainSignPKG(cmd string) bool {
-	_, ok := signMap[cmd]
+	_, ok := sign_map[cmd]
 	if !ok {
-		comm.LOGD(cmd)
+		ok = strings.Contains(cmd, "OidbSvcTrpcTcp.0x")
+	}
+	if !ok {
+		comm.LOGD("unsign cmd: %s", cmd)
 	}
 	return ok
 }
 
-func AddSignPKG(pkg string) {
-	if _, ok := signMap[pkg]; !ok {
-		signMap[pkg] = 1
-	}
-}
+func AddSignPKG(pkg string) { sign_map[pkg] = 1 }
 
 func init() {
-	signMap = make(map[string]uint8)
+	sign_map = make(map[string]uint8)
 
 	for _, cmd := range []string{
 		"trpc.o3.ecdh_access.EcdhAccess.SsoEstablishShareKey",
@@ -91,7 +91,11 @@ func init() {
 		"OidbSvcTrpcTcp.0xf51_1",
 		"OidbSvcTrpcTcp.0xfe1_2",
 		"OidbSvcTrpcTcp.0xfe1_8",
+		// king add
+		"trpc.msg.register_proxy.RegisterProxy.SsoInfoSync",
+		"trpc.qq_new_tech.status_svc.StatusService.SsoHeartBeat",
+		"trpc.qq_new_tech.status_svc.StatusService.SetStatus",
 	} {
-		signMap[cmd] = 1
+		sign_map[cmd] = 1
 	}
 }

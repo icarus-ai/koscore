@@ -1,8 +1,6 @@
 package client
 
 import (
-	pb_msg "github.com/kernel-ai/koscore/client/packets/pb/v2/message"
-
 	"github.com/kernel-ai/koscore/client/event"
 	"github.com/kernel-ai/koscore/client/packets/message/message_type"
 	"github.com/kernel-ai/koscore/client/packets/pb/v2/notify"
@@ -12,6 +10,8 @@ import (
 	"github.com/kernel-ai/koscore/message"
 	"github.com/kernel-ai/koscore/utils"
 	"github.com/kernel-ai/koscore/utils/proto"
+
+	pb_msg "github.com/kernel-ai/koscore/client/packets/pb/v2/message"
 )
 
 func (m *QQClient) message_handle_parse_packet(pkt *sso_type.SsoPacket) bool {
@@ -23,16 +23,25 @@ func (m *QQClient) message_handle_parse_packet(pkt *sso_type.SsoPacket) bool {
 		if rsp, e := system.ParseKickPacket(pkt); e == nil {
 			ev.Message = rsp.TipsTitle.Unwrap() + " " + rsp.TipsInfo.Unwrap()
 		} else {
-			m.LOGW("ParseKickPacket: %v", e)
 			ev.Message = e.Error()
 		}
 		m.Events.Disconnected.dispatch(m, ev)
 	case system_type.AttributePushParams.Command:
-	case system_type.AttributeInfoSyncPush.Command:
-	case system_type.AttributeHeartbeat.Command, system_type.AttributeSsoHeartBeat.Command:
-		return false
+		pb, e := system.ParsePushParamsPacket(pkt)
+		if e != nil {
+			m.LOGD("parse push params packet: %v", e)
+		} else {
+			for _, v := range pb.OnlineDevices {
+				m.LOGD("device name: %s", v.DeviceName.Unwrap())
+			}
+		}
+	case system_type.AttributeInfoSyncPush.Command, system_type.AttributeHeartbeat.Command:
 	default:
 		//m.LOGD("PacketContext::DispatchPacket: sso: %v %s %d %d %X", e, sso.Command, sso.Sequence, len(sso.Data), sso.Data)
+		if fn, ok := m.decoders[pkt.Command]; ok {
+			fn(pkt.Data)
+			return true
+		}
 		m.LOGD("message_handle_parse_packet: %d %s", pkt.Sequence, pkt.Command)
 		if fn, ok := m.sso_context.handlers.LoadAndDelete(pkt.Sequence); ok {
 			fn(pkt, nil)
@@ -53,25 +62,25 @@ func (m *QQClient) message_handle_parse_push_message(data []byte) error {
 
 	switch msg_type {
 	case message_type.GROUP_MESSAGE:
-		msg := message.ParseGroupMessage(m.Uin(), common_msg)
+		msg := message.ParseGroupMessage(m.session.Info.Uin, common_msg)
 		m.PreprocessGroupMessageEvent(msg)
-		if msg.Sender.Uin == m.Uin() {
+		if msg.Sender.Uin == m.session.Info.Uin {
 			m.Events.SelfGroupMessage.dispatch(m, msg)
 		} else {
 			m.Events.GroupMessage.dispatch(m, msg)
 		}
 		return nil
 	case message_type.PRIVATE_MESSAGE: // 166 for private msg, 208 for private record, 529 for private file
-		msg := message.ParsePrivateMessage(m.Uin(), common_msg)
+		msg := message.ParsePrivateMessage(m.session.Info.Uin, common_msg)
 		m.PreprocessPrivateMessageEvent(msg)
-		if msg.Sender.Uin == m.Uin() {
+		if msg.Sender.Uin == m.session.Info.Uin {
 			m.Events.SelfPrivateMessage.dispatch(m, msg)
 		} else {
 			m.Events.PrivateMessage.dispatch(m, msg)
 		}
 		return nil
 	case message_type.TEMP_MESSAGE:
-		msg := message.ParseTempMessage(m.Uin(), common_msg)
+		msg := message.ParseTempMessage(m.session.Info.Uin, common_msg)
 		m.Events.TempMessage.dispatch(m, msg)
 		return nil
 	}
@@ -87,7 +96,7 @@ func (m *QQClient) message_handle_parse_push_message(data []byte) error {
 			}
 			ev := event.ParseMemberIncreaseEvent(pb)
 			_ = m.ResolveUin(ev)
-			if ev.UserUin == m.Uin() { // bot 进群
+			if ev.UserUin == m.session.Info.Uin { // bot 进群
 				_ = m.RefreshAllGroupsInfo()
 				m.Events.GroupJoin.dispatch(m, ev)
 			} else {
@@ -110,7 +119,7 @@ func (m *QQClient) message_handle_parse_push_message(data []byte) error {
 				pb.Operator = utils.S2B(op.Operator.Uid.Unwrap())
 				ev := event.ParseMemberDecreaseEvent(pb)
 				_ = m.ResolveUin(ev)
-				if ev.UserUin == m.Uin() {
+				if ev.UserUin == m.session.Info.Uin {
 					m.Events.GroupLeave.dispatch(m, ev)
 				} else {
 					m.Events.GroupMemberLeave.dispatch(m, ev)
@@ -149,8 +158,8 @@ func (m *QQClient) message_handle_parse_push_message(data []byte) error {
 			}
 
 			m.Events.GroupMemberJoinRequest.dispatch(m, ev)
-		case message_type.GROUP_INVITE_NOTICE:
-			pb, e := proto.Unmarshal[notify.GroupInvite](msg_content)
+		case message_type.GROUP_INVITE_NOTICE: // group invite notice
+			pb, e := proto.Unmarshal[notify.GroupInvite0X57](msg_content)
 			if e != nil {
 				return e
 			}
@@ -175,7 +184,7 @@ func (m *QQClient) message_handle_parse_push_message(data []byte) error {
 			}
 
 			m.Events.GroupInvited.dispatch(m, ev)
-		case message_type.Event0x20D: // GroupInviteProcessor
+		case message_type.Event0x20D: // group request invitation notice // GroupInviteProcessor
 			// another in `RichTextMsgProcessor` for private send invitation card.
 			pb, e := proto.Unmarshal[notify.Event0X20D](msg_content)
 			if e != nil {

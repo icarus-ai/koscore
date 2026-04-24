@@ -2,11 +2,11 @@ package oidb
 
 import (
 	"errors"
-	"fmt"
 	"strings"
 
 	"github.com/kernel-ai/koscore/client/packets/pb/v2/service/oidb"
 	"github.com/kernel-ai/koscore/client/packets/structs/sso_type"
+	"github.com/kernel-ai/koscore/utils/exception"
 )
 
 func BuildImageOcrRequestPacket(url string) (*sso_type.SsoPacket, error) {
@@ -55,7 +55,7 @@ func ParseImageOcrResp(data []byte) (*OcrResponse, error) {
 		return nil, errors.New(rsp.Wording)
 	}
 	if rsp.RetCode != 0 {
-		return nil, fmt.Errorf("server error, code: %v msg: %v", rsp.RetCode, rsp.ErrMsg)
+		return nil, exception.NewFormat("server error, code: %v msg: %v", rsp.RetCode, rsp.ErrMsg)
 	}
 	texts := make([]*TextDetection, 0, len(rsp.OcrRspBody.TextDetections))
 	for _, text := range rsp.OcrRspBody.TextDetections {

@@ -85,11 +85,6 @@ func (g *FriendPokeEvent) Content() string {
 	return fmt.Sprintf("%d%s%d", g.Sender, g.Action, g.Receiver)
 }
 
-func (m *FriendPokeRecallEvent) ResolveUin(f func(uid string, groupUin ...uint64) uint64) {
-	m.PeerUin = f(m.PeerUid)
-	m.OperatorUin = f(m.OperatorUid)
-}
-
 func (g *GroupPokeEvent) From() uint64 { return g.GroupUin }
 func (g *GroupPokeEvent) Content() string {
 	if g.Suffix == "" {
@@ -98,9 +93,22 @@ func (g *GroupPokeEvent) Content() string {
 	return fmt.Sprintf("%d%s%d的%s", g.UserUin, g.Action, g.Receiver, g.Suffix)
 }
 
+func (m *FriendPokeRecallEvent) ResolveUin(f func(uid string, _ ...uint64) uint64) {
+	m.PeerUin = f(m.PeerUid)
+	m.OperatorUin = f(m.OperatorUid)
+}
+func (m *FriendPokeRecallEvent) From() uint64 { return m.PeerUin }
+func (m *FriendPokeRecallEvent) Content() string {
+	return fmt.Sprintf("%d撤回了戳一戳", m.PeerUin)
+}
+
 func (m *GroupPokeRecallEvent) ResolveUin(f func(uid string, groupUin ...uint64) uint64) {
 	m.GroupEvent.UserUin = f(m.GroupEvent.UserUid, m.GroupEvent.GroupUin)
 	m.OperatorUin = f(m.OperatorUid, m.GroupEvent.GroupUin)
+}
+func (m *GroupPokeRecallEvent) From() uint64 { return m.GroupUin }
+func (m *GroupPokeRecallEvent) Content() string {
+	return fmt.Sprintf("%d撤回了%d的戳一戳", m.OperatorUin, m.UserUin)
 }
 
 func (e *GroupSignEvent) From() uint64 { return e.GroupUin }

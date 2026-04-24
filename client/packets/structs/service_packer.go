@@ -9,6 +9,7 @@ import (
 	"github.com/kernel-ai/koscore/client/packets/structs/sso_type"
 	"github.com/kernel-ai/koscore/utils/binary"
 	"github.com/kernel-ai/koscore/utils/binary/prefix"
+	"github.com/kernel-ai/koscore/utils/exception"
 )
 
 var __EmptyD2Key = make([]byte, 16)
@@ -22,7 +23,7 @@ func buildServicePackerProtocol12(session *auth.Session, sso *binary.Builder, op
 	case sso_type.EncryptD2Key:
 		cipher = tea.NewTeaCipher(session.Sig.D2Key).Encrypt(cipher)
 	default:
-		return nil, fmt.Errorf("ServicePacker::BuildProtocol12: argument out of range exception: unknown encrypt type: %d", options.EncryptType)
+		return nil, exception.NewArgumentOfRangeException("ServicePacker::BuildProtocol12: unknown encrypt type: %d", options.EncryptType)
 	}
 
 	w := binary.NewBuilder().WriteU32(12).WriteU8(uint8(options.EncryptType))
@@ -45,7 +46,7 @@ func buildServicePackerProtocol13(session *auth.Session, sso *sso_type.SsoPacket
 	case sso_type.EncryptD2Key:
 		tea.NewTeaCipher(session.Sig.D2Key).Encrypt(cipher)
 	default:
-		return nil, fmt.Errorf("ServicePacker::BuildProtocol13: argument out of range exception: unknown encrypt type: %d", sso.EncryptType)
+		return nil, exception.NewArgumentOfRangeException("ServicePacker::BuildProtocol13: unknown encrypt type: %d", sso.EncryptType)
 	}
 	return binary.NewBuilder().WriteLenBarrier(
 		binary.NewBuilder().
@@ -61,7 +62,7 @@ func buildServicePackerProtocol13(session *auth.Session, sso *sso_type.SsoPacket
 
 func parseServicePacker(session *auth.Session, data []byte) *sso_type.SsoPacket {
 	r := binary.NewReader(data)
-	r.ReadU32() // length
+	//r.ReadU32() // length loop.read.uint32
 	r.ReadI32() // RequestType protocol
 	//if protocol != RequestTypeLogin && protocol != RequestTypeSimple && protocol != RequestTypeNT { return resp, ErrInvalidPacketType }
 	authFlag := sso_type.EncryptType(r.ReadU8())         // resp.EncryptType authFlag
