@@ -141,7 +141,7 @@ func (i *remote) sign(cmd string, seq uint32, buf []byte, uin uint32, guid, qua 
 		return nil, e
 	}
 	if len(rsp.Value.Sign) == 0 {
-		return nil, k_err_sign_rsp
+		return nil, k_err_rsp_sign_nil
 	}
 	return &rsp.Value, nil
 }

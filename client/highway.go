@@ -43,7 +43,7 @@ func (m *QQClient) ensureHighwayServers() error {
 		for _, info := range rsp.RspBody.Addrs {
 			if info.ServiceType.Unwrap() == 1 {
 				for _, addr := range info.Addrs {
-					m.LOGD("add highway server %s:%d", binary.UInt32ToIPV4Address(addr.Ip.Unwrap()), addr.Port)
+					m.LOGD("add highway server %s:%d", binary.UInt32ToIPV4Address(addr.Ip.Unwrap()), addr.Port.Unwrap())
 					m.hw_session.AppendAddr(addr.Ip.Unwrap(), addr.Port.Unwrap())
 				}
 			}

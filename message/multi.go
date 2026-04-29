@@ -1,10 +1,6 @@
 package message
 
-import (
-	"encoding/xml"
-
-	"github.com/kernel-ai/koscore/client/packets/message/message_type"
-)
+import "encoding/xml"
 
 type ForwardNode struct {
 	GroupId    uint64
@@ -12,8 +8,6 @@ type ForwardNode struct {
 	SenderName string
 	Time       uint32
 	Message    []IMessageElement
-
-	Type message_type.MSG_TYPE
 }
 
 type (

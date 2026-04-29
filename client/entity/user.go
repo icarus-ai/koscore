@@ -37,23 +37,20 @@ type (
 		Avatar       string
 		Age          uint32
 		Sex          GenderInfo // 1男 2女 255不可见
+		QID          string
+
 		Level        uint32
-		Source       string // 好友来源
-
-		QID string
-
-		Country string
-		City    string
-		School  string
-
-		VipLevel uint32
-
+		Country      string
+		City         string
+		School       string
 		Registration int64
 		Birthday     int64
 		Status       OnlineStatus
 		Business     []BusinessCustom
 
-		Category *UserCategory
+		Source string // 好友来源
+
+		Category *UserCategory // v2
 	}
 )
 

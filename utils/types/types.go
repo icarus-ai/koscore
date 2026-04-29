@@ -61,3 +61,5 @@ type Tlvs map[uint16][]byte
 type MapSS map[string]string
 
 const ERROR_NOT_IMPL = "未实现该功能"
+
+type Signal chan uint8

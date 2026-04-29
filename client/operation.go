@@ -39,9 +39,6 @@ func (m *QQClient) FetchCookies(domains []string) (types.MapSS, error) {
 // 获取用户信息
 func (m *QQClient) FetchStrangerUin(uin uint64) (*entity.User, error) {
 	pkt, err := oidb.BuildFetchStrangerPacket(uin, 2)
-	if err != nil {
-		return nil, err
-	}
 	if pkt, err = m.sendOidbPacketAndWait(pkt); err != nil {
 		return nil, err
 	}
@@ -49,15 +46,15 @@ func (m *QQClient) FetchStrangerUin(uin uint64) (*entity.User, error) {
 }
 
 // 获取用户信息
-func (m *QQClient) FetchStrangerUid(uid string) (*entity.User, error) {
-	pkt, err := oidb.BuildFetchStrangerPacket(uid, 2)
-	if err != nil {
-		return nil, err
-	}
+func (m *QQClient) FetchStrangerUid(uid string) (usr *entity.User, err error) {
+	pkt, _ := oidb.BuildFetchStrangerPacket(uid, 2)
 	if pkt, err = m.sendOidbPacketAndWait(pkt); err != nil {
-		return nil, err
+		return
 	}
-	return oidb.ParseFetchStrangerPacket(pkt.Data)
+	if usr, err = oidb.ParseFetchStrangerPacket(pkt.Data); err == nil {
+		usr.Uid = uid
+	}
+	return
 }
 
 // 获取好友列表信息，使用token可以获取下一页的群成员信息
@@ -155,8 +152,7 @@ func (m *QQClient) SetGroupRequest(is_filtered bool, operate entity.GroupRequest
 
 // 上传合并转发消息 group_uin should be the group number where the uploader is located or 0 (c2c)
 func (m *QQClient) UploadForwardMsg(forward *message.ForwardMessage, group_uin uint64) (*message.ForwardMessage, error) {
-	pkt := pkt_msg.BuildMultiMsgUploadPacket(m.session.Info.Uid, group_uin, m.BuildFakeMessage(forward.Nodes), m.version)
-	pkt, err := m.sendOidbPacketAndWait(pkt)
+	pkt, err := m.sendOidbPacketAndWait(pkt_msg.BuildMultiMsgUploadPacket(m.session.Info.Uid, group_uin, m.BuildFakeMessage(forward.Nodes), m.version))
 	if err != nil {
 		return nil, err
 	}
@@ -169,17 +165,17 @@ func (m *QQClient) UploadForwardMsg(forward *message.ForwardMessage, group_uin u
 }
 
 // 获取合并转发消息
-func (m *QQClient) FetchForwardMsg(resid string, is_group bool) (msg *message.ForwardMessage, err error) {
+func (m *QQClient) FetchForwardMsg(resid string, is_group bool) (*message.ForwardMessage, error) {
 	if resid == "" {
-		return msg, errors.New("empty resid")
+		return nil, errors.New("empty resid")
 	}
 	pkt, err := m.sendOidbPacketAndWait(pkt_msg.BuildMultiMsgDownloadPcket(m.session.Info.Uid, resid, is_group, m.version))
 	if err != nil {
 		return nil, err
 	}
-	rsp, e := pkt_msg.ParseMultiMsgDownloadPacket(pkt.Data)
-	if e != nil {
-		return nil, e
+	rsp, err := pkt_msg.ParseMultiMsgDownloadPacket(pkt.Data)
+	if err != nil {
+		return nil, err
 	}
 
 	forward := &message.ForwardMessage{ResId: resid}
@@ -203,7 +199,6 @@ func (m *QQClient) FetchForwardMsg(resid string, is_group bool) (msg *message.Fo
 			forward.Nodes[idx].Message = ms.Elements
 		}
 	}
-
 	return forward, nil
 }
 

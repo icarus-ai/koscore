@@ -129,6 +129,7 @@ func (m *ForwardMessage) BuildElement() []*message.Elem {
 	var news []News
 	var metaSource string
 	nodes_size := len(m.Nodes)
+
 	if nodes_size == 0 {
 		news = []News{{Text: "转发消息"}}
 		metaSource = "聊天记录"
@@ -137,7 +138,6 @@ func (m *ForwardMessage) BuildElement() []*message.Elem {
 		for i, node := range m.Nodes {
 			news[i] = News{Text: fmt.Sprintf("%s: %s", node.SenderName, ToReadableString(node.Message))}
 		}
-
 		isSenderNameExist := make(map[string]bool)
 		isContainSelf := false
 		isCount := 0

@@ -13,8 +13,9 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/pkg/errors"
 	"github.com/tidwall/gjson"
+
+	"github.com/pkg/errors"
 	"golang.org/x/net/html"
 
 	pkt_msg "github.com/kernel-ai/koscore/client/packets/message"

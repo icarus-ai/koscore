@@ -29,13 +29,16 @@ func (m *QQClient) heart_beat_loop(interval time.Duration) {
 	pkt := system_type.AttributeHeartbeat.NewSsoPacket(0, system_type.HeartbeatReq)
 	go func() {
 		for m.is_heart_beat {
-			<-ticker.C
-			pkt.Sequence = m.session.GetAndIncreaseSequence()
-			if e := m.sso_context.SendPacket(pkt); e != nil {
-				m.LOGW("heart_beat: send: %s", e)
+			select {
+			case <-m.stop_signal[0]:
+				m.is_heart_beat = false
+			case <-ticker.C:
+				pkt.Sequence = m.session.GetAndIncreaseSequence()
+				if e := m.sso_context.SendPacket(pkt); e != nil {
+					m.LOGW("heart_beat: send: %s", e)
+				}
 			}
 		}
-		m.is_heart_beat = false
 		ticker.Stop()
 	}()
 }
@@ -51,16 +54,20 @@ func (m *QQClient) sso_heart_beat_loop(interval time.Duration) {
 	pkt := system.BuildSsoHeartBeatPacket()
 	go func() {
 		for m.Online.Load() {
-			<-ticker.C
-			pkt.Sequence = m.session.GetAndIncreaseSequence()
-			//m.LOGD("sso_heart_beat: send: cmd: %s seq: %d data: %X", sso.Command, sso.Sequence, sso.Data)
-			rsp, e := m.sso_context.SendPacketAndWait(pkt)
-			if e != nil {
-				m.LOGW("sso_heart_beat: send: %v", e)
-				continue
-			}
-			if _, e = system.ParseSsoHeartBeatPacket(rsp); e != nil {
-				m.LOGW("sso_heart_beat: rsp: %v", e)
+			select {
+			case <-m.stop_signal[1]:
+				m.Online.Store(false)
+			case <-ticker.C:
+				pkt.Sequence = m.session.GetAndIncreaseSequence()
+				//m.LOGD("sso_heart_beat: send: cmd: %s seq: %d data: %X", sso.Command, sso.Sequence, sso.Data)
+				rsp, e := m.sso_context.SendPacketAndWait(pkt)
+				if e != nil {
+					m.LOGW("sso_heart_beat: send: %v", e)
+					continue
+				}
+				if _, e = system.ParseSsoHeartBeatPacket(rsp); e != nil {
+					m.LOGW("sso_heart_beat: rsp: %v", e)
+				}
 			}
 		}
 		ticker.Stop()
@@ -138,6 +145,7 @@ func (m *QQClient) register() error {
 	rsp := system.ParseInfoSyncPacket(sso)
 	if strings.Contains(rsp.Message, "register success") {
 		m.setSessionId()
+		m.heart_beat_loop(2)
 		m.sso_heart_beat_loop(270)
 		//if protocol.IsAndroid { _timers[ExchangeEmpTag].Change(TimeSpan.Zero, TimeSpan.FromDays(1)) }
 		return nil
@@ -206,7 +214,6 @@ func (m *QQClient) Logout() error {
 	}
 	if strings.Contains(rsp.Msg.Unwrap(), "unregister success") {
 		m.LOGD("sso_unregister: logout success")
-		m.is_heart_beat = false
 		m.sso_context.Disconnect()
 		return nil
 	}

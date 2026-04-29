@@ -4,8 +4,7 @@ import (
 	"errors"
 	"math"
 	"strings"
-
-	"github.com/kernel-ai/koscore/utils/comm"
+	//"github.com/kernel-ai/koscore/utils/comm"
 )
 
 const server_latency_down = math.MaxUint32
@@ -13,7 +12,7 @@ const server_latency_down = math.MaxUint32
 var (
 	ErrVersionMismatch    = errors.New("sign version mismatch")
 	ErrAllSignServiceDown = errors.New("all sign service down")
-	k_err_sign_rsp        = errors.New("sign rsp 0")
+	k_err_rsp_sign_nil    = errors.New("rsp.sign nil")
 )
 
 // signExtraHexLower = fmt.Sprintf("%x", proto.DynamicMessage{2: c.app.PackageSign}.Encode())
@@ -25,9 +24,7 @@ func ContainSignPKG(cmd string) bool {
 	if !ok {
 		ok = strings.Contains(cmd, "OidbSvcTrpcTcp.0x")
 	}
-	if !ok {
-		comm.LOGD("unsign cmd: %s", cmd)
-	}
+	//if !ok { comm.LOGD("unsign cmd: %s", cmd) }
 	return ok
 }
 
@@ -92,9 +89,12 @@ func init() {
 		"OidbSvcTrpcTcp.0xfe1_2",
 		"OidbSvcTrpcTcp.0xfe1_8",
 		// king add
-		"trpc.msg.register_proxy.RegisterProxy.SsoInfoSync",
 		"trpc.qq_new_tech.status_svc.StatusService.SsoHeartBeat",
 		"trpc.qq_new_tech.status_svc.StatusService.SetStatus",
+		"trpc.msg.register_proxy.RegisterProxy.SsoInfoSync",
+		"trpc.msg.register_proxy.RegisterProxy.SsoGetGroupMsg",
+		"trpc.msg.register_proxy.RegisterProxy.SsoGetRoamMsg",
+		"trpc.msg.register_proxy.RegisterProxy.SsoGetC2cMsg",
 	} {
 		sign_map[cmd] = 1
 	}

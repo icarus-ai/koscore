@@ -1,6 +1,8 @@
 package message
 
 import (
+	"strconv"
+
 	"github.com/kernel-ai/koscore/client/auth"
 	"github.com/kernel-ai/koscore/client/packets/message/message_type"
 	"github.com/kernel-ai/koscore/client/packets/pb/v2/message"
@@ -21,7 +23,7 @@ func BuildMultiMsgUploadPacket(bot_uid string, gin uint64, msg []*message.Common
 	data, _ = proto.Marshal(&message.LongMsgInterfaceReq{
 		SendReq: &message.LongMsgSendReq{
 			MsgType:  proto.Some(utils.Ternary[uint32](gin == 0, 1, 3)), // 4 for wpamsg, 5 for grpmsg temp
-			PeerInfo: &message.LongMsgPeerInfo{PeerUid: proto.Some(bot_uid)},
+			PeerInfo: &message.LongMsgPeerInfo{PeerUid: proto.Some(utils.Ternary(gin == 0, bot_uid, strconv.Itoa(int(gin))))},
 			GroupUin: proto.Some(int64(gin)),
 			Payload:  binary.GZipCompress(data),
 		},
@@ -56,7 +58,7 @@ func build_multi_msg_settings(sub uint32, version *auth.AppInfo) *message.LongMs
 			case auth.APad:
 				return 5
 			default:
-				return 0
+				return 1
 			}
 		}()),
 		Platform: proto.Some(func() uint32 {
@@ -70,7 +72,7 @@ func build_multi_msg_settings(sub uint32, version *auth.AppInfo) *message.LongMs
 			case auth.Android, auth.APad:
 				return 9
 			default:
-				return 0
+				return 7
 			}
 		}()),
 		//ProxyType: proto.Some[uint32](0),

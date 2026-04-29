@@ -13,10 +13,10 @@ import (
 	"github.com/kernel-ai/koscore/utils/comm"
 )
 
-const (
+var (
 	k_SIGN_V2_URI = "https://sign.lagrangecore.org/api/sign/sec-sign"
 	k_SIGN_V2_KEY = "you sign key"
-	k_SIGN_V2_UIN = 0 // you sign uin
+	k_SIGN_V2_UIN = uint64(0) // you sign uin
 	TOKEN_PATH    = "session_bin"
 	QRCODE_PATH   = "qrcode.png"
 	k_GUID        = "you guid hex"
@@ -24,9 +24,7 @@ const (
 	dump_path = "dump"
 )
 
-func main() {
-	qq_login(k_SIGN_V2_UIN, "")
-}
+func main() { qq_login(k_SIGN_V2_UIN, "") }
 
 func qq_login(uin uint64, password string) {
 	ctx := new_client(uin, password)
@@ -45,14 +43,13 @@ func qq_login(uin uint64, password string) {
 	if e = ctx.RefreshFriendCache(); e == nil {
 		infos := ctx.GetCachedAllFriendsInfo()
 		comm.LOGI("好友数: %d", len(infos))
+		for _, v := range infos {
+			if v.Category == nil {
+				comm.LOGD("[单向好友|%s<%d>%d]: 来自 %s", v.Nickname, v.Uin, v.Age, v.Source)
+			}
+		}
 	} else {
 		comm.LOGW("刷新好友列表失败: %v", e)
-	}
-
-	if us, e := ctx.GetUnidirectionalFriendList(); e == nil {
-		comm.LOGI("单向好友数: %d", len(us))
-	} else {
-		comm.LOGW("刷新单向好友列表失败: %v", e)
 	}
 
 	if e = ctx.RefreshAllGroupMembersCache(); e == nil {

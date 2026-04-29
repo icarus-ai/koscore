@@ -13,6 +13,7 @@ import (
 	"github.com/kernel-ai/koscore/client/internal/cache"
 	"github.com/kernel-ai/koscore/client/internal/highway"
 	"github.com/kernel-ai/koscore/client/sign"
+	"github.com/kernel-ai/koscore/utils/types"
 )
 
 type QQClient struct {
@@ -22,13 +23,14 @@ type QQClient struct {
 	sig_context sign.Provider
 	sso_context *PacketContext
 
-	is_heart_beat bool
-	stat          Statistics
-	cache         cache.Cache
-	hw_session    highway.Session
-	ticket        *TicketService
+	stat       Statistics
+	cache      cache.Cache
+	hw_session highway.Session
+	ticket     *TicketService
 
-	Online atomic.Bool
+	stop_signal   [2]types.Signal
+	is_heart_beat bool
+	Online        atomic.Bool
 
 	decoders event.DecodersEvent
 
@@ -79,6 +81,8 @@ func NewClient(uin uint64, password string) *QQClient {
 		},
 		decoders: make(event.DecodersEvent),
 	}
+	ctx.stop_signal[0] = make(types.Signal)
+	ctx.stop_signal[1] = make(types.Signal)
 	ctx.sso_context = NewPacketContext(ctx)
 	return ctx
 }
@@ -91,6 +95,8 @@ func (m *QQClient) Release() {
 	if m.Online.Load() {
 		m.sso_context.Disconnect()
 	}
+	m.stop_signal[0] = make(types.Signal)
+	m.stop_signal[1] = make(types.Signal)
 }
 
 // *****

@@ -70,7 +70,7 @@ func (m *QQClient) GetUin(uid string, gin ...uint64) uint64 {
 }
 
 // GetCachedFriendInfo 获取好友信息(缓存)
-func (m *QQClient) GetCachedFriendInfo(uin uint64) *entity.User {
+func (m *QQClient) GetCachedFriendInfo(uin uint64, cache ...bool) *entity.User {
 	if m.cache.FriendCacheIsEmpty() {
 		if e := m.RefreshFriendCache(); e != nil {
 			return nil
@@ -78,6 +78,9 @@ func (m *QQClient) GetCachedFriendInfo(uin uint64) *entity.User {
 	}
 	if fr := m.cache.GetFriend(uin); fr != nil {
 		return fr
+	}
+	if len(cache) > 0 && cache[0] {
+		return nil
 	}
 	_ = m.RefreshFriendCache()
 	return m.cache.GetFriend(uin)

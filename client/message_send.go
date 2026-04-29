@@ -6,8 +6,10 @@ import (
 	pkt_msg "github.com/kernel-ai/koscore/client/packets/message"
 	pb_msg "github.com/kernel-ai/koscore/client/packets/pb/v2/message"
 
+	"github.com/kernel-ai/koscore/client/packets/message/message_type"
 	"github.com/kernel-ai/koscore/client/packets/structs/sso_type"
 	"github.com/kernel-ai/koscore/message"
+	"github.com/kernel-ai/koscore/utils"
 	"github.com/kernel-ai/koscore/utils/crypto"
 	"github.com/kernel-ai/koscore/utils/exception"
 	"github.com/kernel-ai/koscore/utils/proto"
@@ -146,6 +148,7 @@ func (m *QQClient) SendGroupFile(gin uint64, local_path, file_name, target_dir s
 func (m *QQClient) BuildFakeMessage(nodes []*message.ForwardNode) []*pb_msg.CommonMessage {
 	body := make([]*pb_msg.CommonMessage, len(nodes))
 	seq := crypto.RandU32()
+	node_type := utils.Ternary[int32](nodes[0].GroupId > 0, message_type.GROUP_MESSAGE, message_type.PRIVATE_MESSAGE)
 	for idx, node := range nodes {
 		body[idx] = &pb_msg.CommonMessage{
 			RoutingHead: &pb_msg.RoutingHead{
@@ -153,7 +156,7 @@ func (m *QQClient) BuildFakeMessage(nodes []*message.ForwardNode) []*pb_msg.Comm
 				FromUin: proto.Some(int64(node.SenderId)),
 			},
 			ContentHead: &pb_msg.ContentHead{
-				Type:           proto.Some(int32(node.Type)),
+				Type:           proto.Some(node_type),
 				Random:         proto.Some(seq),
 				Sequence:       proto.Some(uint64(seq) + uint64(idx)),
 				Time:           proto.Some(int64(node.Time)),

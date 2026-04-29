@@ -4,13 +4,13 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/kernel-ai/koscore/utils/exception"
 	"github.com/pkg/errors"
 
 	"github.com/kernel-ai/koscore/client/packets/pb/v2/common"
 	"github.com/kernel-ai/koscore/client/packets/structs"
 	"github.com/kernel-ai/koscore/client/packets/structs/sso_type"
 	"github.com/kernel-ai/koscore/client/sign"
+	"github.com/kernel-ai/koscore/utils/exception"
 	"github.com/kernel-ai/koscore/utils/proto"
 )
 

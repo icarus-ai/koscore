@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/RomiChan/syncx"
+
 	"github.com/kernel-ai/koscore/client/event"
 	"github.com/kernel-ai/koscore/client/internal/network"
 	"github.com/kernel-ai/koscore/client/packets/structs"
@@ -126,31 +127,35 @@ func (m *PacketContext) IsConnect() bool { return m.sock.IsConnect() }
 func (m *PacketContext) plannedDisconnect(_ *network.TCPClient) {
 	m.LOGD("planned disconnect.")
 	m.stat.DisconnectTimes.Add(1)
-	m.Online.Store(false)
+	if m.is_heart_beat {
+		m.stop_signal[0] <- 1
+	}
+	if m.Online.Load() {
+		m.stop_signal[1] <- 1
+	}
 }
 
 // 非预期断线事件
 func (m *PacketContext) unexpectedDisconnect(_ *network.TCPClient, e error) {
 	m.LOGE("unexpected disconnect: %v", e)
 	m.stat.DisconnectTimes.Add(1)
-	m.Online.Store(false)
-	if err := m.sock.Connect(); err != nil {
-		m.LOGE("connect server error: %v", err)
-		m.Events.Disconnected.dispatch(m.QQClient, &event.Disconnected{Message: "connection dropped by server."})
-		return
+	if m.is_heart_beat {
+		m.stop_signal[0] <- 1
 	}
-	if e := m.register(); e != nil {
-		m.LOGE("register client failed: %v", e)
-		m.sock.Disconnect()
-		m.Events.Disconnected.dispatch(m.QQClient, &event.Disconnected{Message: "register error"})
-		return
+	if m.Online.Load() {
+		m.stop_signal[1] <- 1
 	}
+	m.prv_reconnect()
 }
 
 // 快速重连
 func (m *PacketContext) quickReconnect() {
 	m.sock.Disconnect()
-	time.Sleep(time.Millisecond * 200)
+	m.prv_reconnect()
+}
+
+func (m *PacketContext) prv_reconnect() {
+	time.Sleep(time.Millisecond * 500)
 	if err := m.sock.Connect(); err != nil {
 		m.LOGE("connect server error: %v", err)
 		m.Events.Disconnected.dispatch(m.QQClient, &event.Disconnected{Message: "quick reconnect failed"})
