@@ -21,9 +21,11 @@ import (
 )
 
 func (m *QQClient) initHighwayServers() {
-	m.hw_session.Uin = &m.session.Info.Uin
-	m.hw_session.AppId = m.version.AppId
-	m.hw_session.SubAppId = m.version.SubAppId
+	m.hw_session = &hw.Session{
+		Uin:      &m.session.Info.Uin,
+		AppId:    m.version.AppId,
+		SubAppId: m.version.SubAppId,
+	}
 }
 
 func (m *QQClient) ensureHighwayServers() error {
@@ -96,7 +98,7 @@ func (m *QQClient) highwayUpload(common_id uint32, r io.Reader, file_size uint64
 func (m *QQClient) highwayUploadBlock(trans *hw.Transaction, server string, offset uint64, blkmd5 []byte, blk []byte) error {
 	blksz := uint64(len(blk))
 	isEnd := offset+blksz == trans.Size
-	payload, err := sendHighwayPacket(trans.Build(&m.hw_session, offset, uint32(blksz), blkmd5), blk, server, isEnd)
+	payload, err := sendHighwayPacket(trans.Build(m.hw_session, offset, uint32(blksz), blkmd5), blk, server, isEnd)
 	if err != nil {
 		return exception.NewFormat("send highway packet: %w", err)
 	}

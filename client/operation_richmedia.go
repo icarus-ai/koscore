@@ -33,7 +33,7 @@ func (m *QQClient) UploadGroupImage(gin uint64, image *message.ImageElement) (*m
 	if err != nil {
 		return nil, err
 	}
-	if md5, ext := oidb.NTV2RICH_MEDIA_IMAGE.CommonGenerateHighwayExt(upload, image.Stream, image.Size, nil); ext != nil {
+	if md5, ext := oidb.NTV2RICH_MEDIA_IMAGE.CommonGenerateHighwayExt(upload, image.Stream, nil); ext != nil {
 		//m.LOGD("group image upload ukey: %s", upload.UKey.Unwrap())
 		if err = m.highwayUpload(1004, image.Stream, uint64(image.Size), md5, ext); err != nil {
 			return nil, err
@@ -67,7 +67,7 @@ func (m *QQClient) UploadPrivateImage(uin uint64, image *message.ImageElement) (
 	if err != nil {
 		return nil, err
 	}
-	if md5, ext := oidb.NTV2RICH_MEDIA_IMAGE.CommonGenerateHighwayExt(upload, image.Stream, image.Size, nil); ext != nil {
+	if md5, ext := oidb.NTV2RICH_MEDIA_IMAGE.CommonGenerateHighwayExt(upload, image.Stream, nil); ext != nil {
 		//m.LOGD("private image upload ukey: %s", ukey)
 		if err = m.highwayUpload(1003, image.Stream, uint64(image.Size), md5, ext); err != nil {
 			return nil, err
@@ -103,14 +103,14 @@ func (m *QQClient) UploadGroupShortVideo(gin uint64, video *message.ShortVideoEl
 	}
 
 	// video
-	if md5, ext := oidb.NTV2RICH_MEDIA_VIdEO.CommonGenerateHighwayExt(upload, video.Stream, video.Size, nil); ext != nil {
+	if md5, ext := oidb.NTV2RICH_MEDIA_VIDEO.CommonGenerateHighwayExt(upload, video.Stream, nil); ext != nil {
 		//m.LOGD("group video upload ukey: %s", ukey)
 		if err = m.highwayUpload(1005, video.Stream, uint64(video.Size), md5, ext); err != nil {
 			return nil, err
 		}
 	}
 	// thumb
-	if md5, ext := oidb.NTV2RICH_MEDIA_IMAGE.CommonGenerateHighwayExt(upload, video.Thumb.Stream, video.Thumb.Size, upload.SubFileInfos[0]); ext != nil {
+	if md5, ext := oidb.NTV2RICH_MEDIA_IMAGE.CommonGenerateHighwayExt(upload, video.Thumb.Stream, upload.SubFileInfos[0]); ext != nil {
 		//m.LOGD("group video.thumb upload ukey: %s", ukey)
 		if err = m.highwayUpload(1006, video.Thumb.Stream, uint64(video.Thumb.Size), md5, ext); err != nil {
 			return nil, err
@@ -152,14 +152,14 @@ func (m *QQClient) UploadPrivateShortVideo(uin uint64, video *message.ShortVideo
 	}
 
 	// video
-	if md5, ext := oidb.NTV2RICH_MEDIA_VIdEO.CommonGenerateHighwayExt(upload, video.Stream, video.Size, nil); ext != nil {
+	if md5, ext := oidb.NTV2RICH_MEDIA_VIDEO.CommonGenerateHighwayExt(upload, video.Stream, nil); ext != nil {
 		//m.LOGD("pivate video upload ukey: %s", ukey)
 		if err = m.highwayUpload(1001, video.Stream, uint64(video.Size), md5, ext); err != nil {
 			return nil, err
 		}
 	}
 	// thumb
-	if md5, ext := oidb.NTV2RICH_MEDIA_IMAGE.CommonGenerateHighwayExt(upload, video.Thumb.Stream, video.Thumb.Size, upload.SubFileInfos[0]); ext != nil {
+	if md5, ext := oidb.NTV2RICH_MEDIA_IMAGE.CommonGenerateHighwayExt(upload, video.Thumb.Stream, upload.SubFileInfos[0]); ext != nil {
 		//m.LOGD("pivate video.thumb upload ukey: %s", ukey)
 		if err = m.highwayUpload(1002, video.Thumb.Stream, uint64(video.Thumb.Size), md5, ext); err != nil {
 			return nil, err
@@ -194,7 +194,7 @@ func (m *QQClient) UploadGroupRecord(gin uint64, voice *message.VoiceElement) (*
 		return nil, err
 	}
 
-	if md5, ext := oidb.NTV2RICH_MEDIA_RECORD.CommonGenerateHighwayExt(upload, voice.Stream, voice.Size, nil); ext != nil {
+	if md5, ext := oidb.NTV2RICH_MEDIA_RECORD.CommonGenerateHighwayExt(upload, voice.Stream, nil); ext != nil {
 		//m.LOGD("group record upload ukey: %s", ukey)
 		if err = m.highwayUpload(1008, voice.Stream, uint64(voice.Size), md5, ext); err != nil {
 			return nil, err
@@ -230,7 +230,7 @@ func (m *QQClient) UploadPrivateRecord(uin uint64, voice *message.VoiceElement) 
 		return nil, err
 	}
 
-	if md5, ext := oidb.NTV2RICH_MEDIA_RECORD.CommonGenerateHighwayExt(upload, voice.Stream, voice.Size, nil); ext != nil {
+	if md5, ext := oidb.NTV2RICH_MEDIA_RECORD.CommonGenerateHighwayExt(upload, voice.Stream, nil); ext != nil {
 		//m.LOGD("group record upload ukey: %s", ukey)
 		if err = m.highwayUpload(1007, voice.Stream, uint64(voice.Size), md5, ext); err != nil {
 			return nil, err

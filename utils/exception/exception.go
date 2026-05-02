@@ -10,7 +10,7 @@ func (m Exception) Error() string { return m.message }
 
 func New(err string) IException { return Exception{message: err} }
 func NewFormat(format string, args ...any) IException {
-	return Exception{message: fmt.Sprintf(format, args)}
+	return Exception{message: fmt.Sprintf(format, args...)}
 }
 
 type (
@@ -32,7 +32,7 @@ func NewOperationException(format string, args ...any) OperationException {
 }
 
 func NewOperationExceptionCode[T int32 | uint32 | int64](code T, err string) OperationException {
-	return OperationException(NewFormat("%s (%d)", err, code))
+	return OperationException(NewFormat("operation: %s (%d)", err, code))
 }
 
 func NewInvalidTargetException(uin uint64, gin ...uint64) InvalidTargetException {

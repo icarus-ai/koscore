@@ -25,7 +25,7 @@ type QQClient struct {
 
 	stat       Statistics
 	cache      cache.Cache
-	hw_session highway.Session
+	hw_session *highway.Session
 	ticket     *TicketService
 
 	stop_signal   [2]types.Signal

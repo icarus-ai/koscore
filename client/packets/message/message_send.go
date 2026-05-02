@@ -29,7 +29,7 @@ func BuildRawMessage(cli_seq, random uint32, route *message.SendRoutingHead, bod
 	if e != nil {
 		return nil, e
 	}
-	return message_type.AttributePbSendMsg.NewSsoPacket(cli_seq, data), nil
+	return message_type.AttributePbSendMsg.NewSsoPacket(0, data), nil
 }
 
 func ParseMessagePacket(data []byte) (*message.PbSendMsgResp, error) {

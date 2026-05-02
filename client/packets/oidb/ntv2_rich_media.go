@@ -30,19 +30,21 @@ func (typ ntv2_rich_media) common_ConvertIPv4(ipv4s []*oidb.IPv4) *oidb.NTHighwa
 	return ret
 }
 
-func (typ ntv2_rich_media) CommonGenerateHighwayExt(upload *oidb.UploadResp, stream io.ReadSeeker, io_size uint32, subFileInfo *oidb.SubFileInfo) (md5, ext []byte) {
+func (typ ntv2_rich_media) CommonGenerateHighwayExt(upload *oidb.UploadResp, stream io.ReadSeeker, sub *oidb.SubFileInfo) (md5, ext []byte) {
 	if upload.UKey.Unwrap() == "" {
 		return
 	}
-	if subFileInfo == nil {
-		hash := &oidb.NTHighwayHash{}
+	if sub == nil {
+		var file_sha1 [][]byte
 		index := upload.MsgInfo.MsgInfoBody[0].Index
-		if typ == NTV2RICH_MEDIA_VIdEO {
-			io_size = highway.BlockSize
-			hash.FileSha1 = crypto.ComputeBlockSha1(stream, highway.BlockSize)
+		if typ == NTV2RICH_MEDIA_VIDEO {
+			file_sha1 = crypto.ComputeBlockSha1(stream, highway.BlockSize)
 		} else {
-			sha, _ := hex.DecodeString(index.Info.FileSha1.Unwrap())
-			hash.FileSha1 = [][]byte{sha}
+			sha, e := hex.DecodeString(index.Info.FileSha1.Unwrap())
+			if e != nil {
+				return
+			}
+			file_sha1 = [][]byte{sha}
 		}
 		md5, _ = hex.DecodeString(index.Info.FileHash.Unwrap())
 		ext, _ = proto.Marshal(&oidb.NTV2RichMediaHighwayExt{
@@ -51,11 +53,11 @@ func (typ ntv2_rich_media) CommonGenerateHighwayExt(upload *oidb.UploadResp, str
 			Network:     typ.common_ConvertIPv4(upload.IPv4S),
 			MsgInfoBody: upload.MsgInfo.MsgInfoBody,
 			BlockSize:   proto.Some(uint32(highway.BlockSize)),
-			Hash:        hash,
+			Hash:        &oidb.NTHighwayHash{FileSha1: file_sha1},
 		})
 		return
 	}
-	if subFileInfo.UKey.Unwrap() != "" {
+	if sub.UKey.Unwrap() == "" {
 		return
 	}
 	index := upload.MsgInfo.MsgInfoBody[1].Index
@@ -63,8 +65,8 @@ func (typ ntv2_rich_media) CommonGenerateHighwayExt(upload *oidb.UploadResp, str
 	md5, _ = hex.DecodeString(index.Info.FileHash.Unwrap())
 	ext, _ = proto.Marshal(&oidb.NTV2RichMediaHighwayExt{
 		FileUuid:    index.FileUuid,
-		UKey:        subFileInfo.UKey,
-		Network:     typ.common_ConvertIPv4(subFileInfo.IPv4S),
+		UKey:        sub.UKey,
+		Network:     typ.common_ConvertIPv4(sub.IPv4S),
 		MsgInfoBody: upload.MsgInfo.MsgInfoBody,
 		BlockSize:   proto.Some(uint32(highway.BlockSize)),
 		Hash:        &oidb.NTHighwayHash{FileSha1: [][]byte{sha}},
@@ -76,7 +78,7 @@ type ntv2_rich_media uint8
 
 const (
 	NTV2RICH_MEDIA_IMAGE  ntv2_rich_media = 1
-	NTV2RICH_MEDIA_VIdEO  ntv2_rich_media = 2
+	NTV2RICH_MEDIA_VIDEO  ntv2_rich_media = 2
 	NTV2RICH_MEDIA_RECORD ntv2_rich_media = 3
 )
 
@@ -96,7 +98,7 @@ func (typ ntv2_rich_media) build_scene(id any) *oidb.SceneInfo {
 	switch typ {
 	case NTV2RICH_MEDIA_IMAGE:
 		scene.BusinessType = proto.Some[uint32](1)
-	case NTV2RICH_MEDIA_VIdEO:
+	case NTV2RICH_MEDIA_VIDEO:
 		scene.BusinessType = proto.Some[uint32](2)
 	case NTV2RICH_MEDIA_RECORD:
 		scene.BusinessType = proto.Some[uint32](3)
@@ -137,7 +139,7 @@ func (typ ntv2_rich_media) build_file(fs fstream) (*oidb.FileInfo, error) {
 		info.Height = proto.Some(uint32(size.Height))
 		info.FileName = proto.Some(md5str + "." + format.String())
 		info.Original = proto.Some[uint32](1)
-	case NTV2RICH_MEDIA_VIdEO:
+	case NTV2RICH_MEDIA_VIDEO:
 		// unable to determine video type, skip
 		info.Type = &oidb.FileType{Type: proto.Some[uint32](2)}
 		info.FileName = proto.Some(md5str + ".mp4") // default to mp4
@@ -255,7 +257,7 @@ func BuildGroupVideoUploadPacket(gin uint64, video *message.ShortVideoElement) (
 	if video.Thumb.Stream == nil {
 		return nil, errors.New("video thumb stream data is null")
 	}
-	body, e := NTV2RICH_MEDIA_VIdEO.build_upload(gin, &oidb.ExtBizInfo{
+	body, e := NTV2RICH_MEDIA_VIDEO.build_upload(gin, &oidb.ExtBizInfo{
 		Pic: &oidb.PicExtBizInfo{
 			BizType:     proto.Some[uint32](0),
 			TextSummary: proto.Some(""),
@@ -279,7 +281,7 @@ func BuildPrivateVideoUploadPacket(self_uid string, video *message.ShortVideoEle
 	if video.Thumb.Stream == nil {
 		return nil, errors.New("video thumb stream data is null")
 	}
-	body, e := NTV2RICH_MEDIA_VIdEO.build_upload(self_uid, &oidb.ExtBizInfo{
+	body, e := NTV2RICH_MEDIA_VIDEO.build_upload(self_uid, &oidb.ExtBizInfo{
 		Pic: &oidb.PicExtBizInfo{
 			BizType:     proto.Some[uint32](0),
 			TextSummary: proto.Some(""),
@@ -386,7 +388,7 @@ func BuildGroupVideoDownloadPacket(gin uint64, node *oidb.IndexNode) (*sso_type.
 	if node == nil {
 		return nil, errors.New("video node data is null")
 	}
-	body, e := NTV2RICH_MEDIA_VIdEO.build_download(gin, node)
+	body, e := NTV2RICH_MEDIA_VIDEO.build_download(gin, node)
 	if e != nil {
 		return nil, e
 	}
@@ -397,7 +399,7 @@ func BuildPrivateVideoDownloadPacket(self_uid string, node *oidb.IndexNode) (*ss
 	if node == nil {
 		return nil, errors.New("video node data is null")
 	}
-	body, e := NTV2RICH_MEDIA_VIdEO.build_download(self_uid, node)
+	body, e := NTV2RICH_MEDIA_VIDEO.build_download(self_uid, node)
 	if e != nil {
 		return nil, e
 	}
