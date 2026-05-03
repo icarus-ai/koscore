@@ -11,7 +11,6 @@ import (
 /*
 func httpGet[T any](uri string, heads types.MapSS) (target T, e error) {
 	var data []byte
-	heads["Content-Type"] = "application/json"
 	if data, e = http.Get(uri, heads); e != nil { return }
 	if       e = json.Unmarshal(data, &target); e != nil { return }
 	return
@@ -19,7 +18,6 @@ func httpGet[T any](uri string, heads types.MapSS) (target T, e error) {
 */
 
 func http_post[T any](uri string, data []byte, heads types.MapSS) (target T, e error) {
-	heads["Content-Type"] = "application/json"
 	if data, e = http.Post(uri, data, heads); e != nil {
 		return
 	}
@@ -31,7 +29,6 @@ func http_post[T any](uri string, data []byte, heads types.MapSS) (target T, e e
 
 /*
 func http_post_debug[T any](uri string, data []byte, heads types.MapSS) (target T, e error) {
-	heads["Content-Type"] = "application/json"
 	comm.LOGW("sign: %s", uri)
 	comm.LOGW("  > body: %s", string(data))
 	if data, e = http.Post(uri, data, heads); e != nil {

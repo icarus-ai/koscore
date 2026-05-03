@@ -21,7 +21,10 @@ import (
 )
 
 //go:embed default_thumb.jpg
-var DefaultThumb []byte
+var k_default_thumb []byte
+
+//go:embed default_thumb_h.jpg
+var k_default_thumb_h []byte
 
 const AtTypeGroupMember = 0 // At群成员
 
@@ -157,11 +160,18 @@ func NewFileVideo(path string, thumb []byte, summary ...string) (*ShortVideoElem
 
 func NewVideoThumb(r io.ReadSeeker) *VideoThumb {
 	width, height := uint32(1920), uint32(1080)
-	md5, sha1, size := crypto.ComputeMd5AndSha1AndLength(r)
-	_, imgSize, err := utils.ImageResolve(r)
+	_, im_size, err := utils.ImageResolve(r)
 	if err == nil {
-		width, height = uint32(imgSize.Width), uint32(imgSize.Height)
+		width, height = uint32(im_size.Width), uint32(im_size.Height)
 	}
+	if width > 1920 || height > 1080 {
+		if width > height {
+			width, height, r = 240, 383, bytes.NewReader(k_default_thumb)
+		} else {
+			width, height, r = 383, 240, bytes.NewReader(k_default_thumb_h)
+		}
+	}
+	md5, sha1, size := crypto.ComputeMd5AndSha1AndLength(r)
 	return &VideoThumb{
 		Stream: r,
 		Size:   uint32(size),

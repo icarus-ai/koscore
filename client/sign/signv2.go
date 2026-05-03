@@ -40,6 +40,7 @@ func NewSignerV2(uin uint32, app *auth.AppInfo, device *auth.DeviceInfo, sign_se
 		servs = append(servs, &remote{server: sign_server_token[i], headers: types.MapSS{
 			"Authorization": "Bearer " + sign_server_token[i+1],
 			"User-Agent":    "kosbot qq/" + app.CurrentVersion,
+			"Content-Type":  "application/json",
 		}})
 	}
 	client := &Client{instances: servs, uin: uin, app: app, device: device}
