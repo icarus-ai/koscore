@@ -35,6 +35,9 @@ func (m *PacketContext) dispatchPacket(payload []byte) {
 		}
 	}()
 
+	m.stat.Packet.Recv.Add(1)
+	m.stat.Packet.Size.Recv.Add(uint64(len(payload)))
+
 	//m.LOGD("PacketContext::dispatchPacket: raw %d %X", len(payload), payload)
 	sso, e := structs.ParseSsoPacket(m.session, payload)
 	if e != nil {
@@ -71,9 +74,14 @@ func (m *PacketContext) dispatchPacket(payload []byte) {
 
 func (m *PacketContext) SendPacket(pkt *sso_type.SsoPacket) (e error) {
 	if _, pkt.Data, e = m.uniPacket(pkt); e != nil {
-		return e
+		return
 	}
-	return m.sock.Send(pkt.Data)
+	m.stat.Packet.Sent.Add(1)
+	m.stat.Packet.Size.Sent.Add(uint64(len(pkt.Data)))
+	if e = m.sock.Send(pkt.Data); e != nil {
+		m.stat.Packet.Lost.Add(1)
+	}
+	return
 }
 
 func (m *PacketContext) SendPacketAndWait(pkt *sso_type.SsoPacket) (*sso_type.SsoPacket, error) {
@@ -85,7 +93,10 @@ func (m *PacketContext) SendPacketAndWait(pkt *sso_type.SsoPacket) (*sso_type.Ss
 	ch := make(chan handlerMessage, 1)
 	m.handlers.Store(seq, func(sso *sso_type.SsoPacket, err error) { ch <- handlerMessage{Packet: sso, Error: err} })
 
+	m.stat.Packet.Sent.Add(1)
+	m.stat.Packet.Size.Sent.Add(uint64(len(pkt.Data)))
 	if e = m.sock.Send(data); e != nil {
+		m.stat.Packet.Lost.Add(1)
 		m.handlers.Delete(seq)
 		return nil, e
 	}
@@ -98,7 +109,11 @@ func (m *PacketContext) SendPacketAndWait(pkt *sso_type.SsoPacket) (*sso_type.Ss
 		case <-time.After(time.Second * 15):
 			retry++
 			if retry < 2 {
-				_ = m.sock.Send(data)
+				m.stat.Packet.Sent.Add(1)
+				m.stat.Packet.Size.Sent.Add(uint64(len(pkt.Data)))
+				if nil != m.sock.Send(data) {
+					m.stat.Packet.Lost.Add(1)
+				}
 				continue
 			}
 			m.handlers.Delete(seq)
@@ -126,7 +141,7 @@ func (m *PacketContext) IsConnect() bool { return m.sock.IsConnect() }
 // 计划中断线事件
 func (m *PacketContext) plannedDisconnect(_ *network.TCPClient) {
 	m.LOGD("planned disconnect.")
-	m.stat.DisconnectTimes.Add(1)
+	m.stat.DisconnectCount.Add(1)
 	if m.is_heart_beat {
 		m.stop_signal[0] <- 1
 	}
@@ -138,7 +153,7 @@ func (m *PacketContext) plannedDisconnect(_ *network.TCPClient) {
 // 非预期断线事件
 func (m *PacketContext) unexpectedDisconnect(_ *network.TCPClient, e error) {
 	m.LOGE("unexpected disconnect: %v", e)
-	m.stat.DisconnectTimes.Add(1)
+	m.stat.DisconnectCount.Add(1)
 	if m.is_heart_beat {
 		m.stop_signal[0] <- 1
 	}

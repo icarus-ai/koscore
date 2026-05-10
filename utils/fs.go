@@ -1,4 +1,4 @@
-package client
+package utils
 
 import (
 	"fmt"
@@ -6,7 +6,14 @@ import (
 	"os"
 )
 
-func resolveFileName(fstream io.ReadSeeker, name string) string {
+func StreamSize(image io.ReadSeeker) int64 {
+	_, _ = image.Seek(0, io.SeekStart)
+	size, _ := image.Seek(0, io.SeekEnd)
+	_, _ = image.Seek(0, io.SeekStart)
+	return size
+}
+
+func ResolveFileName(fstream io.ReadSeeker, name string) string {
 	if name == "" {
 		switch o := fstream.(type) {
 		case *os.File:

@@ -32,11 +32,11 @@ func (m *QQClient) ensureHighwayServers() error {
 	if m.hw_session.SsoAddr == nil || m.hw_session.SigSession == nil || m.hw_session.SessionKey == nil {
 		pkt, err := m.sendOidbPacketAndWait(pkt_hw.BuildHighWayURLReq(m.session.Sig.A2))
 		if err != nil {
-			return exception.NewFormat("get highway server: %w", err)
+			return exception.NewFormat("highway: get server: %w", err)
 		}
 		rsp, err := pkt_hw.ParseHighWayURLReq(pkt.Data)
 		if err != nil {
-			return exception.NewFormat("parse highway server: %w", err)
+			return exception.NewFormat("highway: parse server: %w", err)
 		}
 
 		m.hw_session.SigSession = rsp.RspBody.SigSession
@@ -45,14 +45,14 @@ func (m *QQClient) ensureHighwayServers() error {
 		for _, info := range rsp.RspBody.Addrs {
 			if info.ServiceType.Unwrap() == 1 {
 				for _, addr := range info.Addrs {
-					m.LOGD("add highway server %s:%d", binary.UInt32ToIPV4Address(addr.Ip.Unwrap()), addr.Port.Unwrap())
+					m.LOGD("highway: add server %s:%d", binary.UInt32ToIPV4Address(addr.Ip.Unwrap()), addr.Port.Unwrap())
 					m.hw_session.AppendAddr(addr.Ip.Unwrap(), addr.Port.Unwrap())
 				}
 			}
 		}
 	}
 	if m.hw_session.SsoAddr == nil || m.hw_session.SigSession == nil || m.hw_session.SessionKey == nil {
-		return errors.New("empty highway servers")
+		return errors.New("highway: empty servers")
 	}
 	return nil
 }
@@ -106,7 +106,7 @@ func (m *QQClient) highwayUploadBlock(trans *hw.Transaction, server string, offs
 	if _, _, err = parseHighwayPacket(payload); err != nil {
 		return err
 	}
-	//m.LOGD("highway block result: %d | %d | %x | %v", rsphead.ErrorCode, rsphead.MsgSegHead.RetCode.Unwrap(), rsphead.BytesRspExtendInfo, rspbody)
+	//m.LOGD("highway: block result: %d | %d | %x | %v", rsphead.ErrorCode, rsphead.MsgSegHead.RetCode.Unwrap(), rsphead.BytesRspExtendInfo, rspbody)
 	return nil
 }
 
@@ -150,7 +150,7 @@ func sendHighwayPacket(packet *highway.ReqDataHighwayHead, block []byte, server_
 	   		WriteBytes(marshal).
 	   		WriteBytes(block).
 	   		WriteBytes([]byte{0x29}).
-	   	ToReader(), serverURL, end)
+	   	ToReader(), server_url, end)
 	*/
 }
 

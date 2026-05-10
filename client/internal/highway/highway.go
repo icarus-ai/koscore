@@ -15,6 +15,7 @@ import (
 
 	"github.com/RomiChan/protobuf/proto"
 
+	"github.com/kernel-ai/koscore/client/internal/highway/network"
 	"github.com/kernel-ai/koscore/client/packets/pb/v2/service/highway"
 	"github.com/kernel-ai/koscore/utils/binary"
 	"github.com/kernel-ai/koscore/utils/exception"
@@ -96,7 +97,7 @@ func (s *Session) ping(pc *persistConn) error {
 	if err != nil {
 		return errors.Wrap(err, "echo error")
 	}
-	if _, err = readResponse(binary.NewNetworkReader(pc.conn)); err != nil {
+	if _, err = readResponse(network.NewNetReader(pc.conn)); err != nil {
 		return errors.Wrap(err, "echo error")
 	}
 	// update delay
@@ -104,7 +105,7 @@ func (s *Session) ping(pc *persistConn) error {
 	return nil
 }
 
-func readResponse(r *binary.NetworkReader) (*highway.RespDataHighwayHead, error) {
+func readResponse(r *network.NetReader) (*highway.RespDataHighwayHead, error) {
 	_, err := r.ReadByte()
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to read byte")

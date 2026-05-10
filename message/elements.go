@@ -26,45 +26,31 @@ var k_default_thumb []byte
 //go:embed default_thumb_h.jpg
 var k_default_thumb_h []byte
 
-const AtTypeGroupMember = 0 // At群成员
-
 func NewText(s string) *TextElement {
 	return &TextElement{Content: s}
 }
 
 func NewAt(target uint64, display ...string) *AtElement {
-	dis := "@" + strconv.FormatInt(int64(target), 10)
 	if target == 0 {
-		dis = "@全体成员"
+		return &AtElement{SubType: AT_ALL, Display: "@全体成员"}
 	}
-	if len(display) != 0 {
-		dis = display[0]
+	at := &AtElement{SubType: AT_USER, TargetUin: target}
+	if len(display) == 0 {
+		at.Display = "@" + strconv.FormatInt(int64(target), 10)
+	} else {
+		at.Display = display[0]
 	}
-	return &AtElement{
-		TargetUin: target,
-		Display:   dis,
-	}
+	return at
 }
 
-/*
-func NewGroupReply(m *GroupMessage) *ReplyElement {
+func NewReply(m *Message) *ReplyElement {
 	return &ReplyElement{
-		ReplySeq : m.Id,
+		ReplySeq:  m.Id,
 		SenderUin: m.Sender.Uin,
-		Time     : m.Time,
-		Elements : m.Elements,
+		Time:      uint32(m.Time),
+		Elements:  m.Elements,
 	}
 }
-
-func NewPrivateReply(m *PrivateMessage) *ReplyElement {
-	return &ReplyElement{
-		ReplySeq : m.Id,
-		SenderUin: m.Sender.Uin,
-		Time     : m.Time,
-		Elements : m.Elements,
-	}
-}
-*/
 
 func NewRecord(data []byte, summary ...string) *VoiceElement {
 	return NewStreamRecord(bytes.NewReader(data), summary...)
@@ -160,15 +146,15 @@ func NewFileVideo(path string, thumb []byte, summary ...string) (*ShortVideoElem
 
 func NewVideoThumb(r io.ReadSeeker) *VideoThumb {
 	width, height := uint32(1920), uint32(1080)
-	_, im_size, err := utils.ImageResolve(r)
+	_, imctx, err := utils.ImageResolve(r)
 	if err == nil {
-		width, height = uint32(im_size.Width), uint32(im_size.Height)
+		width, height = uint32(imctx.Width), uint32(imctx.Height)
 	}
-	if width > 1920 || height > 1080 {
+	if utils.StreamSize(r) > 1024*1024 { // 封面小于1M
 		if width > height {
-			width, height, r = 240, 383, bytes.NewReader(k_default_thumb)
-		} else {
 			width, height, r = 383, 240, bytes.NewReader(k_default_thumb_h)
+		} else {
+			width, height, r = 240, 383, bytes.NewReader(k_default_thumb)
 		}
 	}
 	md5, sha1, size := crypto.ComputeMd5AndSha1AndLength(r)

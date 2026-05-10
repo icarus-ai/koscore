@@ -10,9 +10,9 @@ func Unmarshal[T any](data []byte) (*T, error) {
 	return any(p).(*T), nil
 }
 
-var Marshal = proto.Marshal
-
 var (
+	Marshal = proto.Marshal
+
 	TRUE  = proto.Some(true)
 	FALSE = proto.Some(false)
 )

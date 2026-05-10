@@ -15,8 +15,8 @@ import (
 	"github.com/RomiChan/protobuf/proto"
 	"github.com/fumiama/gofastTEA"
 
+	"github.com/kernel-ai/koscore/client/internal/highway/network"
 	"github.com/kernel-ai/koscore/client/packets/pb/v2/service/highway"
-	"github.com/kernel-ai/koscore/utils/binary"
 	"github.com/kernel-ai/koscore/utils/exception"
 )
 
@@ -87,7 +87,7 @@ func (s *Session) uploadSingle(trans *Transaction) ([]byte, error) {
 	}
 	defer s.putIdleConn(pc)
 
-	reader := binary.NewNetworkReader(pc.conn)
+	reader := network.NewNetReader(pc.conn)
 	var rspExt []byte
 	offset := 0
 	chunk := make([]byte, BlockSize)
@@ -172,7 +172,7 @@ func (s *Session) Upload(trans *Transaction) ([]byte, error) {
 		}
 		defer s.putIdleConn(pc)
 
-		reader := binary.NewNetworkReader(pc.conn)
+		reader := network.NewNetReader(pc.conn)
 		chunk := make([]byte, BlockSize)
 		for {
 			cond.L.Lock() // lock protect reading

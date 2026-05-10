@@ -216,7 +216,7 @@ func (m *QQClient) PreprocessGroupMessageEvent(msg *message.GroupMessage) {
 	if friend := m.GetCachedFriendInfo(msg.Sender.Uin, true); friend != nil {
 		msg.Sender.IsFriend = true
 		msg.Sender.Nickname = friend.Nickname
-	} else if member := m.GetCachedMemberInfo(msg.GroupUin, msg.Sender.Uin); member != nil {
+	} else if member := m.GetCachedMemberInfo(msg.Sender.Uin, msg.GroupUin, true); member != nil {
 		msg.Sender.Nickname = member.Nickname
 	}
 	for _, elem := range msg.Elements {
@@ -280,6 +280,6 @@ func (m *QQClient) PreprocessPrivateMessageEvent(msg *message.PrivateMessage) {
 }
 
 func (m *QQClient) ResolveUin(g event.Iuid2uin) error {
-	g.ResolveUin(func(uid string, groupUin ...uint64) uint64 { return m.GetUin(uid, groupUin...) })
+	g.ResolveUin(func(uid string, group_uin ...uint64) uint64 { return m.GetUin(uid, group_uin...) })
 	return nil
 }

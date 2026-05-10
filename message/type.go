@@ -152,8 +152,14 @@ type (
 		MediaType  uint32 // 1 -> Voice Face 2 -> dynamic face
 		MagicValue string
 	}
+)
 
-	AtType int
+type AtType uint32
+
+const (
+	AT_UNKNOWN AtType = 0
+	AT_ALL     AtType = 1 // mention_all
+	AT_USER    AtType = 2 // mention specific user
 )
 
 type ElementType int
@@ -173,6 +179,8 @@ const (
 	RedBag                        // 红包
 	MarketFace                    // 魔法表情
 )
+
+func (m AtType) IsAtAll() bool { return m == AT_ALL }
 
 func (m *TextElement) Type() ElementType       { return Text }
 func (m *AtElement) Type() ElementType         { return At }

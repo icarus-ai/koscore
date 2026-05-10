@@ -10,7 +10,7 @@ import (
 func BuildSsoPacket(version *auth.AppInfo, device *auth.DeviceInfo, session *auth.Session, packet *sso_type.SsoPacket, info *common.SsoSecureInfo) (d []byte, e error) {
 	switch packet.RequestType {
 	case sso_type.RequestD2Auth:
-		return buildServicePackerProtocol12(session, buildSsoPackerProtocol12(version, device, session, packet, info), packet.ServiceAttribute)
+		return buildServicePackerProtocol12(session, packet.ServiceAttribute, buildSsoPackerProtocol12(version, device, session, packet, info))
 	case sso_type.RequestSimple:
 		return buildServicePackerProtocol13(session, packet, buildSsoPackerProtocol13(version, session, packet, info))
 	default:

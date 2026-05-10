@@ -205,12 +205,14 @@ func ParseMessageElements(msg []*message.Elem) (res []IMessageElement) {
 				att6 := binary.NewReader(elem.Text.Attr6Buf)
 				att6.SkipBytes(7)
 				at := NewAt(uint64(att6.ReadU32()), elem.Text.TextMsg.Unwrap())
-				at.SubType = AtTypeGroupMember
+				at.SubType = AT_UNKNOWN
 				// v2
 				if attr, e := proto.Unmarshal[message.TextResvAttr](elem.Text.PbReserve); e == nil {
-					at.TargetUin = attr.AtMemberUin.Unwrap()
-					// AtType: 1 = mention_all, 2 = mention specific user
-					if attr.AtType.Unwrap() == 2 {
+					if uin := attr.AtMemberUin.Unwrap(); uin > 0 {
+						at.TargetUin = uin
+					}
+					at.SubType = AtType(attr.AtType.Unwrap()) // 1 = mention_all, 2 = mention specific user
+					if at.SubType == AT_USER {
 						at.TargetUid = attr.AtMemberUid.Unwrap()
 					}
 				}

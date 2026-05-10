@@ -17,7 +17,7 @@ import (
 func (m *PacketContext) uniPacket(packet *sso_type.SsoPacket) (seq uint32, d []byte, e error) {
 	var info *common.SsoSecureInfo = nil
 	var val *sign.Value = nil
-	if sign.ContainSignPKG(packet.Command) {
+	if sign.ContainSignPKG(packet.Command) || packet.IsD2Auth() {
 		val, e = m.sig_context.Sign(packet.Command, packet.Sequence, packet.Data)
 		if e != nil {
 			return
@@ -54,11 +54,11 @@ func (m *QQClient) webSsoRequest(host, webcmd, data string) (string, error) {
 	})
 	sso, e := m.sendUniPacketAndWait(fmt.Sprintf("MQUpdateSvc_%s.web.%s", sub, webcmd), req)
 	if e != nil {
-		return "", errors.Wrap(e, "send web sso request error")
+		return "", errors.Wrap(e, "send web sso req")
 	}
 	rsp, e := proto.Unmarshal[common.WebSsoResponseBody](sso.Data)
 	if e != nil {
-		return "", exception.NewUnmarshalProtoException(e, "response")
+		return "", exception.NewUnmarshalProtoException(e, "web sso rsp")
 	}
 	return rsp.Data.Unwrap(), nil
 }

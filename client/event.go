@@ -5,7 +5,6 @@ package client
 import (
 	"runtime/debug"
 	"sync"
-	"sync/atomic"
 	"time"
 
 	"github.com/kernel-ai/koscore/client/event"
@@ -74,36 +73,33 @@ type Events struct {
 
 	// client event
 	Disconnected EventHandle[*event.Disconnected]
-
-	MessageReceived atomic.Int64
-	LastMessageTime atomic.Int64
 }
 
 func newEventCall() *Events {
 	ev := &Events{}
-	ev.SelfGroupMessage.Subscribe(func(_ *QQClient, _ *message.GroupMessage) {
-		ev.MessageReceived.Add(1)
-		ev.LastMessageTime.Store(time.Now().Unix())
+	ev.SelfGroupMessage.Subscribe(func(c *QQClient, _ *message.GroupMessage) {
+		c.stat.Message.Recv.Add(1)
+		c.stat.Message.LastTime.Store(time.Now().Unix())
 	})
-	ev.GroupMessage.Subscribe(func(_ *QQClient, _ *message.GroupMessage) {
-		ev.MessageReceived.Add(1)
-		ev.LastMessageTime.Store(time.Now().Unix())
+	ev.GroupMessage.Subscribe(func(c *QQClient, _ *message.GroupMessage) {
+		c.stat.Message.Recv.Add(1)
+		c.stat.Message.LastTime.Store(time.Now().Unix())
 	})
-	ev.SelfPrivateMessage.Subscribe(func(_ *QQClient, _ *message.PrivateMessage) {
-		ev.MessageReceived.Add(1)
-		ev.LastMessageTime.Store(time.Now().Unix())
+	ev.SelfPrivateMessage.Subscribe(func(c *QQClient, _ *message.PrivateMessage) {
+		c.stat.Message.Recv.Add(1)
+		c.stat.Message.LastTime.Store(time.Now().Unix())
 	})
-	ev.PrivateMessage.Subscribe(func(_ *QQClient, _ *message.PrivateMessage) {
-		ev.MessageReceived.Add(1)
-		ev.LastMessageTime.Store(time.Now().Unix())
+	ev.PrivateMessage.Subscribe(func(c *QQClient, _ *message.PrivateMessage) {
+		c.stat.Message.Recv.Add(1)
+		c.stat.Message.LastTime.Store(time.Now().Unix())
 	})
-	ev.SelfTempMessage.Subscribe(func(_ *QQClient, _ *message.TempMessage) {
-		ev.MessageReceived.Add(1)
-		ev.LastMessageTime.Store(time.Now().Unix())
+	ev.SelfTempMessage.Subscribe(func(c *QQClient, _ *message.TempMessage) {
+		c.stat.Message.Recv.Add(1)
+		c.stat.Message.LastTime.Store(time.Now().Unix())
 	})
-	ev.TempMessage.Subscribe(func(_ *QQClient, _ *message.TempMessage) {
-		ev.MessageReceived.Add(1)
-		ev.LastMessageTime.Store(time.Now().Unix())
+	ev.TempMessage.Subscribe(func(c *QQClient, _ *message.TempMessage) {
+		c.stat.Message.Recv.Add(1)
+		c.stat.Message.LastTime.Store(time.Now().Unix())
 	})
 	return ev
 }

@@ -6,7 +6,7 @@ import (
 )
 
 type (
-	rsp_sign_v2 struct {
+	rsp_sign struct {
 		Code  int    `json:"code"`
 		Msg   string `json:"message"`
 		Value Value  `json:"value"`

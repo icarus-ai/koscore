@@ -30,15 +30,12 @@ func (m *AtElement) BuildElement() []*message.Elem {
 }
 
 func (m *ReplyElement) BuildElement() []*message.Elem {
-	reserveData, err := proto.Marshal(&message.SourceMsgResvAttr{
+	reserveData, _ := proto.Marshal(&message.SourceMsgResvAttr{
 		OriMsgType:  proto.Some[uint32](2),
 		SourceMsgId: proto.Some(m.SrcUid),
 		SenderUid:   proto.Some(m.SenderUid),
 		//ReceiverUid: proto.Some(m.SenderUid),
 	})
-	if err != nil {
-		return nil
-	}
 	return []*message.Elem{{
 		SrcMsg: &message.SourceMsg{
 			OrigSeqs:  []uint64{m.ReplySeq},
@@ -193,60 +190,60 @@ func (m *ForwardMessage) BuildElement() []*message.Elem {
 	return NewLightApp(utils.B2S(data)).BuildElement()
 }
 
-/*
-func (e *FaceElement) BuildElement() []*message.Elem {
-	if e.isLargeFace {
+func (m *FaceElement) BuildElement() []*message.Elem {
+	if m.isLargeFace {
 		business, resultid, name := int32(1), "", ""
-		if        e.FaceId == 358 { business, resultid, name = 2, fmt.Sprint(e.ResultId), "/骰子"
-		} else if e.FaceId == 359 { business, resultid, name = 2, fmt.Sprint(e.ResultId), "/包剪锤" }
+		if m.FaceId == 358 {
+			business, resultid, name = 2, fmt.Sprint(m.ResultId), "/骰子"
+		} else if m.FaceId == 359 {
+			business, resultid, name = 2, fmt.Sprint(m.ResultId), "/包剪锤"
+		}
 		qFaceData, _ := proto.Marshal(&message.QFaceExtra{
-			PackId     : proto.Some("1"),
-			StickerId  : proto.Some("8"),
-			Qsid       : proto.Some(int32(e.FaceId)),
-			SourceType : proto.Some[int32](1),
+			PackId:      proto.Some("1"),
+			StickerId:   proto.Some("8"),
+			Qsid:        proto.Some(int32(m.FaceId)),
+			SourceType:  proto.Some[int32](1),
 			StickerType: proto.Some(business),
-			ResultId   : proto.Some(resultid),
-			Text       : proto.Some(name),
-			RandomType : proto.Some[int32](1),
+			ResultId:    proto.Some(resultid),
+			Text:        proto.Some(name),
+			RandomType:  proto.Some[int32](1),
 		})
 		return []*message.Elem{{
 			CommonElem: &message.CommonElem{
-				ServiceType : 37,
-				PbElem      : qFaceData,
-				BusinessType: 1,
-		} } }
+				ServiceType:  proto.Some[uint32](37),
+				PbElem:       qFaceData,
+				BusinessType: proto.Some[uint32](1),
+			}}}
 	}
-	return []*message.Elem {
-		{ Face: &message.Face{Index: proto.Some(int32(e.FaceId))} },
-	}
+	return []*message.Elem{{
+		Face: &message.Face{Index: proto.Some(int32(m.FaceId))},
+	}}
 }
 
-func (e *XMLElement) BuildElement() []*message.Elem {
+func (m *XMLElement) BuildElement() []*message.Elem {
 	return []*message.Elem{{
 		RichMsg: &message.RichMsg{
-			ServiceId: proto.Some(int32(e.ServiceId)),
-			Template1: append([]byte{0x01}, binary.ZlibCompress([]byte(e.Content))...),
-	} }}
+			ServiceId: proto.Some(uint32(m.ServiceId)),
+			Template1: append([]byte{0x01}, binary.ZlibCompress([]byte(m.Content))...),
+		}}}
 }
 
-func (e *MarketFaceElement) BuildElement() []*message.Elem {
-	reserve, _ := proto.Marshal(&message.MarketFacePbReserve{Field8: 1})
-	return []*message.Elem { {
-		MarketFace : &message.MarketFace{
-		FaceName   : proto.String(e.Summary),
-		ItemType   : proto.Uint32(e.ItemType),
-		FaceInfo   : proto.Uint32(1),
-		FaceId     : e.FaceId,
-		TabId      : proto.Uint32(e.TabId),
-		SubType    : proto.Uint32(e.SubType),
-		Key        : e.EncryptKey,
-		MediaType  : proto.Uint32(e.MediaType),
-		ImageWidth : proto.Uint32(300),
-		ImageHeight: proto.Uint32(300),
-		MobileParam: utils.S2B(e.MagicValue),
-		PbReserve  : reserve,
-	} }, {
-		Text       : &message.Text { Str: proto.Some(e.Summary) },
-	} }
+func (m *MarketFaceElement) BuildElement() []*message.Elem {
+	return []*message.Elem{{
+		MarketFace: &message.MarketFace{
+			FaceName:    proto.Some(m.Summary),
+			ItemType:    proto.Some[uint32](m.ItemType),
+			FaceInfo:    proto.Some[uint32](1),
+			FaceId:      m.FaceId,
+			TabId:       proto.Some[uint32](m.TabId),
+			SubType:     proto.Some[uint32](m.SubType),
+			Key:         m.EncryptKey,
+			MediaType:   proto.Some[uint32](m.MediaType),
+			ImageWidth:  proto.Some[uint32](300),
+			ImageHeight: proto.Some[uint32](300),
+			MobileParam: utils.S2B(m.MagicValue),
+			PbReserve:   []byte{0x40, 0x01}, // message reserve { int32 field8 = 8; }
+		}}, {
+		Text: &message.Text{TextMsg: proto.Some(m.Summary)},
+	}}
 }
-*/

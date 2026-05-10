@@ -8,14 +8,13 @@ import (
 
 var DEBUG = false
 
-func AESGCMEncrypt(data []byte, key []byte) ([]byte, error) {
+func AESGCMEncrypt(data, key []byte) ([]byte, error) {
 	nonce := make([]byte, 12)
 	if !DEBUG {
 		if _, e := rand.Read(nonce); e != nil {
 			return nil, e
 		}
 	}
-
 	block, e := aes.NewCipher(key)
 	if e != nil {
 		return nil, e
@@ -33,7 +32,7 @@ func AESGCMEncrypt(data []byte, key []byte) ([]byte, error) {
 	return result, nil
 }
 
-func AESGCMDecrypt(data []byte, key []byte) ([]byte, error) {
+func AESGCMDecrypt(data, key []byte) ([]byte, error) {
 	block, e := aes.NewCipher(key)
 	if e != nil {
 		return nil, e

@@ -14,7 +14,7 @@ import (
 
 var __EmptyD2Key = make([]byte, 16)
 
-func buildServicePackerProtocol12(session *auth.Session, sso *binary.Builder, options *sso_type.ServiceAttribute) ([]byte, error) {
+func buildServicePackerProtocol12(session *auth.Session, options *sso_type.ServiceAttribute, sso *binary.Builder) ([]byte, error) {
 	cipher := sso.ToBytes()
 	switch options.EncryptType {
 	case sso_type.NoEncrypt:

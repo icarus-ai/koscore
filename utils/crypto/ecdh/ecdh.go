@@ -9,7 +9,7 @@ import (
 
 var DEBUG = false
 
-// big.IsEven pub.Y.Bit(0) == 0
+// big.IsEven obj.Bit(0) == 0
 var (
 	k_zero = big.NewInt(0)
 	k_one  = big.NewInt(1)
@@ -59,8 +59,7 @@ func (ctx *Provider) KeyExchange(pub_key []byte, is_hash bool) ([]byte, error) {
 
 // 打包公钥
 func (ctx *Provider) PackPublic(compress bool) []byte {
-	curve := ctx.curve
-	pub := ctx.public
+	curve, pub := ctx.curve, ctx.public
 	if compress {
 		res := make([]byte, curve.Size+1)
 		if (pub.Y.Bit(0) == 0) != (pub.Y.Sign() < 0) {
@@ -75,8 +74,7 @@ func (ctx *Provider) PackPublic(compress bool) []byte {
 	}
 	res := make([]byte, curve.Size*2+1)
 	res[0] = 0x04
-	xB := ToFixedBytes(pub.X, curve.Size)
-	yB := ToFixedBytes(pub.Y, curve.Size)
+	xB, yB := ToFixedBytes(pub.X, curve.Size), ToFixedBytes(pub.Y, curve.Size)
 	copy(res[1:], xB)
 	copy(res[1+curve.Size:], yB)
 	return res
@@ -159,11 +157,11 @@ func (ctx *Provider) createSecret() (*big.Int, error) {
 		if e != nil {
 			return nil, e
 		}
-		res := new(big.Int).SetBytes(buf)
 		// 强制把最高位清零 避免数值永远大于 N
 		if len(buf) > 0 {
 			buf[0] &= 0x7F
 		}
+		res := new(big.Int).SetBytes(buf)
 		if res.Sign() > 0 && res.Cmp(ctx.curve.N) < 0 {
 			return res, nil
 		}
@@ -207,7 +205,6 @@ func (ctx *Provider) jacobianDouble(p JacobianPoint) JacobianPoint {
 	p2 := curve.P
 	x, y, z := p.X, p.Y, p.Z
 
-	// 完全严格按照 C# 原版公式
 	yy := Mod(new(big.Int).Mul(y, y), p2)
 	s := Mod(new(big.Int).Mul(big.NewInt(4), new(big.Int).Mul(x, yy)), p2)
 	z2 := new(big.Int).Mul(z, z)

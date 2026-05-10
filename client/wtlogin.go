@@ -17,7 +17,12 @@ import (
 	"github.com/kernel-ai/koscore/utils/exception"
 )
 
-func (m *QQClient) heart_beat_loop(interval time.Duration) {
+const (
+	INTERVAL_HEART_BEAT_ALIVE = 10
+	INTERVAL_HEART_BEAT_SSO   = 270
+)
+
+func (m *QQClient) heart_beat_loop() {
 	if !m.sso_context.IsConnect() {
 		_ = m.sso_context.Connect()
 	}
@@ -25,40 +30,47 @@ func (m *QQClient) heart_beat_loop(interval time.Duration) {
 		return
 	}
 	m.is_heart_beat = true
-	ticker := time.NewTicker(interval * time.Second)
-	pkt := system_type.AttributeHeartbeat.NewSsoPacket(0, system_type.HeartbeatReq)
+	ticker := time.NewTicker(INTERVAL_HEART_BEAT_ALIVE * time.Second)
+	pkt := system_type.AttributeHeartbeat.NewSsoPacket(0, nil)
 	go func() {
+		m.stat.HeartBeat.Count.Add(1)
 		for m.is_heart_beat {
 			select {
 			case <-m.stop_signal[0]:
 				m.is_heart_beat = false
 			case <-ticker.C:
+				m.stat.HeartBeat.Alive.Add(1)
 				pkt.Sequence = m.session.GetAndIncreaseSequence()
+				pkt.Data = system_type.HeartBeatReq()
 				if e := m.sso_context.SendPacket(pkt); e != nil {
 					m.LOGW("heart_beat: send: %s", e)
 				}
 			}
 		}
 		ticker.Stop()
+		m.stat.HeartBeat.Count.Add(-1)
 	}()
 }
 
 // protocol pc tx_interval 360s
 // 设置在线状态 并且发送心跳
-func (m *QQClient) sso_heart_beat_loop(interval time.Duration) {
+func (m *QQClient) sso_heart_beat_loop() {
 	if m.Online.Load() {
 		return
 	}
 	m.Online.Store(true)
-	ticker := time.NewTicker(interval * time.Second)
-	pkt := system.BuildSsoHeartBeatPacket()
+	ticker := time.NewTicker(INTERVAL_HEART_BEAT_SSO * time.Second)
+	pkt := system_type.AttributeSsoHeartBeat.NewSsoPacket(0, nil)
 	go func() {
+		m.stat.HeartBeat.Count.Add(1)
 		for m.Online.Load() {
 			select {
 			case <-m.stop_signal[1]:
 				m.Online.Store(false)
 			case <-ticker.C:
+				m.stat.HeartBeat.Sso.Add(1)
 				pkt.Sequence = m.session.GetAndIncreaseSequence()
+				pkt.Data = system.SsoHeartBeatReq()
 				//m.LOGD("sso_heart_beat: send: cmd: %s seq: %d data: %X", sso.Command, sso.Sequence, sso.Data)
 				rsp, e := m.sso_context.SendPacketAndWait(pkt)
 				if e != nil {
@@ -71,6 +83,7 @@ func (m *QQClient) sso_heart_beat_loop(interval time.Duration) {
 			}
 		}
 		ticker.Stop()
+		m.stat.HeartBeat.Count.Add(-1)
 	}()
 }
 
@@ -81,7 +94,7 @@ func (m *QQClient) sso_heart_beat_loop(interval time.Duration) {
 
 // qrcode_size 2
 func (m *QQClient) FetchQRode(qrcode_size uint32, unusual_sig []byte) (*login_type.TransEmpRsp31, error) {
-	m.heart_beat_loop(2)
+	m.heart_beat_loop()
 	sso, e := m.sendOidbPacketAndWait(login.BuildTransEmpPacket[login_type.TransEmpReq31](m.version, m.device, m.session, &login_type.TransEmpReq31{
 		QRCcodeSize: qrcode_size,
 		UnusualSig:  unusual_sig,
@@ -145,8 +158,8 @@ func (m *QQClient) register() error {
 	rsp := system.ParseInfoSyncPacket(sso)
 	if strings.Contains(rsp.Message, "register success") {
 		m.setSessionId()
-		m.heart_beat_loop(2)
-		m.sso_heart_beat_loop(270)
+		m.heart_beat_loop()
+		m.sso_heart_beat_loop()
 		//if protocol.IsAndroid { _timers[ExchangeEmpTag].Change(TimeSpan.Zero, TimeSpan.FromDays(1)) }
 		return nil
 	}
@@ -222,7 +235,7 @@ func (m *QQClient) Logout() error {
 
 // 快读登录
 func (m *QQClient) FastLogin() error {
-	m.heart_beat_loop(2)
+	m.heart_beat_loop()
 	if len(m.session.Sig.A2) > 0 && len(m.session.Sig.D2) > 0 {
 		if m.Online.Load() {
 			return exception.ErrAlreadyOnline
@@ -235,7 +248,7 @@ func (m *QQClient) FastLogin() error {
 
 // return state unusual error
 func (m *QQClient) ExchangeEasyLogin() (login_type.LoginState, []byte, error) {
-	m.heart_beat_loop(2)
+	m.heart_beat_loop()
 	if m.version.OS.IsPC() && len(m.session.Sig.A1) > 0 {
 		if e := m.keyExchange(); e != nil {
 			return 0, nil, e

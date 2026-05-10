@@ -6,6 +6,7 @@ import (
 	"github.com/kernel-ai/koscore/client/auth"
 	"github.com/kernel-ai/koscore/client/packets/pb/v2/login"
 	"github.com/kernel-ai/koscore/utils/binary"
+	"github.com/kernel-ai/koscore/utils/binary/prefix"
 	"github.com/kernel-ai/koscore/utils/proto"
 )
 
@@ -24,8 +25,9 @@ func (m *TlvQrCode) T02() []byte { return binary.NewBuilder().WriteI32(0).WriteI
 // ??
 func (m *TlvQrCode) T04(uin uint32) []byte {
 	return binary.NewBuilder().WriteI16(0x00). // uin for 0, uid for 1
-							WritePacketString(fmt.Sprint(uin), "u16", false).
-							Pack(0x04)
+		//WritePacketString(fmt.Sprint(uin), "u16", false).
+		WriteLengthString(fmt.Sprint(uin), prefix.Int16).
+		Pack(0x04)
 }
 
 // ??
@@ -43,9 +45,12 @@ func (m *TlvQrCode) T16() []byte {
 		WriteU32(m.version.AppId).
 		WriteU32(m.version.SubAppId).
 		WriteBytes(m.device.GUID).
-		WritePacketString(m.version.PackageName, "u16", false).
-		WritePacketString(m.version.PtVersion, "u16", false).
-		WritePacketString(m.version.PackageName, "u16", false).
+		//WritePacketString(m.version.PackageName, "u16", false).
+		//WritePacketString(m.version.PtVersion  , "u16", false).
+		//WritePacketString(m.version.PackageName, "u16", false).
+		WriteLengthString(m.version.PackageName, prefix.Int16).
+		WriteLengthString(m.version.PtVersion, prefix.Int16).
+		WriteLengthString(m.version.PackageName, prefix.Int16).
 		Pack(0x16)
 }
 

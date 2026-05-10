@@ -12,6 +12,7 @@ import (
 	"github.com/kernel-ai/koscore/client/event"
 	"github.com/kernel-ai/koscore/client/internal/cache"
 	"github.com/kernel-ai/koscore/client/internal/highway"
+	"github.com/kernel-ai/koscore/client/internal/utils"
 	"github.com/kernel-ai/koscore/client/sign"
 	"github.com/kernel-ai/koscore/utils/types"
 )
@@ -23,7 +24,7 @@ type QQClient struct {
 	sig_context sign.Provider
 	sso_context *PacketContext
 
-	stat       Statistics
+	stat       utils.Statistics
 	cache      cache.Cache
 	hw_session *highway.Session
 	ticket     *TicketService
@@ -98,6 +99,8 @@ func (m *QQClient) Release() {
 	m.stop_signal[0] = make(types.Signal)
 	m.stop_signal[1] = make(types.Signal)
 }
+
+func (m *QQClient) GetStatistics() *utils.Statistics { return &m.stat }
 
 // *****
 

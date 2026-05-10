@@ -15,7 +15,8 @@ import (
 	"github.com/kernel-ai/koscore/utils/proto"
 )
 
-func (m *QQClient) SendRawMessage(route *pb_msg.SendRoutingHead, body *pb_msg.MessageBody) (rsp *pb_msg.PbSendMsgResp, seq uint64, random uint32, err error) {
+func (m *QQClient) sendRawMessage(route *pb_msg.SendRoutingHead, body *pb_msg.MessageBody) (rsp *pb_msg.PbSendMsgResp, seq uint64, random uint32, err error) {
+	m.stat.Message.Sent.Add(1)
 	var pkt *sso_type.SsoPacket
 	random = crypto.RandU32()
 	if pkt, err = pkt_msg.BuildRawMessage(m.session.GetSequence(), random, route, body); err != nil {
@@ -45,7 +46,7 @@ func (m *QQClient) SendGroupMessage(gin uint64, elements []message.IMessageEleme
 	if need_preprocess == nil || need_preprocess[0] {
 		elements = m.preProcessGroupMessage(gin, elements)
 	}
-	rsp, seq, random, err := m.SendRawMessage(&pb_msg.SendRoutingHead{
+	rsp, seq, random, err := m.sendRawMessage(&pb_msg.SendRoutingHead{
 		Group: &pb_msg.Grp{GroupUin: proto.Some(int64(gin))},
 	}, message.PackElementsToBody(elements))
 	if err != nil {
@@ -79,7 +80,7 @@ func (m *QQClient) SendPrivateMessage(uin uint64, elements []message.IMessageEle
 	if need_preprocess == nil || need_preprocess[0] {
 		elements = m.preProcessPrivateMessage(uin, elements)
 	}
-	rsp, seq, random, err := m.SendRawMessage(&pb_msg.SendRoutingHead{
+	rsp, seq, random, err := m.sendRawMessage(&pb_msg.SendRoutingHead{
 		C2C: &pb_msg.C2C{PeerUin: proto.Some(int64(uin)), PeerUid: proto.Some(uid)},
 	}, message.PackElementsToBody(elements))
 	if err != nil {
@@ -116,7 +117,7 @@ func (m *QQClient) SendPrivateFile(uin uint64, local_path, file_name string) err
 	if e != nil {
 		return e
 	}
-	rsp, _, _, e := m.SendRawMessage(&pb_msg.SendRoutingHead{
+	rsp, _, _, e := m.sendRawMessage(&pb_msg.SendRoutingHead{
 		Trans0X211: &pb_msg.Trans0X211{
 			ToUin: proto.Some(int64(uin)),
 			CcCmd: proto.Some[uint32](4),
@@ -152,7 +153,7 @@ func (m *QQClient) BuildFakeMessage(nodes []*message.ForwardNode) []*pb_msg.Comm
 	for idx, node := range nodes {
 		body[idx] = &pb_msg.CommonMessage{
 			RoutingHead: &pb_msg.RoutingHead{
-				FromUid: proto.Some(m.get_uid(node.SenderId)),
+				FromUid: proto.Some(m.get_uid(node.SenderId, node.GroupId)),
 				FromUin: proto.Some(int64(node.SenderId)),
 			},
 			ContentHead: &pb_msg.ContentHead{

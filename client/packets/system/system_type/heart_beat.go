@@ -2,7 +2,7 @@ package system_type
 
 import "github.com/kernel-ai/koscore/client/packets/structs/sso_type"
 
-var HeartbeatReq = []byte{0x00, 0x00, 0x00, 0x04}
+func HeartBeatReq() []byte { return []byte{0x00, 0x00, 0x00, 0x04} }
 
 var (
 	AttributeHeartbeat    = sso_type.NewServiceAttribute("Heartbeat.Alive", sso_type.RequestSimple, sso_type.NoEncrypt, true)

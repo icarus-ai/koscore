@@ -13,6 +13,8 @@ import (
 
 var Empty []byte
 
+const max_zipWriterSize = 1 << 16
+
 type zlibWriter struct {
 	w   *zlib.Writer
 	buf *bytes.Buffer
@@ -33,8 +35,7 @@ func acquireZlibWriter() *zlibWriter {
 
 func (w *zlibWriter) Release() {
 	// See https://golang.org/issue/23199
-	const maxSize = 1 << 16
-	if w.buf.Cap() < maxSize {
+	if w.buf.Cap() < max_zipWriterSize {
 		w.buf.Reset()
 		zlibPool.Put(w)
 	}
@@ -62,8 +63,7 @@ func acquireGzipWriter() *GzipWriter {
 
 func (w *GzipWriter) Release() {
 	// See https://golang.org/issue/23199
-	const maxSize = 1 << 16
-	if w.buf.Cap() < maxSize {
+	if w.buf.Cap() < max_zipWriterSize {
 		w.buf.Reset()
 		gzipPool.Put(w)
 	}

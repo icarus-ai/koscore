@@ -18,6 +18,10 @@ func BuildSsoHeartBeatPacket() *sso_type.SsoPacket {
 	return system_type.AttributeSsoHeartBeat.NewSsoPacket(0, data)
 }
 
+func SsoHeartBeatReq() []byte {
+	return []byte{0x08, 0x01, 0x12, 0x02, 0x08, 0x00, 0x18, 0x00, 0x20, 0x00}
+}
+
 func ParseSsoHeartBeatPacket(pkt *sso_type.SsoPacket) (*system.SsoHeartBeatResponse, error) {
 	return proto.Unmarshal[system.SsoHeartBeatResponse](pkt.Data)
 }

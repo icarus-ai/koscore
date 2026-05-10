@@ -23,8 +23,7 @@ func (m *QQClient) GetGroupFileSystemInfo(group_uin uint64) (*entity.GroupFileSy
 		return nil, err
 	}
 
-	pkt, err = oidb.BuildGroupFileSpaceReq(group_uin)
-	if err != nil {
+	if pkt, err = oidb.BuildGroupFileSpaceReq(group_uin); err != nil {
 		return nil, err
 	}
 	if pkt, err = m.sendOidbPacketAndWait(pkt); err != nil {
@@ -120,34 +119,34 @@ func (m *QQClient) GenFileNode(name, md5, sha1, uuid string, size, ttl uint32, i
 
 /*
 // 重命名群文件
-func (c *QQClient) RenameGroupFile(groupUin uint64, fileId string, parent_dir string, newFileName string) error {
-	pkt, err := oidb.BuildGroupFileRenameReq(groupUin, fileId, parent_dir, newFileName)
+func (m *QQClient) RenameGroupFile(group_uin uint64, file_id string, parent_dir string, new_file_name string) error {
+	pkt, err := oidb.BuildGroupFileRenameReq(group_uin, file_id, parent_dir, new_file_name)
 	if   err != nil { return err }
 	if pkt, err = m.sendOidbPacketAndWait(pkt); err != nil { return err }
-	return oidb.ParseGroupFileRenameResp(pkt.Data)
+	return oidb.ParseGroupFileRenameResp (pkt.Data)
 }
 
 // 创建群文件夹
-func (c *QQClient) CreateGroupFolder(groupUin uint64, target_dir string, dir_name string) error {
-	pkt, err := oidb.BuildGroupFolderCreateReq(groupUin, target_dir, dir_name)
+func (m *QQClient) CreateGroupFolder(group_uin uint64, target_dir string, dir_name string) error {
+	pkt, err := oidb.BuildGroupFolderCreateReq(group_uin, target_dir, dir_name)
 	if   err != nil { return err }
-	if pkt, err = m.sendOidbPacketAndWait(pkt); err != nil { return err }
+	if pkt, err = m.sendOidbPacketAndWait (pkt); err != nil { return err }
 	return oidb.ParseGroupFolderCreateResp(pkt.Data)
 }
 
 // 重命名群文件夹
-func (c *QQClient) RenameGroupFolder(groupUin uint64, dir_id string, new_dir_name string) error {
-	pkt, err := oidb.BuildGroupFolderRenameReq(groupUin, dir_id, new_dir_name)
+func (m *QQClient) RenameGroupFolder(group_uin uint64, dir_id string, new_dir_name string) error {
+	pkt, err := oidb.BuildGroupFolderRenameReq(group_uin, dir_id, new_dir_name)
 	if   err != nil { return err }
-	if pkt, err = m.sendOidbPacketAndWait(pkt); err != nil { return err }
+	if pkt, err = m.sendOidbPacketAndWait (pkt); err != nil { return err }
 	return oidb.ParseGroupFolderRenameResp(pkt.Data)
 }
 
 // 删除群文件夹
-func (c *QQClient) DeleteGroupFolder(groupUin uint64, dir_id string) error {
-	pkt, err := oidb.BuildGroupFolderDeleteReq(groupUin, dir_id)
+func (m *QQClient) DeleteGroupFolder(group_uin uint64, dir_id string) error {
+	pkt, err := oidb.BuildGroupFolderDeleteReq(group_uin, dir_id)
 	if   err != nil { return err }
-	if pkt, err = m.sendOidbPacketAndWait(pkt); err != nil { return err }
+	if pkt, err = m.sendOidbPacketAndWait (pkt); err != nil { return err }
 	return oidb.ParseGroupFolderDeleteResp(pkt.Data)
 }
 */

@@ -7,10 +7,7 @@ import (
 	"math"
 	"net"
 	"runtime"
-	"strconv"
 	"sync"
-
-	"github.com/fumiama/gofastTEA"
 
 	"github.com/kernel-ai/koscore/utils"
 	"github.com/kernel-ai/koscore/utils/binary/prefix"
@@ -21,48 +18,33 @@ import (
 var bufferPool = sync.Pool{New: func() any { return new(Builder) }}
 
 // 从池中取出一个 Builder
-func SelectBuilder(key []byte) *Builder {
+func SelectBuilder() *Builder {
 	// 因为 bufferPool 定义有 New 函数
 	// 所以 bufferPool.Get() 永不为 nil
 	// 不用判空
-	return bufferPool.Get().(*Builder).init(key)
+	return bufferPool.Get().(*Builder)
 }
+
+const max_BuilderSize = 32 * 1024
 
 // 将 Builder 放回池中
 func (b *Builder) PutBuilder() {
 	// See https://golang.org/issue/23199
-	const maxSize = 32 * 1024
-	if b.hasput {
-		return
-	}
-	b.hasput = true
-	if b.buffer.Cap() < maxSize { // 对于大Buffer直接丢弃
+	if b.buffer.Cap() < max_BuilderSize { // 对于大Buffer直接丢弃
 		b.buffer.Reset()
 		bufferPool.Put(b)
 	}
 }
 
-func (b *Builder) init(key []byte) *Builder {
-	b.key = tea.NewTeaCipher(key)
-	b.usetea = len(key) == 16
-	b.hasput = false
-	return b
-}
-
 type Builder struct {
 	buffer bytes.Buffer
-	key    tea.TEA
-	usetea bool
-	hasput bool
 	hasset bool
-	io.Writer
-	io.ReaderFrom
 }
 
 // from https://github.com/Mrs4s/MiraiGo/blob/master/binary/writer.go
 
 func NewWriterF(f func(writer *Builder)) []byte {
-	w := SelectBuilder(nil)
+	w := SelectBuilder()
 	f(w)
 	return w.ToBytes()
 }
@@ -81,8 +63,8 @@ func ToBytes(i any) []byte {
 // with finalizer of itself.
 //
 // Be sure to use all data before builder is GCed.
-func NewBuilder(key ...byte) *Builder {
-	b := SelectBuilder(key)
+func NewBuilder() *Builder {
+	b := SelectBuilder()
 	if !b.hasset {
 		b.hasset = true
 		runtime.SetFinalizer(b, func(b any) { b.(*Builder).PutBuilder() })
@@ -102,9 +84,6 @@ func (b *Builder) Len() int { return b.buffer.Len() }
 // 但是只能调用一次, 调用后 Builder 即失效
 func (b *Builder) ToBytes() []byte {
 	defer b.PutBuilder()
-	if b.usetea {
-		return b.key.Encrypt(b.buffer.Bytes())
-	}
 	buf := make([]byte, b.Len())
 	copy(buf, b.buffer.Bytes())
 	return buf
@@ -117,11 +96,7 @@ func (b *Builder) ToBytes() []byte {
 func (b *Builder) Pack(typ uint16) []byte {
 	defer b.PutBuilder()
 	n, buf := 0, make([]byte, b.Len()+2+2+16)
-	if b.usetea {
-		n = b.key.EncryptTo(b.buffer.Bytes(), buf[2+2:])
-	} else {
-		n = copy(buf[2+2:], b.buffer.Bytes())
-	}
+	n = copy(buf[2+2:], b.buffer.Bytes())
 	binary.BigEndian.PutUint16(buf[0:2], typ)         // type
 	binary.BigEndian.PutUint16(buf[2:2+2], uint16(n)) // length
 	return buf[:n+2+2]
@@ -129,50 +104,13 @@ func (b *Builder) Pack(typ uint16) []byte {
 
 func (b *Builder) WriteBool(v bool) *Builder {
 	if v {
-		b.WriteU8('1')
-	} else {
-		b.WriteU8('0')
+		return b.WriteU8('1')
 	}
-	return b
-}
-
-// WritePacketBytes prefix must not be empty
-func (b *Builder) WritePacketBytes(v []byte, prefix string, withPrefix bool) *Builder {
-	n := len(v)
-	if withPrefix {
-		plus, e := strconv.Atoi(prefix[1:])
-		if e != nil {
-			panic(e)
-		}
-		n += plus / 8
-	}
-	switch prefix {
-	case "u8":
-		b.WriteU8(uint8(n))
-	case "u16":
-		b.WriteU16(uint16(n))
-	case "u32":
-		b.WriteU32(uint32(n))
-	case "u64":
-		b.WriteU64(uint64(n))
-	default:
-		panic("invaild prefix")
-	}
-	b.WriteBytes(v)
-	return b
-}
-
-func (b *Builder) WritePacketString(s, prefix string, withPrefix bool) *Builder {
-	return b.WritePacketBytes(utils.S2B(s), prefix, withPrefix)
+	return b.WriteU8('0')
 }
 
 // Write for impl. io.Writer
 func (b *Builder) Write(p []byte) (n int, err error) { return b.buffer.Write(p) }
-
-func (b *Builder) EncryptAndWrite(key []byte, data []byte) *Builder {
-	_, _ = b.Write(tea.NewTeaCipher(key).Encrypt(data))
-	return b
-}
 
 // ReadFrom for impl. io.ReaderFrom
 func (b *Builder) ReadFrom(r io.Reader) (n int64, err error) { return io.Copy(&b.buffer, r) }
@@ -237,8 +175,6 @@ func (b *Builder) WriteTLV(tlvs ...[]byte) *Builder {
 }
 
 // *****
-
-//func (b *Builder) WriteString(str  string) *Builder { return b.WriteBytes([]byte(str)) }
 
 func (b *Builder) WriteLength(size int, flag prefix.Prefix, addition ...int) *Builder {
 	lengthCounted := (flag & prefix.WithPrefix) != 0 // != 0 is faster than > 0

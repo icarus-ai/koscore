@@ -52,7 +52,7 @@ func (typ ntv2_rich_media) CommonGenerateHighwayExt(upload *oidb.UploadResp, str
 			UKey:        upload.UKey,
 			Network:     typ.common_ConvertIPv4(upload.IPv4S),
 			MsgInfoBody: upload.MsgInfo.MsgInfoBody,
-			BlockSize:   proto.Some(uint32(highway.BlockSize)),
+			BlockSize:   proto.Some[uint32](highway.BlockSize),
 			Hash:        &oidb.NTHighwayHash{FileSha1: file_sha1},
 		})
 		return
@@ -68,14 +68,13 @@ func (typ ntv2_rich_media) CommonGenerateHighwayExt(upload *oidb.UploadResp, str
 		UKey:        sub.UKey,
 		Network:     typ.common_ConvertIPv4(sub.IPv4S),
 		MsgInfoBody: upload.MsgInfo.MsgInfoBody,
-		BlockSize:   proto.Some(uint32(highway.BlockSize)),
+		BlockSize:   proto.Some[uint32](highway.BlockSize),
 		Hash:        &oidb.NTHighwayHash{FileSha1: [][]byte{sha}},
 	})
 	return
 }
 
-type ntv2_rich_media uint8
-
+type ntv2_rich_media uint8 // BusinessType
 const (
 	NTV2RICH_MEDIA_IMAGE  ntv2_rich_media = 1
 	NTV2RICH_MEDIA_VIDEO  ntv2_rich_media = 2
@@ -83,25 +82,9 @@ const (
 )
 
 func (typ ntv2_rich_media) build_head(cmd uint32, id any) *oidb.MultiMediaReqHead {
-	return &oidb.MultiMediaReqHead{
-		Common: &oidb.CommonHead{
-			RequestId: proto.Some[uint32](1),
-			Command:   proto.Some(cmd),
-		},
-		Scene:  typ.build_scene(id),
-		Client: &oidb.ClientMeta{AgentType: proto.Some[uint32](2)},
-	}
-}
-
-func (typ ntv2_rich_media) build_scene(id any) *oidb.SceneInfo {
-	scene := &oidb.SceneInfo{RequestType: proto.Some[uint32](2)}
-	switch typ {
-	case NTV2RICH_MEDIA_IMAGE:
-		scene.BusinessType = proto.Some[uint32](1)
-	case NTV2RICH_MEDIA_VIDEO:
-		scene.BusinessType = proto.Some[uint32](2)
-	case NTV2RICH_MEDIA_RECORD:
-		scene.BusinessType = proto.Some[uint32](3)
+	scene := &oidb.SceneInfo{
+		RequestType:  proto.Some[uint32](2),
+		BusinessType: proto.Some(uint32(typ)),
 	}
 	switch o := id.(type) {
 	case uint64:
@@ -114,12 +97,18 @@ func (typ ntv2_rich_media) build_scene(id any) *oidb.SceneInfo {
 			AccountType: proto.Some[uint32](1),
 		}
 	}
-	return scene
+	return &oidb.MultiMediaReqHead{
+		Common: &oidb.CommonHead{
+			RequestId: proto.Some[uint32](1),
+			Command:   proto.Some(cmd),
+		},
+		Scene:  scene,
+		Client: &oidb.ClientMeta{AgentType: proto.Some[uint32](2)},
+	}
 }
 
 func (typ ntv2_rich_media) build_file(fs fstream) (*oidb.FileInfo, error) {
 	md5str := hex.EncodeToString(fs.md5)
-
 	info := &oidb.FileInfo{
 		FileSize: proto.Some(fs.size),
 		FileHash: proto.Some(md5str),
@@ -167,15 +156,19 @@ type fstream struct {
 }
 
 func (typ ntv2_rich_media) build_upload(id any, ext *oidb.ExtBizInfo, fsinfo ...fstream) (*oidb.NTV2RichMediaReq, error) {
-	var files []*oidb.UploadInfo
-	file, err := typ.build_file(fsinfo[0])
-	if err != nil {
-		return nil, err
+	file, e := typ.build_file(fsinfo[0])
+	if e != nil {
+		return nil, e
 	}
-	files = append(files, &oidb.UploadInfo{FileInfo: file, SubFileType: proto.Some(fsinfo[0].sub_type)})
+
+	files := []*oidb.UploadInfo{{
+		FileInfo:    file,
+		SubFileType: proto.Some(fsinfo[0].sub_type),
+	}}
+
 	if len(fsinfo) == 2 { // video thumb sub_file_type 100
-		if file, err = NTV2RICH_MEDIA_IMAGE.build_file(fsinfo[1]); err != nil {
-			return nil, err
+		if file, e = NTV2RICH_MEDIA_IMAGE.build_file(fsinfo[1]); e != nil {
+			return nil, e
 		}
 		files = append(files, &oidb.UploadInfo{FileInfo: file, SubFileType: proto.Some(fsinfo[1].sub_type)})
 	}
@@ -185,13 +178,13 @@ func (typ ntv2_rich_media) build_upload(id any, ext *oidb.ExtBizInfo, fsinfo ...
 		ReqHead: head,
 		Upload: &oidb.UploadReq{
 			UploadInfo:             files,
-			TryFastUploadCompleted: proto.Some(true),
-			SrvSendMsg:             proto.Some(false),
+			TryFastUploadCompleted: proto.TRUE,
+			SrvSendMsg:             proto.FALSE,
 			ClientRandomId:         proto.Some(uint64(crypto.RandU32())),
 			CompatQMsgSceneType:    head.Scene.SceneType,
 			ExtBizInfo:             ext,
 			ClientSeq:              proto.Some[uint32](10),
-			NoNeedCompatMsg:        proto.Some(false),
+			NoNeedCompatMsg:        proto.FALSE,
 		}}, nil
 }
 
@@ -341,13 +334,6 @@ func BuildPrivateRecordUploadPacket(self_uid string, voice *message.VoiceElement
 	}
 	return BuildOidbPacket(0x126D, 100, body, false, false)
 }
-
-// new ImageGroupUploadEventResp(response.Upload.MsgInfo, response.Upload.CompatQMsg, Common.GenerateExt(response.Upload)))
-// new ImageUploadEventResp     (response.Upload.MsgInfo, response.Upload.CompatQMsg, Common.GenerateExt(response.Upload)))
-// new VideoUploadEventResp     (response.Upload.MsgInfo, response.Upload.CompatQMsg, Common.GenerateExt(response.Upload), Common.GenerateExt(response.Upload, response.Upload.SubFileInfos[0])));
-// new VideoGroupUploadEventResp(response.Upload.MsgInfo, response.Upload.CompatQMsg, Common.GenerateExt(response.Upload), Common.GenerateExt(response.Upload, response.Upload.SubFileInfos[0])));
-// new RecordUploadEventResp     (response.Upload.MsgInfo, response.Upload.CompatQMsg, Common.GenerateExt(response.Upload)));
-// new RecordGroupUploadEventResp(response.Upload.MsgInfo, response.Upload.CompatQMsg, Common.GenerateExt(response.Upload)));
 
 func ParseNTv2RichMediaUploadPacket(data []byte) (*oidb.UploadResp, error) {
 	rsp, e := ParseOidbPacket[oidb.NTV2RichMediaResp](data)

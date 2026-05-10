@@ -521,7 +521,7 @@ func (m *QQClient) FetchEssenceMessage(group_uin uint64) ([]*message.GroupEssenc
 			sender_info := m.GetCachedMemberInfo(sender_uin, group_uin)
 			essences = append(essences, &message.GroupEssenceMessage{
 				OperatorUin:  uint64(v.Get("add_digest_uin").Int()),
-				OperatorUid:  m.get_uid(uint64(v.Get("add_digest_uin").Int())),
+				OperatorUid:  m.get_uid(uint64(v.Get("add_digest_uin").Int()), group_uin),
 				OperatorTime: uint64(v.Get("add_digest_time").Int()),
 				CanRemove:    v.Get("can_be_removed").Bool(),
 				Message: &message.GroupMessage{

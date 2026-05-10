@@ -116,19 +116,16 @@ func BuildFetchStrangerPacket[T uint64 | string](id T, sub uint32) (*sso_type.Ss
 		}
 	}
 
+	if sub != 2 && sub != 8 {
+		sub = 2
+	}
 	switch o := any(id).(type) {
 	case uint64:
-		if sub != 2 {
-			sub = 2
-		}
 		return BuildOidbPacket(0xFE1, sub, &operation.FetchStrangerByUinRequest{
 			Uin:  proto.Some(int64(o)),
 			Keys: fetch_strange_keys,
-		}, false, false)
+		}, false, true)
 	case string:
-		if sub != 2 && sub != 8 {
-			sub = 2
-		}
 		return BuildOidbPacket(0xFE1, sub, &operation.FetchStrangerByUidRequest{
 			Uid:  proto.Some(o),
 			Keys: fetch_strange_keys,

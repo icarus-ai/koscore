@@ -66,6 +66,14 @@ func Post(uri string, body []byte, heads types.MapSS) ([]byte, error) {
 	return doHTTP(req)
 }
 
+func PostIO(uri string, body io.Reader, heads types.MapSS) ([]byte, error) {
+	req, e := http_request(uri, http.MethodPost, body, heads)
+	if e != nil {
+		return nil, e
+	}
+	return doHTTP(req)
+}
+
 //nolint:bodyclose
 func doHTTP(req *http.Request) ([]byte, error) {
 	rsp, e := __http.Do(req)

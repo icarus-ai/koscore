@@ -117,6 +117,7 @@ func (m *QQClient) decodeOlPushServicePacket_group_notify_msg_0x2DC(sub_type int
 		_ = m.ResolveUin(ev)
 		m.Events.GroupMute.dispatch(m, ev)
 		return nil
+
 	case 0x10, 0x11, 0x14, 0x15: // group notify msg
 		reader := binary.NewReader(msg_content)
 		group_uin := uint64(reader.ReadU32()) // group uin

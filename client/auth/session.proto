@@ -24,7 +24,7 @@ message WLoginSigs {
   bytes super_key             = 10;
   bytes st                    = 11;
   bytes st_key                = 12;
-  bytes St_web                = 13;
+  bytes st_web                = 13;
   bytes wt_session_ticket     = 14;
   bytes wt_session_ticket_key = 15;
   bytes random_key            = 16; // 16

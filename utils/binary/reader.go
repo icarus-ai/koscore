@@ -3,7 +3,6 @@ package binary
 import (
 	"encoding/binary"
 	"io"
-	"strconv"
 	"unsafe"
 
 	"github.com/kernel-ai/koscore/utils"
@@ -48,8 +47,7 @@ func (r *Reader) String() string {
 		return utils.B2S(data)
 	}
 	s := string(r.data[r.pos:])
-	r.pos = 0
-	r.data = r.data[:0]
+	r.pos, r.data = 0, r.data[:0]
 	return s
 }
 
@@ -65,8 +63,7 @@ func (r *Reader) ReadAll() []byte {
 		return data
 	}
 	s := r.data[r.pos:]
-	r.pos = 0
-	r.data = r.data[:0]
+	r.pos, r.data = 0, r.data[:0]
 	buf := make([]byte, len(s))
 	copy(buf, s)
 	return s
@@ -131,61 +128,7 @@ func (r *Reader) ReadBytes(length int) (v []byte) {
 	return
 }
 
-func (r *Reader) ReadString(length int) string {
-	return utils.B2S(r.ReadBytes(length))
-}
-
-func (r *Reader) SkipBytesWithLength(prefix string, withPerfix bool) {
-	var length int
-	switch prefix {
-	case "u8":
-		length = int(r.ReadU8())
-	case "u16":
-		length = int(r.ReadU16())
-	case "u32":
-		length = int(r.ReadU32())
-	case "u64":
-		length = int(r.ReadU64())
-	default:
-		panic("invaild prefix")
-	}
-	if withPerfix {
-		plus, err := strconv.Atoi(prefix[1:])
-		if err != nil {
-			panic(err)
-		}
-		length -= plus / 8
-	}
-	r.SkipBytes(length)
-}
-
-func (r *Reader) ReadBytesWithLength(prefix string, withPerfix bool) []byte {
-	var length int
-	switch prefix {
-	case "u8":
-		length = int(r.ReadU8())
-	case "u16":
-		length = int(r.ReadU16())
-	case "u32":
-		length = int(r.ReadU32())
-	case "u64":
-		length = int(r.ReadU64())
-	default:
-		panic("invaild prefix")
-	}
-	if withPerfix {
-		plus, err := strconv.Atoi(prefix[1:])
-		if err != nil {
-			panic(err)
-		}
-		length -= plus / 8
-	}
-	return r.ReadBytes(length)
-}
-
-func (r *Reader) ReadStringWithLength(prefix string, withPerfix bool) string {
-	return utils.B2S(r.ReadBytesWithLength(prefix, withPerfix))
-}
+func (r *Reader) ReadString(length int) string { return utils.B2S(r.ReadBytes(length)) }
 
 func (r *Reader) ReadTlv() (result types.Tlvs) {
 	result = make(types.Tlvs)
@@ -227,7 +170,7 @@ func (r *Reader) ReadLength(flag prefix.Prefix) int {
 	return int(size)
 }
 
+func (r *Reader) SkipBytesWithLength(flag prefix.Prefix) { r.SkipBytes(r.ReadLength(flag)) }
+
 func (r *Reader) ReadLengthBytes(flag prefix.Prefix) []byte  { return r.ReadBytes(r.ReadLength(flag)) }
 func (r *Reader) ReadLengthString(flag prefix.Prefix) string { return string(r.ReadLengthBytes(flag)) }
-
-//func (b *Reader) WriteString      (str  string)                     *Builder { return b.WriteBytes([]byte(str)) }

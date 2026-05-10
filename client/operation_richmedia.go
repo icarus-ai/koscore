@@ -21,6 +21,7 @@ func (m *QQClient) UploadGroupImage(gin uint64, image *message.ImageElement) (*m
 		return nil, errors.New("image is nil")
 	}
 	defer utils.CloseIO(image.Stream)
+
 	image.IsGroup = true
 	pkt, err := oidb.BuildGroupImageUploadPacket(gin, image)
 	if err != nil {
@@ -51,6 +52,7 @@ func (m *QQClient) UploadPrivateImage(uin uint64, image *message.ImageElement) (
 		return nil, errors.New("image is nil")
 	}
 	defer utils.CloseIO(image.Stream)
+
 	image.IsGroup = false
 	uid, err := m.GetUid(uin)
 	if err != nil {
@@ -89,6 +91,7 @@ func (m *QQClient) UploadGroupShortVideo(gin uint64, video *message.ShortVideoEl
 	}
 	defer utils.CloseIO(video.Stream)
 	defer utils.CloseIO(video.Thumb.Stream)
+
 	video.IsGroup = true
 	pkt, err := oidb.BuildGroupVideoUploadPacket(gin, video)
 	if err != nil {
@@ -102,9 +105,10 @@ func (m *QQClient) UploadGroupShortVideo(gin uint64, video *message.ShortVideoEl
 		return nil, err
 	}
 
+	//m.LOGW("group video upload ukey: %s", upload.UKey.Unwrap())
+
 	// video
 	if md5, ext := oidb.NTV2RICH_MEDIA_VIDEO.CommonGenerateHighwayExt(upload, video.Stream, nil); ext != nil {
-		//m.LOGD("group video upload ukey: %s", ukey)
 		if err = m.highwayUpload(1005, video.Stream, uint64(video.Size), md5, ext); err != nil {
 			return nil, err
 		}
@@ -134,6 +138,7 @@ func (m *QQClient) UploadPrivateShortVideo(uin uint64, video *message.ShortVideo
 	}
 	defer utils.CloseIO(video.Stream)
 	defer utils.CloseIO(video.Thumb.Stream)
+
 	video.IsGroup = false
 	uid, err := m.GetUid(uin)
 	if err != nil {
@@ -181,6 +186,7 @@ func (m *QQClient) UploadGroupRecord(gin uint64, voice *message.VoiceElement) (*
 		return nil, errors.New("voice is nil")
 	}
 	defer utils.CloseIO(voice.Stream)
+
 	voice.IsGroup = true
 	pkt, err := oidb.BuildGroupRecordUploadPacket(gin, voice)
 	if err != nil {
@@ -213,6 +219,7 @@ func (m *QQClient) UploadPrivateRecord(uin uint64, voice *message.VoiceElement) 
 		return nil, errors.New("voice is nil")
 	}
 	defer utils.CloseIO(voice.Stream)
+
 	voice.IsGroup = false
 	uid, err := m.GetUid(uin)
 	if err != nil {
@@ -321,7 +328,7 @@ func (m *QQClient) UploadGroupFile(gin uint64, file *message.FileElement, parent
 		return nil, errors.New("element type is not group file")
 	}
 
-	file.FileName = resolveFileName(file.FileStream, file.FileName)
+	file.FileName = utils.ResolveFileName(file.FileStream, file.FileName)
 	pkt, err := oidb.BuildGroupFSUploadPacket(gin, file.FileStream, file.FileSize, file.FileName, parent_dir, file.FileSha1, file.FileMd5)
 	if err != nil {
 		return nil, err

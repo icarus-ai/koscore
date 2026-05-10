@@ -15,7 +15,7 @@ func (m *QQClient) GetUid(uin uint64, gin ...uint64) (string, error) {
 	return uid, nil
 }
 
-// GetUid 获取缓存中对应uin的uid
+// 获取缓存中对应uin的uid
 func (m *QQClient) get_uid(uin uint64, gin ...uint64) string {
 	if uin == 0 {
 		return ""
@@ -42,7 +42,7 @@ func (m *QQClient) get_uid(uin uint64, gin ...uint64) string {
 	return m.cache.GetUid(uin, gin...)
 }
 
-// GetUin 获取缓存中对应的uin
+// 获取缓存中对应的uin
 func (m *QQClient) GetUin(uid string, gin ...uint64) uint64 {
 	if uid == "" {
 		return 0
@@ -69,7 +69,7 @@ func (m *QQClient) GetUin(uid string, gin ...uint64) uint64 {
 	return m.cache.GetUin(uid, gin...)
 }
 
-// GetCachedFriendInfo 获取好友信息(缓存)
+// 获取好友信息(缓存)
 func (m *QQClient) GetCachedFriendInfo(uin uint64, cache ...bool) *entity.User {
 	if m.cache.FriendCacheIsEmpty() {
 		if e := m.RefreshFriendCache(); e != nil {
@@ -86,7 +86,7 @@ func (m *QQClient) GetCachedFriendInfo(uin uint64, cache ...bool) *entity.User {
 	return m.cache.GetFriend(uin)
 }
 
-// GetCachedAllFriendsInfo 获取所有好友信息(缓存)
+// 获取所有好友信息(缓存)
 func (m *QQClient) GetCachedAllFriendsInfo() map[uint64]*entity.User {
 	if m.cache.FriendCacheIsEmpty() {
 		if e := m.RefreshFriendCache(); e != nil {
@@ -96,7 +96,7 @@ func (m *QQClient) GetCachedAllFriendsInfo() map[uint64]*entity.User {
 	return m.cache.GetAllFriends()
 }
 
-// GetCachedGroupInfo 获取群信息(缓存)
+// 获取群信息(缓存)
 func (m *QQClient) GetCachedGroupInfo(gin uint64) *entity.Group {
 	if m.cache.GroupInfoCacheIsEmpty() {
 		if e := m.RefreshAllGroupsInfo(); e != nil {
@@ -110,7 +110,7 @@ func (m *QQClient) GetCachedGroupInfo(gin uint64) *entity.Group {
 	return m.cache.GetGroupInfo(gin)
 }
 
-// GetCachedAllGroupsInfo 获取所有群信息(缓存)
+// 获取所有群信息(缓存)
 func (m *QQClient) GetCachedAllGroupsInfo() map[uint64]*entity.Group {
 	if m.cache.GroupInfoCacheIsEmpty() {
 		if err := m.RefreshAllGroupsInfo(); err != nil {
@@ -120,37 +120,39 @@ func (m *QQClient) GetCachedAllGroupsInfo() map[uint64]*entity.Group {
 	return m.cache.GetAllGroupsInfo()
 }
 
-// GetCachedMemberInfo 获取群成员信息(缓存)
-func (m *QQClient) GetCachedMemberInfo(uin, groupUin uint64) *entity.GroupMember {
-	if m.cache.GroupMemberCacheIsEmpty(groupUin) {
-		if err := m.RefreshGroupMemberCache(groupUin, uin); err != nil {
+// 获取群成员信息(缓存)
+func (m *QQClient) GetCachedMemberInfo(uin, gin uint64, cache ...bool) *entity.GroupMember {
+	if m.cache.GroupMemberCacheIsEmpty(gin) {
+		if err := m.RefreshGroupMemberCache(gin, uin); err != nil {
 			return nil
 		}
 	}
-	if m := m.cache.GetGroupMember(uin, groupUin); m != nil {
+	if m := m.cache.GetGroupMember(uin, gin); m != nil {
 		return m
 	}
-	_ = m.RefreshGroupMemberCache(uin, groupUin)
-	return m.cache.GetGroupMember(uin, groupUin)
+	if len(cache) > 0 && cache[0] {
+		return nil
+	}
+	_ = m.RefreshGroupMemberCache(uin, gin)
+	return m.cache.GetGroupMember(uin, gin)
 }
 
-// GetCachedMembersInfo 获取指定群所有群成员信息(缓存)
-func (m *QQClient) GetCachedMembersInfo(groupUin uint64) map[uint64]*entity.GroupMember {
-	if m.cache.GroupMemberCacheIsEmpty(groupUin) {
-		if err := m.RefreshGroupMembersCache(groupUin); err != nil {
+// 获取指定群所有群成员信息(缓存)
+func (m *QQClient) GetCachedMembersInfo(gin uint64) map[uint64]*entity.GroupMember {
+	if m.cache.GroupMemberCacheIsEmpty(gin) {
+		if err := m.RefreshGroupMembersCache(gin); err != nil {
 			return nil
 		}
 	}
-	if gm := m.cache.GetGroupMembers(groupUin); gm != nil {
+	if gm := m.cache.GetGroupMembers(gin); gm != nil {
 		return gm
 	}
-	_ = m.RefreshGroupMembersCache(groupUin)
-	return m.cache.GetGroupMembers(groupUin)
+	_ = m.RefreshGroupMembersCache(gin)
+	return m.cache.GetGroupMembers(gin)
 }
 
+// 获取指定类型的RKey信息(缓存)
 // ??? king GetCachedRkeyInfo 有问题
-
-// GetCachedRkeyInfo 获取指定类型的RKey信息(缓存)
 func (m *QQClient) GetCachedRkeyInfo(rkeyType entity.RKeyType) (*entity.RKeyInfo, error) {
 	for {
 		if !m.cache.RkeyInfoCacheIsEmpty() {
@@ -165,7 +167,7 @@ func (m *QQClient) GetCachedRkeyInfo(rkeyType entity.RKeyType) (*entity.RKeyInfo
 	}
 }
 
-// GetCachedRkeyInfos 获取所有RKey信息(缓存)
+// 获取所有RKey信息(缓存)
 func (m *QQClient) GetCachedRkeyInfos() map[entity.RKeyType]*entity.RKeyInfo {
 	for {
 		if !m.cache.RkeyInfoCacheIsEmpty() {
@@ -204,7 +206,7 @@ func (m *QQClient) GetCachedRkeyInfos() map[entity.RKeyType]*entity.RKeyInfo {
 	*/
 }
 
-// RefreshAllRkeyInfoCache 刷新RKey缓存
+// 刷新RKey缓存
 func (m *QQClient) RefreshAllRkeyInfoCache() error {
 	info, e := m.FetchRkey()
 	if e != nil {
@@ -214,136 +216,133 @@ func (m *QQClient) RefreshAllRkeyInfoCache() error {
 	return nil
 }
 
-// RefreshFriendCache 刷新好友缓存
+// 刷新好友缓存
 func (m *QQClient) RefreshFriendCache() error {
 	friends, e := m.GetFriendsData()
 	if e != nil {
 		return e
 	}
 	m.cache.RefreshAllFriend(friends)
-	unidirectionalFriends, e := m.GetUnidirectionalFriendList()
+	unfriends, e := m.GetUnidirectionalFriendList()
 	if e != nil {
 		return e
 	}
-	for _, f := range unidirectionalFriends {
-		m.cache.RefreshFriend(f)
+	for _, item := range unfriends {
+		m.cache.RefreshFriend(item)
 	}
 	return nil
 }
 
 // OLD_CODE 刷新一个群的指定群成员缓存
-func (m *QQClient) RefreshGroupMemberCache(groupUin, memberUin uint64) error {
-	mem, e := m.FetchGroupMember(groupUin, memberUin)
+func (m *QQClient) RefreshGroupMemberCache(gin, member_uin uint64) error {
+	mem, e := m.FetchGroupMember(gin, member_uin)
 	if e != nil {
 		return e
 	}
-	m.cache.RefreshGroupMember(groupUin, mem)
+	m.cache.RefreshGroupMember(gin, mem)
 	return nil
 }
 
 // 刷新指定群的所有群成员缓存
-func (m *QQClient) RefreshGroupMembersCache(groupUin uint64) error {
-	groupData, err := m.GetGroupMembersData(groupUin)
+func (m *QQClient) RefreshGroupMembersCache(gin uint64) error {
+	data, err := m.GetGroupMembersData(gin)
 	if err != nil {
 		return err
 	}
-	m.cache.RefreshGroupMembers(groupUin, groupData)
+	m.cache.RefreshGroupMembers(gin, data)
 	return nil
 }
 
-// RefreshAllGroupMembersCache 刷新所有群的群成员缓存
+// 刷新所有群的群成员缓存
 func (m *QQClient) RefreshAllGroupMembersCache() error {
-	groupsData, err := m.GetAllGroupsMembersData()
+	data, err := m.GetAllGroupsMembersData()
 	if err != nil {
 		return err
 	}
-	m.cache.RefreshAllGroupMembers(groupsData)
+	m.cache.RefreshAllGroupMembers(data)
 	return nil
 }
 
-// RefreshAllGroupsInfo 刷新所有群信息缓存
+// 刷新所有群信息缓存
 func (m *QQClient) RefreshAllGroupsInfo() error {
-	groupsData, err := m.GetAllGroupsInfo()
+	data, err := m.GetAllGroupsInfo()
 	if err != nil {
 		return err
 	}
-	m.cache.RefreshAllGroup(groupsData)
+	m.cache.RefreshAllGroup(data)
 	return nil
 }
 
-// GetFriendsData 获取好友列表数据
+// 获取好友列表数据
 func (m *QQClient) GetFriendsData() (map[uint64]*entity.User, error) {
 	rsp, err := m.FetchFriends(nil)
 	if err != nil {
 		return nil, err
 	}
-
-	friends := make(map[uint64]*entity.User)
+	data := make(map[uint64]*entity.User)
 	for {
-		rsp, err = m.FetchFriends(rsp.Cookie)
-		if err != nil {
-			return friends, err
+		if rsp, err = m.FetchFriends(rsp.Cookie); err != nil {
+			return nil, err
 		}
 		for _, friend := range rsp.Friends {
-			friends[friend.Uin] = friend
+			data[friend.Uin] = friend
 		}
 		if len(rsp.Cookie) == 0 {
 			break
 		}
 	}
-	m.LOGD("获取%d个好友", len(friends))
-	return friends, err
+	m.LOGD("获取%d个好友", len(data))
+	return data, err
 }
 
-// GetGroupMembersData 获取指定群所有成员信息
-func (m *QQClient) GetGroupMembersData(groupUin uint64) (map[uint64]*entity.GroupMember, error) {
-	groupMembers := make(map[uint64]*entity.GroupMember)
-	members, token, err := m.FetchGroupMembers(groupUin, nil)
+// 获取指定群所有成员信息
+func (m *QQClient) GetGroupMembersData(gin uint64) (map[uint64]*entity.GroupMember, error) {
+	members, token, err := m.FetchGroupMembers(gin, nil)
 	if err != nil {
-		return groupMembers, err
+		return nil, err
 	}
-	for _, member := range members {
-		groupMembers[member.Uin] = member
+	data := make(map[uint64]*entity.GroupMember)
+	for _, item := range members {
+		data[item.Uin] = item
 	}
 	for token != nil {
-		members, token, err = m.FetchGroupMembers(groupUin, token)
-		if err != nil {
-			return groupMembers, err
+		if members, token, err = m.FetchGroupMembers(gin, token); err != nil {
+			return nil, err
 		}
-		for _, member := range members {
-			groupMembers[member.Uin] = member
+		for _, item := range members {
+			data[item.Uin] = item
 		}
 	}
-	return groupMembers, err
+	return data, err
 }
 
-// GetAllGroupsMembersData 获取所有群的群成员信息
+// 获取所有群的群成员信息
 func (m *QQClient) GetAllGroupsMembersData() (map[uint64]map[uint64]*entity.GroupMember, error) {
 	groups, err := m.FetchGroups()
 	if err != nil {
 		return nil, err
 	}
-	groupsData := make(map[uint64]map[uint64]*entity.GroupMember, len(groups))
-	for _, group := range groups {
-		groupMembersData, err := m.GetGroupMembersData(group.GroupUin)
+	data := make(map[uint64]map[uint64]*entity.GroupMember)
+	for _, item := range groups {
+		members, err := m.GetGroupMembersData(item.GroupUin)
 		if err != nil {
 			return nil, err
 		}
-		groupsData[group.GroupUin] = groupMembersData
+		data[item.GroupUin] = members
 	}
-	m.LOGD("获取%d个群的成员信息", len(groupsData))
-	return groupsData, err
+	m.LOGD("获取%d个群的成员信息", len(data))
+	return data, err
 }
 
 func (m *QQClient) GetAllGroupsInfo() (map[uint64]*entity.Group, error) {
-	groupsInfo, err := m.FetchGroups()
+	groups, err := m.FetchGroups()
 	if err != nil {
 		return nil, err
 	}
-	groupsData := make(map[uint64]*entity.Group, len(groupsInfo))
-	for _, group := range groupsInfo {
-		groupsData[group.GroupUin] = group
+	data := make(map[uint64]*entity.Group)
+	for _, item := range groups {
+		data[item.GroupUin] = item
 	}
-	m.LOGD("获取%d个群信息", len(groupsData))
-	return groupsData, err
+	m.LOGD("获取%d个群信息", len(data))
+	return data, err
 }

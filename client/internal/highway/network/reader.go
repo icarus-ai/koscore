@@ -1,4 +1,4 @@
-package binary
+package network
 
 // from https://github.com/Mrs4s/MiraiGo/blob/master/binary/reader.go
 
@@ -8,13 +8,13 @@ import (
 	"net"
 )
 
-type NetworkReader struct{ conn net.Conn }
+type NetReader struct{ conn net.Conn }
 
-func NewNetworkReader(conn net.Conn) *NetworkReader {
-	return &NetworkReader{conn: conn}
+func NewNetReader(conn net.Conn) *NetReader {
+	return &NetReader{conn: conn}
 }
 
-func (r *NetworkReader) ReadByte() (byte, error) {
+func (r *NetReader) ReadByte() (byte, error) {
 	b := make([]byte, 1)
 	n, e := r.conn.Read(b)
 	if e != nil {
@@ -26,13 +26,13 @@ func (r *NetworkReader) ReadByte() (byte, error) {
 	return b[0], nil
 }
 
-func (r *NetworkReader) ReadBytes(size int) ([]byte, error) {
+func (r *NetReader) ReadBytes(size int) ([]byte, error) {
 	b := make([]byte, size)
 	_, e := io.ReadFull(r.conn, b)
 	return b, e
 }
 
-func (r *NetworkReader) ReadInt32() (int32, error) {
+func (r *NetReader) ReadInt32() (int32, error) {
 	b := make([]byte, 4)
 	_, e := r.conn.Read(b)
 	if e != nil {

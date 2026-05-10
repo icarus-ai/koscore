@@ -12,7 +12,7 @@ import (
 	"github.com/kernel-ai/koscore/utils"
 	"github.com/kernel-ai/koscore/utils/binary"
 	"github.com/kernel-ai/koscore/utils/types"
-	// "github.com/kernel-ai/koscore/utils/comm"
+	//"github.com/kernel-ai/koscore/utils/comm"
 )
 
 type (
@@ -92,9 +92,6 @@ func (c *Client) sortByLatency() {
 }
 
 func (c *Client) Sign(cmd string, seq uint32, data []byte) (*Value, error) {
-	if !ContainSignPKG(cmd) {
-		return nil, nil
-	}
 	if time.Now().After(c.lastTestTime.Add(30 * time.Minute)) {
 		go c.test()
 	}
@@ -108,7 +105,7 @@ func (c *Client) Sign(cmd string, seq uint32, data []byte) (*Value, error) {
 			if !bytes.Contains(rsp.Extra, []byte(c.app.QUA)) {
 				return nil, ErrVersionMismatch
 			}
-			//comm.LOGD("signed for [%s:%d] %X", cmd, seq, rsp.Value.Sign)
+			//comm.LOGD("signed for [%s:%d] %X", cmd, seq, rsp.Sign)
 			c.signCount.Add(1)
 			if rsp.Token == nil {
 				rsp.Token = binary.Empty
@@ -137,7 +134,7 @@ func (c *Client) test() {
 
 func (i *remote) sign(cmd string, seq uint32, buf []byte, uin uint32, guid, qua string) (*Value, error) {
 	s := fmt.Sprintf(`{"command":"%s","seq":"%d","body":"%x","uin":"%d","guid":"%s","qua":"%s"}`, cmd, seq, buf, uin, guid, qua)
-	rsp, e := http_post[rsp_sign_v2](i.server, utils.S2B(s), i.headers)
+	rsp, e := http_post[rsp_sign](i.server, utils.S2B(s), i.headers)
 	if e != nil {
 		return nil, e
 	}

@@ -64,6 +64,5 @@ func ImageResolve(image io.ReadSeeker) (format ImageFormat, size imgsz.Size, err
 		err = e
 		return
 	}
-
 	return formatmap[fmts], sz, nil
 }
