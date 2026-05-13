@@ -6,11 +6,11 @@ require (
 	github.com/RomiChan/syncx v0.0.0-20240418144900-b7402ffdebc7
 	github.com/fumiama/imgsz v0.0.4
 	github.com/pkg/errors v0.9.1
-	github.com/tidwall/gjson v1.18.0
+	github.com/tidwall/gjson v1.19.0
 	github.com/tidwall/match v1.2.0 // indirect
 	github.com/tidwall/pretty v1.2.1 // indirect
-	golang.org/x/image v0.39.0 // indirect
-	golang.org/x/net v0.53.0
+	golang.org/x/image v0.40.0 // indirect
+	golang.org/x/net v0.54.0
 	golang.org/x/sync v0.20.0
 )
 

@@ -31,10 +31,10 @@ type (
 		GroupUin  uint64 // 私聊回复群聊时
 		Time      uint32
 		// v2
-		SrcUid    uint64
-		ReplySeq  uint64 // SrcSequence
-		Elements  []IMessageElement
-		SourceUin int64 // only for storage, not used in protocol
+		SrcUid   uint64
+		ReplySeq uint64 // SrcSequence
+		Elements []IMessageElement
+		//SourceUin uint64 // only for storage, not used in protocol
 	}
 
 	VoiceElement struct {

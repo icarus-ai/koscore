@@ -312,3 +312,15 @@ func (m *QQClient) FriendPoke(uin uint64) error {
 	}
 	return oidb.CheckError(pkt.Data)
 }
+
+// 从服务器获取最新的表情信息并更新内存缓存
+func (m *QQClient) FaceDetails() ([]entity.BotFaceDetail, error) {
+	pkt, err := oidb.BuildFetchFaceDetailsPacket()
+	if err != nil {
+		return nil, err
+	}
+	if pkt, err = m.sendOidbPacketAndWait(pkt); err != nil {
+		return nil, err
+	}
+	return oidb.ParseFetchFaceDetailsPacket(pkt.Data)
+}

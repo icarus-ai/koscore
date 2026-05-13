@@ -60,4 +60,5 @@ func (m *ServiceAttribute) NewSsoPacket(seq uint32, data []byte) *SsoPacket {
 	}
 }
 
+// RequestType = D2Auth
 func (m *SsoPacket) IsD2Auth() bool { return m.RequestType == RequestD2Auth }

@@ -15,7 +15,7 @@ import (
 // commit 53bc9c04123967aa745e216d00c14755e61b969c
 // miraigo 旧代码 可能有bug
 
-func (m *QQClient) decodeOlPushServicePacket_group_notify_msg_0x210(sub_type int32, pkg *message.CommonMessage) error {
+func (m *QQClient) decodeOlPushServicePacket_msg_0x210(sub_type int32, pkg *message.CommonMessage) error {
 	msg_content := pkg.MessageBody.MsgContent
 	switch sub_type {
 	case 35: // friend request notice
@@ -35,7 +35,7 @@ func (m *QQClient) decodeOlPushServicePacket_group_notify_msg_0x210(sub_type int
 		//_ = m.ResolveUin(ev)
 		m.Events.NewFriendRequest.dispatch(m, ev)
 
-	case 138: // friend recall
+	case 138, 139: // friend recall
 		pb, err := proto.Unmarshal[notify.FriendRecall](msg_content)
 		if err != nil {
 			return err
@@ -105,7 +105,7 @@ func (m *QQClient) decodeOlPushServicePacket_group_notify_msg_0x210(sub_type int
 	return nil
 }
 
-func (m *QQClient) decodeOlPushServicePacket_group_notify_msg_0x2DC(sub_type int32, pkg *message.CommonMessage) error {
+func (m *QQClient) decodeOlPushServicePacket_msg_0x2DC(sub_type int32, pkg *message.CommonMessage) error {
 	msg_content := pkg.MessageBody.MsgContent
 	switch sub_type {
 	case 12: // mute

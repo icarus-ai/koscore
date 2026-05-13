@@ -204,9 +204,9 @@ func (m *QQClient) message_handle_parse_push_message(data []byte) error {
 			}
 			m.Events.GroupMemberJoinRequest.dispatch(m, ev)
 		case message_type.EVENT_FRIEND:
-			return m.decodeOlPushServicePacket_group_notify_msg_0x210(sub_type, common_msg)
+			return m.decodeOlPushServicePacket_msg_0x210(sub_type, common_msg)
 		case message_type.EVENT_GROUP:
-			return m.decodeOlPushServicePacket_group_notify_msg_0x2DC(sub_type, common_msg)
+			return m.decodeOlPushServicePacket_msg_0x2DC(sub_type, common_msg)
 		}
 	}
 	return nil

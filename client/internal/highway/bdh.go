@@ -57,7 +57,7 @@ func (trans *Transaction) Build(s *Session, offset uint64, length uint32, md5has
 			AppId:      proto.Some[uint32](s.SubAppId),
 			DataFlag:   proto.Some[uint32](16),
 			CommandId:  proto.Some[uint32](trans.CommandId),
-			//LocaleId:  2052,
+			//LocaleId: 2052,
 		},
 		MsgSegHead: &highway.SegHead{
 			ServiceId:     proto.Some(uint32(0)),
@@ -89,8 +89,7 @@ func (s *Session) uploadSingle(trans *Transaction) ([]byte, error) {
 
 	reader := network.NewNetReader(pc.conn)
 	var rspExt []byte
-	offset := 0
-	chunk := make([]byte, BlockSize)
+	offset, chunk := 0, make([]byte, BlockSize)
 	for {
 		chunk = chunk[:cap(chunk)]
 		rl, err := io.ReadFull(trans.Body, chunk)
@@ -104,8 +103,7 @@ func (s *Session) uploadSingle(trans *Transaction) ([]byte, error) {
 		head, _ := proto.Marshal(trans.Build(s, uint64(offset), uint32(rl), ch[:]))
 		offset += rl
 		buffers := Frame(head, chunk)
-		_, err = buffers.WriteTo(pc.conn)
-		if err != nil {
+		if _, err = buffers.WriteTo(pc.conn); err != nil {
 			return nil, errors.Wrap(err, "write conn error")
 		}
 		rspHead, err := readResponse(reader)
@@ -137,9 +135,8 @@ func (s *Session) Upload(trans *Transaction) ([]byte, error) {
 		threadCount = maxThreadCount
 	}
 	if threadCount < 2 {
-		// single thread upload
 		return s.uploadSingle(trans)
-	}
+	} // single thread upload
 
 	// pick a address
 	// TODO: pick smarter

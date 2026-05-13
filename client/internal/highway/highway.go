@@ -83,7 +83,7 @@ func (s *Session) sendHeartbreak(conn net.Conn) error {
 			AppId:     proto.Some[uint32](s.SubAppId),
 			DataFlag:  proto.Some[uint32](16),
 			CommandId: proto.Some[uint32](0),
-			//LocaleId:  2052,
+			//LocaleId: 2052,
 		},
 	})
 	buffers := Frame(head, nil)
@@ -91,10 +91,9 @@ func (s *Session) sendHeartbreak(conn net.Conn) error {
 	return err
 }
 
-func (s *Session) ping(pc *persistConn) error {
+func (s *Session) ping(pc *persistConn) (err error) {
 	start := time.Now()
-	err := s.sendHeartbreak(pc.conn)
-	if err != nil {
+	if err = s.sendHeartbreak(pc.conn); err != nil {
 		return errors.Wrap(err, "echo error")
 	}
 	if _, err = readResponse(network.NewNetReader(pc.conn)); err != nil {
@@ -102,7 +101,7 @@ func (s *Session) ping(pc *persistConn) error {
 	}
 	// update delay
 	pc.ping = time.Since(start).Milliseconds()
-	return nil
+	return
 }
 
 func readResponse(r *network.NetReader) (*highway.RespDataHighwayHead, error) {
@@ -134,18 +133,18 @@ type persistConn struct {
 const maxIdleConn = 7
 
 type idle struct {
-	pc   persistConn
+	pc   *persistConn
 	next *idle
 }
 
 // getIdleConn ...
-func (s *Session) getIdleConn() persistConn {
+func (s *Session) getIdleConn() *persistConn {
 	s.idleMu.Lock()
 	defer s.idleMu.Unlock()
 
 	// no idle
 	if s.idle == nil {
-		return persistConn{}
+		return &persistConn{}
 	}
 
 	// switch the fastest idle conn
@@ -155,11 +154,10 @@ func (s *Session) getIdleConn() persistConn {
 	if s.idleCount < 0 {
 		panic("idle count underflow")
 	}
-
 	return conn
 }
 
-func (s *Session) putIdleConn(pc persistConn) {
+func (s *Session) putIdleConn(pc *persistConn) {
 	s.idleMu.Lock()
 	defer s.idleMu.Unlock()
 
@@ -185,6 +183,7 @@ func (s *Session) putIdleConn(pc persistConn) {
 	if pre != nil {
 		pre.next = cur
 	}
+
 	cur.next = succ
 
 	// remove the slowest idle conn if idle count greater than maxIdleConn
@@ -198,21 +197,19 @@ func (s *Session) putIdleConn(pc persistConn) {
 	}
 }
 
-func (s *Session) connect(addr Addr) (persistConn, error) {
+func (s *Session) connect(addr Addr) (*persistConn, error) {
 	conn, err := net.DialTimeout("tcp", addr.String(), time.Second*3)
 	if err != nil {
-		return persistConn{}, err
+		return nil, err
 	}
 	_ = conn.(*net.TCPConn).SetKeepAlive(true)
 
 	// close conn
-	runtime.SetFinalizer(conn, func(conn net.Conn) {
-		_ = conn.Close()
-	})
+	runtime.SetFinalizer(conn, func(conn net.Conn) { _ = conn.Close() })
 
-	pc := persistConn{conn: conn, addr: addr}
-	if err = s.ping(&pc); err != nil {
-		return persistConn{}, err
+	pc := &persistConn{conn: conn, addr: addr}
+	if err = s.ping(pc); err != nil {
+		return nil, err
 	}
 	return pc, nil
 }
@@ -225,16 +222,15 @@ func (s *Session) nextAddr() Addr {
 	return addr
 }
 
-func (s *Session) selectConn() (pc persistConn, err error) {
+func (s *Session) selectConn() (pc *persistConn, err error) {
 	for { // select from idle pc
 		pc = s.getIdleConn()
+		// no idle connection
 		if pc.conn == nil {
-			// no idle connection
 			break
 		}
-
-		err = s.ping(&pc) // ping
-		if err == nil {
+		// ping
+		if err = s.ping(pc); err == nil {
 			return
 		}
 	}
@@ -242,8 +238,7 @@ func (s *Session) selectConn() (pc persistConn, err error) {
 	try := 0
 	for {
 		addr := s.nextAddr()
-		pc, err = s.connect(addr)
-		if err == nil {
+		if pc, err = s.connect(addr); err == nil {
 			break
 		}
 		try++

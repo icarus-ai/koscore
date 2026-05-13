@@ -346,3 +346,26 @@ func (m *QQClient) GetAllGroupsInfo() (map[uint64]*entity.Group, error) {
 	m.LOGD("获取%d个群信息", len(data))
 	return data, err
 }
+
+// ***** add date 20260514 *****
+
+// 刷新表情信息
+func (m *QQClient) RefreshFaceDetails() (int, error) {
+	details, e := m.FaceDetails()
+	if e != nil {
+		return 0, e
+	}
+	m.face_details.Set(details)
+	m.LOGD("获取%d个表情信息", len(details))
+	return len(details), nil
+}
+
+// 获取表情信息
+func (m *QQClient) GetFaceDetail(qsid string) (*entity.BotFaceDetail, error) {
+	if m.face_details.IsEmpty() {
+		if _, e := m.RefreshFaceDetails(); e != nil {
+			return nil, e
+		}
+	}
+	return m.face_details.Get(qsid), nil
+}

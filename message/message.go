@@ -170,6 +170,7 @@ func ParseTempMessage(bot_uin uint64, msg *message.CommonMessage) *TempMessage {
 
 func ParseMessageElements(msg []*message.Elem) (res []IMessageElement) {
 	skipNext := false
+	reply_uin := uint64(0) // 跳过回复中的第一个AT(被回复UID)
 
 	for _, elem := range msg {
 		if skipNext {
@@ -188,34 +189,46 @@ func ParseMessageElements(msg []*message.Elem) (res []IMessageElement) {
 				//if len(v) > 0 { if _elem, e := proto.Unmarshal[message.Elem](v); e == nil { elements = append(elements, _elem) } }
 				elements = append(elements, v)
 			}
+			reply_uin = elem.SrcMsg.SenderUin.Unwrap()
 			res = append(res, &ReplyElement{
 				ReplySeq:  elem.SrcMsg.OrigSeqs[0],
 				Time:      elem.SrcMsg.Time.Unwrap(),
-				SenderUin: elem.SrcMsg.SenderUin.Unwrap(),
+				SenderUin: reply_uin,
 				GroupUin:  elem.SrcMsg.ToUin.Unwrap(),
 				Elements:  ParseMessageElements(elements),
-				SourceUin: int64(elem.SrcMsg.SenderUin.Unwrap()),
 				SrcUid:    resvAttr.SourceMsgId.Unwrap(),
+				//SourceUin: elem.SrcMsg.SenderUin.Unwrap(),
 			})
 		}
 
 		// TextEntity
+		// reply message 会默认at被回复消息的QQ 不论有没有主动at 需要丢弃掉第一个
 		if elem.Text != nil {
 			if len(elem.Text.Attr6Buf) > 0 {
 				att6 := binary.NewReader(elem.Text.Attr6Buf)
 				att6.SkipBytes(7)
-				at := NewAt(uint64(att6.ReadU32()), elem.Text.TextMsg.Unwrap())
+				at_uin := uint64(att6.ReadU32())
+				if at_uin == reply_uin {
+					reply_uin = 0
+					continue
+				}
+				at := NewAt(at_uin, elem.Text.TextMsg.Unwrap())
 				at.SubType = AT_UNKNOWN
 				// v2
 				if attr, e := proto.Unmarshal[message.TextResvAttr](elem.Text.PbReserve); e == nil {
-					if uin := attr.AtMemberUin.Unwrap(); uin > 0 {
-						at.TargetUin = uin
+					if at_uin = attr.AtMemberUin.Unwrap(); at_uin > 0 {
+						at.TargetUin = at_uin
+					}
+					if at_uin == reply_uin {
+						reply_uin = 0
+						continue
 					}
 					at.SubType = AtType(attr.AtType.Unwrap()) // 1 = mention_all, 2 = mention specific user
 					if at.SubType == AT_USER {
 						at.TargetUid = attr.AtMemberUid.Unwrap()
 					}
 				}
+				reply_uin = 0
 				res = append(res, at)
 			} else {
 				s := elem.Text.TextMsg.Unwrap()

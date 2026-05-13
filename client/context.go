@@ -13,6 +13,7 @@ import (
 	"github.com/kernel-ai/koscore/client/internal/cache"
 	"github.com/kernel-ai/koscore/client/internal/highway"
 	"github.com/kernel-ai/koscore/client/internal/utils"
+	"github.com/kernel-ai/koscore/client/packets/structs/sso_type"
 	"github.com/kernel-ai/koscore/client/sign"
 	"github.com/kernel-ai/koscore/utils/types"
 )
@@ -36,6 +37,8 @@ type QQClient struct {
 	decoders event.DecodersEvent
 
 	Uin uint64
+
+	face_details cache.FaceDetailCache // 表情信息缓存
 
 	*Events
 	logger
@@ -104,9 +107,11 @@ func (m *QQClient) GetStatistics() *utils.Statistics { return &m.stat }
 
 // *****
 
-func (m *QQClient) Session() *auth.Session     { return m.session }
-func (m *QQClient) SsoPaacket() *PacketContext { return m.sso_context }
+func (m *QQClient) SendOidbPacketAndWait(pkt *sso_type.SsoPacket) (*sso_type.SsoPacket, error) {
+	return m.sendOidbPacketAndWait(pkt)
+}
 
+func (m *QQClient) Session() *auth.Session                       { return m.session }
 func (m *QQClient) GetCache() *cache.Cache                       { return &m.cache }
 func (m *QQClient) GetCacheUid(uin uint64, gin ...uint64) string { return m.cache.GetUid(uin, gin...) }
 func (m *QQClient) GetCacheUin(uid string, gin ...uint64) uint64 { return m.cache.GetUin(uid, gin...) }

@@ -78,9 +78,7 @@ func parseServicePacker(session *auth.Session, data []byte) *sso_type.SsoPacket 
 		body = tea.NewTeaCipher(__EmptyD2Key).Decrypt(body)
 	}
 	return &sso_type.SsoPacket{
-		ServiceAttribute: &sso_type.ServiceAttribute{
-			EncryptType: authFlag,
-		},
-		Data: body,
+		ServiceAttribute: &sso_type.ServiceAttribute{EncryptType: authFlag},
+		Data:             body,
 	}
 }

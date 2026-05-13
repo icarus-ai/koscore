@@ -17,7 +17,7 @@ import (
 func (m *PacketContext) uniPacket(packet *sso_type.SsoPacket) (seq uint32, d []byte, e error) {
 	var info *common.SsoSecureInfo = nil
 	var val *sign.Value = nil
-	if sign.ContainSignPKG(packet.Command) || packet.IsD2Auth() {
+	if packet.IsD2Auth() {
 		val, e = m.sig_context.Sign(packet.Command, packet.Sequence, packet.Data)
 		if e != nil {
 			return

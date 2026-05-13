@@ -5,6 +5,6 @@ import "github.com/kernel-ai/koscore/client/packets/structs/sso_type"
 func HeartBeatReq() []byte { return []byte{0x00, 0x00, 0x00, 0x04} }
 
 var (
-	AttributeHeartbeat    = sso_type.NewServiceAttribute("Heartbeat.Alive", sso_type.RequestSimple, sso_type.NoEncrypt, true)
+	AttributeHeartbeat    = sso_type.NewServiceAttribute("Heartbeat.Alive", sso_type.RequestSimple, sso_type.NoEncrypt, false)
 	AttributeSsoHeartBeat = sso_type.NewServiceAttributeD2D2("trpc.qq_new_tech.status_svc.StatusService.SsoHeartBeat")
 )

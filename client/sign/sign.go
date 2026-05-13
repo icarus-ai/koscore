@@ -3,8 +3,7 @@ package sign
 import (
 	"errors"
 	"math"
-	"strings"
-	//"github.com/kernel-ai/koscore/utils/comm"
+	// "github.com/kernel-ai/koscore/utils/comm"
 )
 
 const server_latency_down = math.MaxUint32
@@ -15,12 +14,11 @@ var (
 	k_err_rsp_sign_nil    = errors.New("rsp.sign nil")
 )
 
-// signExtraHexLower = fmt.Sprintf("%x", proto.DynamicMessage{2: c.app.PackageSign}.Encode())
-
+/*
 var sign_map map[string]uint8 // 只在启动时初始化, 无并发问题
 
 func ContainSignPKG(cmd string) bool {
-	_, ok := sign_map[cmd]
+	_,  ok := sign_map[cmd]
 	if !ok {
 		if strings.Contains(cmd, "OidbSvcTrpcTcp.0x") {
 			//sign_map[cmd] = cmd
@@ -36,14 +34,14 @@ func AddSignPKG(pkg string) { sign_map[pkg] = 1 }
 func init() {
 	sign_map = make(map[string]uint8)
 
-	for _, cmd := range []string{
+	for _, cmd := range []string {
 		// see github.com/LagrangeDev/kosa/blob/dd029d8f168ab68248ef4c511c46f6b0ae418652/kosa/src/common/sign.rs
 
 		"trpc.o3.ecdh_access.EcdhAccess.SsoEstablishShareKey",
 		"trpc.o3.ecdh_access.EcdhAccess.SsoSecureAccess",
 		"trpc.o3.report.Report.SsoReport",
-		"trpc.o3.ecdh_access.EcdhAccess.SsoSecureA2Access",
-		"trpc.o3.ecdh_access.EcdhAccess.SsoSecureA2Establish",
+			"trpc.o3.ecdh_access.EcdhAccess.SsoSecureA2Access",
+			"trpc.o3.ecdh_access.EcdhAccess.SsoSecureA2Establish",
 
 		"trpc.login.ecdh.EcdhService.SsoKeyExchange",
 		"trpc.login.ecdh.EcdhService.SsoNTLoginPasswordLogin",
@@ -51,22 +49,22 @@ func init() {
 		"trpc.login.ecdh.EcdhService.SsoNTLoginPasswordLoginNewDevice",
 		"trpc.login.ecdh.EcdhService.SsoNTLoginEasyLoginUnusualDevice",
 		"trpc.login.ecdh.EcdhService.SsoNTLoginPasswordLoginUnusualDevice",
-		"trpc.login.ecdh.EcdhService.SsoNTLoginAuthLogin",
-		"trpc.login.ecdh.EcdhService.SsoNTLoginAuthCodeLogin",
-		"trpc.login.ecdh.EcdhService.SsoQRLoginGenQr",
-		"trpc.login.ecdh.EcdhService.SsoNTLoginTGTExchangeFastLogin",
+			"trpc.login.ecdh.EcdhService.SsoNTLoginAuthLogin",
+			"trpc.login.ecdh.EcdhService.SsoNTLoginAuthCodeLogin",
+			"trpc.login.ecdh.EcdhService.SsoQRLoginGenQr",
+			"trpc.login.ecdh.EcdhService.SsoNTLoginTGTExchangeFastLogin",
 		"trpc.login.ecdh.EcdhService.SsoNTLoginRefreshTicket",
-		"trpc.login.ecdh.EcdhService.SsoNTLoginRefreshA2", //
+		"trpc.login.ecdh.EcdhService.SsoNTLoginRefreshA2",                  //
 
 		"wtlogin.trans_emp",
 		"wtlogin.login",
-		"wtlogin.exchange_emp",
-		"wtlogin_device.login",
-		"wtlogin_device.tran_sim_emp",
+			"wtlogin.exchange_emp",
+			"wtlogin_device.login",
+			"wtlogin_device.tran_sim_emp",
 
 		"trpc.group.long_msg_interface.MsgService.SsoRecvLongMsg",
 		"trpc.group.long_msg_interface.MsgService.SsoSendLongMsg",
-		"trpc.group_pro.msgproxy.sendmsg",
+			"trpc.group_pro.msgproxy.sendmsg",
 		"trpc.msg.msg_svc.MsgService.SsoReadedReport",
 		"trpc.msg.msg_svc.MsgService.SsoC2CRecallMsg",
 		"trpc.msg.register_proxy.RegisterProxy.SsoInfoSync",
@@ -76,20 +74,20 @@ func init() {
 		"trpc.qq_new_tech.status_svc.StatusService.SsoHeartBeat",
 		"trpc.qq_new_tech.status_svc.StatusService.SetStatus",
 
-		"trpc.ecom.api_gateway.ApiGateway.SsoForward",
-		"trpc.passwd.manager.PasswdManager.SetPasswd",
-		"trpc.passwd.manager.PasswdManager.VerifyPasswd",
-		"trpc.qqhb.qqhb_proxy.Handler.sso_handle",
+			"trpc.ecom.api_gateway.ApiGateway.SsoForward",
+			"trpc.passwd.manager.PasswdManager.SetPasswd",
+			"trpc.passwd.manager.PasswdManager.VerifyPasswd",
+			"trpc.qqhb.qqhb_proxy.Handler.sso_handle",
 
-		"QQConnectLogin.auth",
-		"QQConnectLogin.pre_auth",
+			"QQConnectLogin.auth",
+			"QQConnectLogin.pre_auth",
 
-		"ConnAuthSvr.fast_qq_login",
-		"ConnAuthSvr.sdk_auth_api",
-		"ConnAuthSvr.sdk_auth_api_emp",
+			"ConnAuthSvr.fast_qq_login",
+			"ConnAuthSvr.sdk_auth_api",
+			"ConnAuthSvr.sdk_auth_api_emp",
 
 		"MessageSvc.PbSendMsg",
-		"MsgProxy.SendMsg",
+			"MsgProxy.SendMsg",
 
 		"OidbSvcTrpcTcp.0x587_74",
 		"OidbSvcTrpcTcp.0x6d9_4",
@@ -117,21 +115,21 @@ func init() {
 		"OidbSvcTrpcTcp.0x1105_1",
 		"OidbSvcTrpcTcp.0x112a_1",
 		"OidbSvcTrpcTcp.0x11ec_1",
-		// sisi
+// sisi
 		"QQLBSShareSvc.room_operation",
 		"QQAIOMediaSvc.share_trans_check",
 		"OidbSvcTrpcTcp.0xdc2_34",
 		"OidbSvcTrpcTcp.0x929b_0",
-		//"Heartbeat.Alive",
+			//"Heartbeat.Alive",
 
-		// extends
+// extends
 		"OidbSvcTrpcTcp.0xb77_9",
 		"OidbSvcTrpcTcp.0xf51_1",
 		"OidbSvcTrpcTcp.0xfe1_2",
 		"OidbSvcTrpcTcp.0xfe1_8",
 		"OidbSvcTrpcTcp.0x12a9_100",
 
-		// ???
+// ???
 		//"OidbSvc.0xcd5",
 		//"OidbSvc.0xdc2_34",
 		//"OidbSvc.0xb77_9",
@@ -162,12 +160,12 @@ func init() {
 		"OidbSvcTrpcTcp.0x9409_10",
 		"OidbSvcTrpcTcp.0x9409_11",
 		"OidbSvcTrpcTcp.0x9409_12",
-		"OidbSvcTrpcTcp.0x9409_13",
-		"OidbSvcTrpcTcp.0x9409_14",
-		"OidbSvcTrpcTcp.0x9409_15",
-		"OidbSvcTrpcTcp.0x9409_16",
-		"OidbSvcTrpcTcp.0x9409_18",
-	} {
-		sign_map[cmd] = 1
-	}
+ 		"OidbSvcTrpcTcp.0x9409_13",
+ 		"OidbSvcTrpcTcp.0x9409_14",
+ 		"OidbSvcTrpcTcp.0x9409_15",
+ 		"OidbSvcTrpcTcp.0x9409_16",
+ 		"OidbSvcTrpcTcp.0x9409_18",
+
+	} { sign_map[cmd] = 1 }
 }
+*/
