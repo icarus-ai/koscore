@@ -150,7 +150,7 @@ func NewVideoThumb(r io.ReadSeeker) *VideoThumb {
 	if err == nil {
 		width, height = uint32(imctx.Width), uint32(imctx.Height)
 	}
-	if utils.StreamSize(r) > 1024*1024 { // 封面小于1M
+	if utils.StreamSize(r) > 1024*1024 { // 封面大于1M
 		if width > height {
 			width, height, r = 383, 240, bytes.NewReader(k_default_thumb_h)
 		} else {

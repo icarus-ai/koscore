@@ -142,24 +142,16 @@ func (m *PacketContext) IsConnect() bool { return m.sock.IsConnect() }
 func (m *PacketContext) plannedDisconnect(_ *network.TCPClient) {
 	m.LOGD("planned disconnect.")
 	m.stat.DisconnectCount.Add(1)
-	if m.is_heart_beat {
-		m.stop_signal[0] <- 1
-	}
-	if m.Online.Load() {
-		m.stop_signal[1] <- 1
-	}
+	m.LOGW("disconnect[planned]: stop_wait[alive]: %d", m.alive.StopAndWait())
+	m.LOGW("disconnect[planned]: stop_wait[online]: %d", m.Online.StopAndWait())
 }
 
 // 非预期断线事件
 func (m *PacketContext) unexpectedDisconnect(_ *network.TCPClient, e error) {
 	m.LOGE("unexpected disconnect: %v", e)
 	m.stat.DisconnectCount.Add(1)
-	if m.is_heart_beat {
-		m.stop_signal[0] <- 1
-	}
-	if m.Online.Load() {
-		m.stop_signal[1] <- 1
-	}
+	m.LOGW("disconnect[unexpected]: stop_wait[alive]: %d", m.alive.StopAndWait())
+	m.LOGW("disconnect[unexpected]: stop_wait[online]: %d", m.Online.StopAndWait())
 	m.prv_reconnect()
 }
 

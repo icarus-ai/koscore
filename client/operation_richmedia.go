@@ -106,6 +106,7 @@ func (m *QQClient) UploadGroupShortVideo(gin uint64, video *message.ShortVideoEl
 	}
 
 	//m.LOGW("group video upload ukey: %s", upload.UKey.Unwrap())
+	//m.LOGW("group video.thumb upload ukey: %s", upload.SubFileInfos[0].UKey.Unwrap())
 
 	// video
 	if md5, ext := oidb.NTV2RICH_MEDIA_VIDEO.CommonGenerateHighwayExt(upload, video.Stream, nil); ext != nil {
@@ -115,7 +116,6 @@ func (m *QQClient) UploadGroupShortVideo(gin uint64, video *message.ShortVideoEl
 	}
 	// thumb
 	if md5, ext := oidb.NTV2RICH_MEDIA_IMAGE.CommonGenerateHighwayExt(upload, video.Thumb.Stream, upload.SubFileInfos[0]); ext != nil {
-		//m.LOGD("group video.thumb upload ukey: %s", ukey)
 		if err = m.highwayUpload(1006, video.Thumb.Stream, uint64(video.Thumb.Size), md5, ext); err != nil {
 			return nil, err
 		}

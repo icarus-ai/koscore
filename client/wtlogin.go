@@ -26,18 +26,18 @@ func (m *QQClient) heart_beat_loop() {
 	if !m.sso_context.IsConnect() {
 		_ = m.sso_context.Connect()
 	}
-	if m.is_heart_beat {
+	if m.alive.Run() {
 		return
 	}
-	m.is_heart_beat = true
 	ticker := time.NewTicker(INTERVAL_HEART_BEAT_ALIVE * time.Second)
 	pkt := system_type.AttributeHeartbeat.NewSsoPacket(0, nil)
 	go func() {
 		m.stat.HeartBeat.Count.Add(1)
-		for m.is_heart_beat {
+		for m.alive.Load() {
 			select {
-			case <-m.stop_signal[0]:
-				m.is_heart_beat = false
+			case <-m.alive.Case():
+				m.alive.Store(false)
+				break
 			case <-ticker.C:
 				m.stat.HeartBeat.Alive.Add(1)
 				pkt.Sequence = m.session.GetAndIncreaseSequence()
@@ -48,6 +48,7 @@ func (m *QQClient) heart_beat_loop() {
 			}
 		}
 		ticker.Stop()
+		m.alive.Signal()
 		m.stat.HeartBeat.Count.Add(-1)
 	}()
 }
@@ -55,18 +56,18 @@ func (m *QQClient) heart_beat_loop() {
 // protocol pc tx_interval 360s
 // 设置在线状态 并且发送心跳
 func (m *QQClient) sso_heart_beat_loop() {
-	if m.Online.Load() {
+	if m.Online.Run() {
 		return
 	}
-	m.Online.Store(true)
 	ticker := time.NewTicker(INTERVAL_HEART_BEAT_SSO * time.Second)
 	pkt := system_type.AttributeSsoHeartBeat.NewSsoPacket(0, nil)
 	go func() {
 		m.stat.HeartBeat.Count.Add(1)
 		for m.Online.Load() {
 			select {
-			case <-m.stop_signal[1]:
+			case <-m.Online.Case():
 				m.Online.Store(false)
+				break
 			case <-ticker.C:
 				m.stat.HeartBeat.Sso.Add(1)
 				pkt.Sequence = m.session.GetAndIncreaseSequence()
@@ -83,6 +84,7 @@ func (m *QQClient) sso_heart_beat_loop() {
 			}
 		}
 		ticker.Stop()
+		m.Online.Signal()
 		m.stat.HeartBeat.Count.Add(-1)
 	}()
 }

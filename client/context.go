@@ -4,7 +4,6 @@ import (
 	"net/http"
 	"net/http/cookiejar"
 	"net/netip"
-	"sync/atomic"
 
 	"golang.org/x/net/publicsuffix"
 
@@ -30,9 +29,8 @@ type QQClient struct {
 	hw_session *highway.Session
 	ticket     *TicketService
 
-	stop_signal   [2]types.Signal
-	is_heart_beat bool
-	Online        atomic.Bool
+	alive  *types.Signal
+	Online *types.Signal
 
 	decoders event.DecodersEvent
 
@@ -75,18 +73,18 @@ func (m *QQClient) setSessionId() { m.Uin = m.session.Info.Uin }
 func NewClient(uin uint64, password string) *QQClient {
 	cookie, _ := cookiejar.New(&cookiejar.Options{PublicSuffixList: publicsuffix.List})
 	ctx := &QQClient{
-		session:       auth.NewSession(uin),
-		is_heart_beat: false,
-		logger:        log_t{},
-		Events:        newEventCall(),
+		session: auth.NewSession(uin),
+		logger:  log_t{},
+		Events:  newEventCall(),
 		ticket: &TicketService{
 			client: &http.Client{Jar: cookie},
 			sKey:   &keyInfo{},
 		},
 		decoders: make(event.DecodersEvent),
+
+		alive:  types.NewSignal(),
+		Online: types.NewSignal(),
 	}
-	ctx.stop_signal[0] = make(types.Signal)
-	ctx.stop_signal[1] = make(types.Signal)
 	ctx.sso_context = NewPacketContext(ctx)
 	return ctx
 }
@@ -99,8 +97,8 @@ func (m *QQClient) Release() {
 	if m.Online.Load() {
 		m.sso_context.Disconnect()
 	}
-	m.stop_signal[0] = make(types.Signal)
-	m.stop_signal[1] = make(types.Signal)
+	m.Online.Reset()
+	m.alive.Reset()
 }
 
 func (m *QQClient) GetStatistics() *utils.Statistics { return &m.stat }
